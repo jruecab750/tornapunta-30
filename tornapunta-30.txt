@@ -200,7 +200,7 @@ const area = p => Math.abs(p.reduce((s,a,i)=>{const b=p[(i+1)%p.length];return s
 /* ================= ESTADO ================= */
 let poly, marks, lines, history, tool, anchor, tapeStart, sawLock, sawTilt, cutsDone, stage, errors, tStart, idc, geoVer;
 let hv = {}, tapeDraw = null, snapShow = null, lastSnap = null, snapCache = null, sideDirty = true;
-let msgText = "", msgKind = "", msgUntil = 0;
+let cutErr="", msgText = "", msgKind = "", msgUntil = 0;
 
 function resetState(){
   poly=[{x:0,y:0},{x:L,y:0},{x:L,y:HH},{x:0,y:HH}];
@@ -363,7 +363,7 @@ function nearestSnap(){
 /* ================= HERRAMIENTAS ================= */
 function setTool(t){
   if(stage!=="trace") return;
-  tool=t; anchor=null; tapeStart=null; sawLock=null; sawTilt=null; tapeDraw=null; sideDirty=true;
+  cutErr=""; tool=t; anchor=null; tapeStart=null; sawLock=null; sawTilt=null; tapeDraw=null; sideDirty=true;
 }
 function undo(){
   if(stage!=="trace") return;
@@ -382,15 +382,18 @@ function addLine(x,y,ang){
 }
 const matchCut=(l,c)=>angDiff(l.ang,c.ang)<0.6 && distPtLine({x:c.x,y:c.y},l)<TOL;
 
+const CUTITEM={4:4,5:5,6:10,7:11};
+function cutFail(t){ errors++; cutErr=t; sideDirty=true; say(t,"err",12000); }
 function doCut(){
   const l=lines.find(x=>x.id===sawLock); if(!l) return;
-  if(sawTilt==null){ say("Elige primero la inclinación de la hoja","err"); return; }
+  cutErr="";
+  if(sawTilt==null){ cutFail("Elige primero la inclinación de la hoja (90° vertical)."); errors--; return; }
   const c=CUTS.find(c=>matchCut(l,c));
-  if(!c){ errors++; say("Ese trazado no es un corte del tornapunta. Revisa el método (pasos 4 a 7).","err",6000); return; }
-  if(cutsDone.includes(c.n)){ say("Ese corte ya está hecho","err"); return; }
   const next=[4,5,6,7].find(n=>!cutsDone.includes(n));
-  if(c.n!==next){ errors++; say(`Orden de los cortes: 4, 5, 6 y 7. Ahora toca el corte ${next}.`,"err",6000); return; }
-  if(sawTilt!==90){ errors++; say(`Con la hoja a ${sawTilt}° el corte sale a bisel y el apoyo no queda plano. Hazlo a 90° (vertical).`,"err",7000); return; }
+  if(!c){ cutFail(`La línea elegida no es una línea de corte. Ahora toca el corte ${next}: «${ITEMS[CUTITEM[next]][1]}». Comprueba que está trazada por ese punto y con ese ángulo; las líneas auxiliares (como la perpendicular desde M o M′) no se cortan.`); return; }
+  if(cutsDone.includes(c.n)){ cutFail("Ese corte ya está hecho."); errors--; return; }
+  if(c.n!==next){ cutFail(`Esa línea es el corte ${c.n}, pero el orden es 4, 5, 6 y 7: ahora toca el corte ${next} («${ITEMS[CUTITEM[next]][1]}»).`); return; }
+  if(sawTilt!==90){ cutFail(`Con la hoja a ${sawTilt}° el corte sale a bisel y el apoyo no queda plano. Hazlo a 90° (vertical).`); return; }
   const A=clipHalf(poly,l,1), B=clipHalf(poly,l,-1);
   const keep=area(A)>=area(B)?A:B, drop=keep===A?B:A;
   dropPiece(drop); poly=keep; rebuildBoard();
@@ -484,7 +487,7 @@ function fire(h){
   else if(k==="reset") resetAll();
   else if(k.startsWith("tilt:")){ sawTilt=+k.slice(5); sideDirty=true; }
   else if(k==="cut") doCut();
-  else if(k==="sawcancel"){ sawLock=null; sawTilt=null; sideDirty=true; }
+  else if(k==="sawcancel"){ cutErr=""; sawLock=null; sawTilt=null; sideDirty=true; }
   else if(k==="mount") startMount();
   else if(k.startsWith("pt:")){ const pt=(k==="pt:free")?{x:h.pt.x,y:h.pt.y}:h.pt; const m=addMark(pt.x,pt.y); anchor={x:m.x,y:m.y}; say("Punto marcado. Ahora elige una línea: apunta en su dirección y pellizca.","ok",3500); }
   else if(k==="anchorcancel"){ anchor=null; }
@@ -492,7 +495,7 @@ function fire(h){
   else if(k.startsWith("fs:")){ tapeStart={x:h.pt.x,y:h.pt.y}; say("Alinea el flexómetro con una línea y avanza; pellizca para marcar el final de la medida.","",5000); }
   else if(k==="fcancel"){ tapeStart=null; }
   else if(k.startsWith("fe:")){ const m=addMark(h.pt.x,h.pt.y); tapeStart=null; say(`Medida marcada: ${f1(Math.abs(parseFloat(k.split(":")[2])))} cm`,"ok",3000); }
-  else if(k.startsWith("sl:")){ sawLock=h.lineId; sideDirty=true; say("Hoja alineada. Elige la inclinación de la hoja y pulsa CORTAR.","",6000); }
+  else if(k.startsWith("sl:")){ cutErr=""; sawLock=h.lineId; sideDirty=true; say("Hoja alineada. Elige la inclinación de la hoja y pulsa CORTAR.","",6000); }
 }
 /* ================= ENTRADA: PELLIZCO = CLIC / ARRASTRE ================= */
 const DRAG_PX=28, ARM_MS=400, GAIN_HAND=0.6, RESET_MS=1500;
@@ -720,7 +723,7 @@ function renderSide(){
   } else if(stage==="trace" && tool==="saw" && sawLock!=null){
     h+=`<div>Inclinación de la hoja respecto a la cara:</div><div class="row">`;
     for(const a of [90,60,45]) h+=`<div class="dw btn ${sawTilt===a?"sel":""}" data-key="tilt:${a}">${a}°${a===90?" vertical":""}</div>`;
-    h+=`</div><div class="row"><div class="dw btn big" style="min-width:150px;height:56px;font-size:17px" data-key="cut">CORTAR</div><div class="dw btn small" data-key="sawcancel">Cancelar</div></div>`;
+    h+=`</div>${cutErr?`<div class="rep" style="border-color:#ff5a5f;background:#2a0f16;color:#ffd0d3">${cutErr}</div>`:""}<div class="row"><div class="dw btn big" style="min-width:150px;height:56px;font-size:17px" data-key="cut">CORTAR</div><div class="dw btn small" data-key="sawcancel">Cancelar</div></div>`;
   } else {
     h+=`<div style="opacity:.85;line-height:1.45"><b>Pellizca</b> (pulgar + índice) sobre un punto, línea o botón para pulsarlo.<br><b>Pellizca dentro de la esfera</b> (izquierda) y arrastra para girar la tabla de 15° en 15°: el disco gira en X/Y y el anillo exterior en Z. Fuera de la esfera la tabla no se mueve.<br>Tabla: ${L} × ${HH} cm · ejión h = ${H} cm · θ = ${TH}°</div>`;
   }
