@@ -11,7 +11,7 @@
     background:radial-gradient(ellipse at 50% 30%,#17234a 0%,#0b1124 60%,#060912 100%)}
   canvas{position:fixed;inset:0;width:100%;height:100%;display:block}
   #ov{pointer-events:none}
-  #video{position:fixed;right:14px;top:14px;width:176px;height:132px;object-fit:cover;transform:scaleX(-1);
+  #video{position:fixed;right:14px;top:14px;width:140px;height:105px;object-fit:cover;transform:scaleX(-1);
     opacity:.3;border-radius:10px;border:1px solid #ffffff22;pointer-events:none;display:none}
   #status{position:fixed;left:14px;top:14px;display:flex;align-items:center;gap:9px;font-size:13px;
     padding:6px 12px;border-radius:999px;background:#0b1226cc;border:1px solid #ffffff1a;max-width:34vw}
@@ -60,16 +60,20 @@
   .sl .thumb{position:absolute;top:3px;width:30px;height:30px;margin-left:-15px;border-radius:50%;background:#35e0ff;box-shadow:0 0 12px #35e0ff88;transition:transform .05s}
   .sl.on .thumb{background:#ffd60a;box-shadow:0 0 18px #ffd60acc}
   .sl.hover{box-shadow:0 0 0 2px #35e0ff inset} .sl.hover .thumb{background:#ffd60a}
-  #orbit{align-self:center;width:150px;height:150px;border-radius:50%;position:relative;touch-action:none;
-    background:radial-gradient(circle at 35% 30%,#2c5aa8 0%,#14274f 55%,#0a1330 100%);border:2px solid #ffffff33;
-    box-shadow:inset 0 0 0 28px #ffffff08, 0 0 0 1px #0008;display:flex;align-items:center;justify-content:center;
-    text-align:center;font-size:11.5px;font-weight:700;line-height:1.25;color:#cfe0ff;user-select:none}
-  #orbit::before{content:"";position:absolute;inset:28px;border-radius:50%;border:1.5px dashed #ffffff44}
-  #orbit span{position:relative;z-index:1;padding:0 36px}
-  #orbit.hover{border-color:#35e0ff;box-shadow:0 0 18px #35e0ff88,inset 0 0 0 28px #ffffff08}
-  #orbit.on{border-color:#ffd60a;box-shadow:0 0 22px #ffd60acc,inset 0 0 0 28px #ffffff10}
-  #nomen{position:fixed;right:14px;top:330px;width:190px;z-index:3;border-radius:10px;overflow:hidden;border:1px solid #ffffff33;background:#fff;pointer-events:none}
+  #nomen{position:fixed;right:14px;top:246px;width:170px;z-index:3;border-radius:10px;overflow:hidden;border:1px solid #ffffff33;background:#fff;pointer-events:none}
   #nomen img{display:block;width:100%}
+  #orbit{align-self:center;width:104px;height:104px;border-radius:50%;position:relative;touch-action:none;
+    background:repeating-conic-gradient(#ef4a4a 0 30deg,#f7f9fc 30deg 60deg);border:2px solid #ffffff55;
+    box-shadow:inset -12px -14px 24px #0000008a, inset 9px 9px 18px #ffffff66, 0 4px 14px #0008;user-select:none}
+  #orbit::before{content:"";position:absolute;inset:16%;border-radius:50%;border:1.5px dashed #0006}
+  #orbit::after{content:"";position:absolute;left:50%;top:50%;width:18px;height:18px;margin:-9px 0 0 -9px;border-radius:50%;background:radial-gradient(#fff,#d9dde6);box-shadow:0 0 0 2px #0003}
+  #orbit.hover{border-color:#35e0ff;box-shadow:inset -12px -14px 24px #0000008a, inset 9px 9px 18px #ffffff66, 0 0 18px #35e0ffcc}
+  #orbit.on{border-color:#ffd60a;box-shadow:inset -12px -14px 24px #0000008a, inset 9px 9px 18px #ffffff66, 0 0 22px #ffd60add}
+  #orbitlab{font-size:11px;text-align:center;opacity:.75;margin-top:-4px}
+  #mini{position:fixed;right:14px;top:354px;width:170px;height:100px;z-index:3;border-radius:10px;border:1px solid #ffffff44;pointer-events:none}
+  #mini span{position:absolute;left:6px;top:3px;font-size:10px;font-weight:700;letter-spacing:.05em;color:#cfe0ff}
+  #l3svg{position:fixed;inset:0;width:100%;height:100%;z-index:3;pointer-events:none}
+  .l3{position:fixed;z-index:4;pointer-events:none;padding:3px 9px;border-radius:8px;font-size:12px;font-weight:800;letter-spacing:.04em;background:#0b1226e6;border:2px solid #fff;transform:translate(-50%,-50%);white-space:nowrap;display:none}
   #front{height:40px;font-size:14px;padding:6px 12px;border-radius:12px}
   #ptr .c1{fill:none;stroke:#fff;stroke-width:4;stroke-dasharray:119.4;stroke-dashoffset:119.4;stroke-linecap:round}
   #start{position:fixed;inset:0;display:flex;align-items:center;justify-content:center;background:#060912e6;z-index:20}
@@ -102,8 +106,10 @@
   <div class="row"><label>ZOOM <b id="zv"></b></label><div class="sl" id="slZoom"><div class="fill"></div><div class="thumb"></div></div></div>
   <div class="row"><label>SENSIBILIDAD <b id="sv"></b></label><div class="sl" id="slSens"><div class="fill"></div><div class="thumb"></div></div></div>
   <div id="front" class="dw btn small" data-key="front">⟲ Vista frontal (ejes a 0°)</div>
-  <div id="orbit"><span>ESFERA<br>pellizca dentro y arrastra</span></div>
+  <div id="orbit"></div><div id="orbitlab">Esfera: pellizca dentro y arrastra<br>(anillo = giro en Z)</div>
 </div>
+<div id="mini"><span>MONTAJE FINAL</span></div>
+<svg id="l3svg"></svg>
 <div id="nomen" title="Nombres de las caras y aristas de la tabla"><img alt="Caras y aristas de la tabla: tabla, canto, testa, tizón, soga, grueso" src="data:image/png;base64,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"></div>
 <div id="resetBtn" class="dw btn small" data-key="reset" style="position:fixed;right:14px;bottom:10px;z-index:5;padding:6px 14px">↺ Reiniciar (pellizco 1,5 s)</div>
 <div id="lupa"><canvas id="lc" width="200" height="200" style="position:static;width:200px;height:200px"></canvas></div>
@@ -226,7 +232,21 @@ const stageG = new THREE.Group(); scene.add(stageG);
 const piv = new THREE.Group(); piv.position.set(0,5.7,0); stageG.add(piv);   // pivote en el centro de la tabla
 const holder = new THREE.Group(); piv.add(holder);
 piv.rotation.order = "XYZ";
-const matTop = new THREE.MeshStandardMaterial({color:0xeccf8e, roughness:.8});
+function woodTexture(){
+  const c=document.createElement("canvas"); c.width=c.height=512; const g=c.getContext("2d");
+  const gr=g.createLinearGradient(0,0,0,512); gr.addColorStop(0,"#e6c887"); gr.addColorStop(.5,"#dcb877"); gr.addColorStop(1,"#e3c283"); g.fillStyle=gr; g.fillRect(0,0,512,512);
+  let seed=7; const R=()=>{seed=(seed*16807)%2147483647; return seed/2147483647;};
+  for(let i=0;i<150;i++){
+    const y0=R()*512, A=2+R()*7, f=1+Math.floor(R()*3), ph=R()*6.28, w=.6+R()*2.2, dark=R()<.7;
+    g.strokeStyle=dark?`rgba(120,76,28,${.10+R()*.22})`:`rgba(255,240,200,${.10+R()*.15})`; g.lineWidth=w; g.beginPath();
+    for(let x=0;x<=512;x+=8){ const y=y0+A*Math.sin(ph+f*6.2832*x/512)+(R()-.5)*.6; x?g.lineTo(x,y):g.moveTo(x,y); } g.stroke();
+  }
+  for(let k=0;k<3;k++){ const cx=60+R()*390, cy=60+R()*390;
+    for(let r=22;r>3;r-=3){ g.strokeStyle=`rgba(95,58,20,${.10+(22-r)/70})`; g.lineWidth=1.6; g.beginPath(); g.ellipse(cx,cy,r*1.9,r*.8,0,0,7); g.stroke(); }
+    g.fillStyle="rgba(80,46,14,.55)"; g.beginPath(); g.ellipse(cx,cy,5,2.4,0,0,7); g.fill(); }
+  const t=new THREE.CanvasTexture(c); t.wrapS=t.wrapT=THREE.RepeatWrapping; t.repeat.set(1/22,1/22); t.anisotropy=4; t.colorSpace=THREE.SRGBColorSpace; return t;
+}
+const matTop = new THREE.MeshStandardMaterial({map:woodTexture(), color:0xffffff, roughness:.85});
 const matSide= new THREE.MeshStandardMaterial({color:0xc29a55, roughness:.85});
 const boardMesh = new THREE.Mesh(new THREE.BufferGeometry(), [matTop,matSide]);
 boardMesh.position.z = -T/2; holder.add(boardMesh);
@@ -239,22 +259,59 @@ function rebuildBoard(){ boardMesh.geometry.dispose(); boardMesh.geometry = geoF
 
 // montaje final (durmientes y ejiones), sale al montar
 const asm = new THREE.Group(); asm.visible=false; stageG.add(asm);
-const mBeam = new THREE.MeshStandardMaterial({color:0x2f5da8, roughness:.6, transparent:true, opacity:0});
-const mEj   = new THREE.MeshStandardMaterial({color:0x7fa8ee, roughness:.6, transparent:true, opacity:0});
+const SOFT={h:0x86b4de, v:0x9fd29a, e:0xc4aee6};
+const mBeamH = new THREE.MeshStandardMaterial({color:SOFT.h, roughness:.7, transparent:true, opacity:0});
+const mBeamV = new THREE.MeshStandardMaterial({color:SOFT.v, roughness:.7, transparent:true, opacity:0});
+const mEj    = new THREE.MeshStandardMaterial({color:SOFT.e, roughness:.7, transparent:true, opacity:0});
+const setAsmOpacity=f=>{ mBeamH.opacity=mBeamV.opacity=mEj.opacity=f; };
 function box(x0,x1,y0,y1,d,m){ const b=new THREE.Mesh(new THREE.BoxGeometry(x1-x0,y1-y0,d),m); b.position.set((x0+x1)/2,(y0+y1)/2,0); asm.add(b); return b; }
 const footY = (()=>{ // el apoyo de la suela queda a Y=0
   const r=rad(-TH); return -(EXP.Q.x*Math.sin(r)+EXP.Q.y*Math.cos(r)); })();
 const footX = EXP.P.x*Math.cos(rad(-TH)) - EXP.P.y*Math.sin(rad(-TH));
 const headY = EXP.P2.x*Math.sin(rad(-TH)) + EXP.P2.y*Math.cos(rad(-TH)) + footY;
 const headX = EXP.P2.x*Math.cos(rad(-TH)) - EXP.P2.y*Math.sin(rad(-TH));
-// medidas reales (cm): tablones 5 de grueso × 15 de ancho; ejiones 3 de grueso × 15 de ancho × 30 de largo
-const BEAM_T=5, BEAM_W=15, EJ_LEN=30;
-box(headX-BEAM_T, footX+EJ_LEN+10, -BEAM_T, 0, BEAM_W, mBeam);   // durmiente horizontal (tabla con tabla con el vertical)
-box(headX-BEAM_T, headX, -BEAM_T, headY+EJ_LEN+6, BEAM_W, mBeam); // durmiente vertical
+// medidas reales (cm): tablones 5 de grueso × 15 de ancho; ejiones 3 de grueso × 15 de ancho × 20 de largo
+const BEAM_T=5, BEAM_W=15, EJ_LEN=20;
+box(headX, footX+EJ_LEN+10, -BEAM_T, 0, BEAM_W, mBeamH);          // durmiente horizontal: topa contra el vertical
+box(headX-BEAM_T, headX, -BEAM_T, headY+EJ_LEN+6, BEAM_W, mBeamV); // durmiente vertical: llega hasta el suelo
 box(footX, footX+EJ_LEN, 0, H, BEAM_W, mEj);               // ejión del pie (apoya contra el corte 4)
 box(headX, headX+H, headY, headY+EJ_LEN, BEAM_W, mEj);     // ejión de la cabeza (junto al corte 7)
 const ASM_POS = {x:-((headX-BEAM_T)+(footX+EJ_LEN+10))/2, y:-(headY+EJ_LEN+6-BEAM_T)/2};
 asm.position.set(ASM_POS.x, ASM_POS.y);
+
+/* ---- vista previa del montaje final (gira igual que la tabla) ---- */
+function idealPoly(){ let p=[{x:0,y:0},{x:L,y:0},{x:L,y:HH},{x:0,y:HH}];
+  for(const c of CUTS){ const l={x:c.x,y:c.y,ang:c.ang}, A=clipHalf(p,l,1), B=clipHalf(p,l,-1); p=area(A)>=area(B)?A:B; } return p; }
+const scene2=new THREE.Scene(); scene2.add(new THREE.AmbientLight(0xffffff,1.1)); const k2=new THREE.DirectionalLight(0xffffff,2); k2.position.set(20,40,60); scene2.add(k2);
+const camera2=new THREE.PerspectiveCamera(30,1.7,1,600); camera2.position.set(0,0,175);
+const miniRoot=new THREE.Group(); scene2.add(miniRoot);
+const miniAsm=new THREE.Group(); miniAsm.position.set(ASM_POS.x,ASM_POS.y,0); miniRoot.add(miniAsm);
+function mbox(x0,x1,y0,y1,d,col){ const b=new THREE.Mesh(new THREE.BoxGeometry(x1-x0,y1-y0,d),new THREE.MeshStandardMaterial({color:col,roughness:.7})); b.position.set((x0+x1)/2,(y0+y1)/2,0); miniAsm.add(b); }
+mbox(headX, footX+EJ_LEN+10, -BEAM_T, 0, BEAM_W, SOFT.h);
+mbox(headX-BEAM_T, headX, -BEAM_T, headY+EJ_LEN+6, BEAM_W, SOFT.v);
+mbox(footX, footX+EJ_LEN, 0, H, BEAM_W, SOFT.e);
+mbox(headX, headX+H, headY, headY+EJ_LEN, BEAM_W, SOFT.e);
+{ const tw=new THREE.Group(); tw.position.set(0,footY,0); tw.rotation.z=rad(-TH); miniAsm.add(tw);
+  const m=new THREE.Mesh(geoFromPoly(idealPoly()),[matTop,matSide]); m.position.z=-T/2; tw.add(m); }
+const miniEl=document.getElementById("mini");
+
+/* ---- nombres de las piezas del montaje final ---- */
+const L3=[
+  {t:"TORNAPUNTA", col:"#e6c887", anchor:()=>holder.localToWorld(new THREE.Vector3(L*0.5,HH*0.55,T/2)), dx:70, dy:-85},
+  {t:"DURMIENTE HORIZONTAL", col:"#86b4de", anchor:()=>asm.localToWorld(new THREE.Vector3(footX+EJ_LEN+2,-BEAM_T/2,BEAM_W/2)), dx:10, dy:75},
+  {t:"DURMIENTE VERTICAL", col:"#9fd29a", anchor:()=>asm.localToWorld(new THREE.Vector3(headX-BEAM_T/2,headY+EJ_LEN+1,BEAM_W/2)), dx:-120, dy:-10},
+  {t:"EJIÓN", col:"#c4aee6", anchor:()=>asm.localToWorld(new THREE.Vector3(footX+EJ_LEN*0.6,H,BEAM_W/2)), dx:40, dy:-70},
+].map(o=>{ o.el=document.createElement("div"); o.el.className="l3"; o.el.textContent=o.t; o.el.style.borderColor=o.col; o.el.style.color=o.col; document.body.appendChild(o.el);
+  o.ln=document.createElementNS("http://www.w3.org/2000/svg","line"); o.ln.setAttribute("stroke",o.col); o.ln.setAttribute("stroke-width","2"); document.getElementById("l3svg").appendChild(o.ln); return o; });
+function updateLabels(){
+  const on=stage==="mounted";
+  for(const o of L3){
+    o.el.style.display=on?"block":"none"; o.ln.style.display=on?"block":"none"; if(!on) continue;
+    const v=o.anchor().project(camera), x=(v.x+1)/2*W, y=(1-v.y)/2*Hh;
+    o.el.style.left=(x+o.dx)+"px"; o.el.style.top=(y+o.dy)+"px";
+    o.ln.setAttribute("x1",x); o.ln.setAttribute("y1",y); o.ln.setAttribute("x2",x+o.dx); o.ln.setAttribute("y2",y+o.dy);
+  }
+}
 // el durmiente vertical debe tocar el corte 7: se ajusta su cara derecha a headX
 
 
@@ -387,6 +444,15 @@ function addLine(x,y,ang){
 }
 const matchCut=(l,c)=>angDiff(l.ang,c.ang)<0.6 && distPtLine({x:c.x,y:c.y},l)<TOL;
 
+const SAW={ blade:[[-5,0],[3,0],[3,2.7],[-5,0.9]],
+  handle:[[3,-0.3],[3,3.1],[3.8,4.9],[6.2,5.4],[8.0,4.8],[9.0,3.2],[9.5,0.6],[9.3,-0.5]],
+  hole:[[4.6,0.7],[5.0,3.5],[6.2,3.9],[7.4,2.9],[8.0,0.7],[6.9,0.2]],
+  rivets:[[3.6,2.8],[3.6,0.5],[8.4,1.6]], toeHole:[-4.2,0.5] };
+function sawSvg(){
+  const X=u=>(10+(u+5)*12.5).toFixed(1), Y=v=>(60-v*10).toFixed(1), P=pp=>pp.map((q,i)=>(i?"L":"M")+X(q[0])+" "+Y(q[1])).join(" ")+" Z";
+  let t=""; for(let i=0;i<40;i++){ const u=-5+i*0.2; t+=`M${X(u)} ${Y(0)} L${X(u+.1)} ${Y(-.35)} L${X(u+.2)} ${Y(0)} Z `; }
+  return `<svg viewBox="0 0 150 66" width="118" height="38" style="flex:none"><defs><linearGradient id="sg" x1="0" x2="1"><stop offset="0" stop-color="#9aa3b3"/><stop offset=".5" stop-color="#e3e7ee"/><stop offset="1" stop-color="#a8b0bf"/></linearGradient></defs><path d="${P(SAW.blade)}" fill="url(#sg)" stroke="#4b5675" stroke-width="1.2"/><path d="${t}" fill="#4b5675"/><path fill-rule="evenodd" d="${P(SAW.handle)} ${P(SAW.hole)}" fill="#2d55b8" stroke="#142a66" stroke-width="1.4"/>${SAW.rivets.map(q=>`<circle cx="${X(q[0])}" cy="${Y(q[1])}" r="1.8" fill="#111b3d"/>`).join("")}<circle cx="${X(SAW.toeHole[0])}" cy="${Y(SAW.toeHole[1])}" r="2.6" fill="#0b1226"/></svg>`;
+}
 const CUTITEM={4:4,5:5,6:10,7:11};
 function cutFail(t){ errors++; cutErr=t; sideDirty=true; say(t,"err",12000); }
 function doCut(){
@@ -419,7 +485,7 @@ function suelaLen(){
 function resetAll(){
   resetState(); rebuildBoard();
   pieces.forEach(p=>{holder.remove(p.m);p.m.geometry.dispose();}); pieces.length=0;
-  asm.visible=false; mBeam.opacity=0; mEj.opacity=0;
+  asm.visible=false; setAsmOpacity(0);
   for(const a of AXN){U[a]=0;view[a]=0;} piv.rotation.set(0,0,0); piv.position.set(0,5.7,0);
   holder.rotation.set(0,0,0); stageG.rotation.set(0,0,0); stageG.position.set(0,0,0);
   holder.position.set(-L/2,-5,0);
@@ -647,10 +713,15 @@ function drawLayer(ctx,Tf,k,isLupa){
         const n={x:-d.y,y:d.x};
         const T=(u,v)=>Tf({x:c.x+d.x*u+n.x*v,y:c.y+d.y*u+n.y*v});
         const poly2=(pts,fill,st,lw)=>{ ctx.beginPath(); pts.forEach((q,i)=>{const p=T(q[0],q[1]); i?ctx.lineTo(p.x,p.y):ctx.moveTo(p.x,p.y);}); ctx.closePath(); ctx.fillStyle=fill; ctx.fill(); ctx.strokeStyle=st; ctx.lineWidth=lw*k; ctx.stroke(); };
-        poly2([[-5,0],[3,0],[3,2.4],[-5,0.8]],"#d3dbec","#4b5675",1.3);                    // hoja
-        ctx.fillStyle="#4b5675"; for(let i=0;i<16;i++){ const u=-5+i*0.5; ctx.beginPath(); [[u,0],[u+0.25,-0.4],[u+0.5,0]].forEach((q,j)=>{const p=T(q[0],q[1]); j?ctx.lineTo(p.x,p.y):ctx.moveTo(p.x,p.y);}); ctx.closePath(); ctx.fill(); }  // dientes
-        poly2([[3,-0.3],[7.2,-0.3],[7.8,1.2],[7.2,3.2],[3,3.2]],"#8a5a2b","#3b2410",1.3);  // mango
-        const hl=T(5.4,1.5); ctx.fillStyle="#0b1226"; ctx.beginPath(); ctx.arc(hl.x,hl.y,5*k,0,7); ctx.fill();
+        const S=0.72, T2=(u,v)=>T(u*S,v*S);
+        const path=(pp,fill,st,lw)=>{ ctx.beginPath(); for(const pl of pp){ pl.forEach((q,i)=>{const p=T2(q[0],q[1]); i?ctx.lineTo(p.x,p.y):ctx.moveTo(p.x,p.y);}); ctx.closePath(); } ctx.fillStyle=fill; ctx.fill("evenodd"); ctx.strokeStyle=st; ctx.lineWidth=lw*k; ctx.stroke(); };
+        const bl=T2(-5,0), br=T2(3,3);
+        const gr=ctx.createLinearGradient(bl.x,bl.y,br.x,br.y); gr.addColorStop(0,"#9aa3b3"); gr.addColorStop(.5,"#e3e7ee"); gr.addColorStop(1,"#a8b0bf");
+        path([SAW.blade],gr,"#4b5675",1.2);
+        ctx.fillStyle="#4b5675"; for(let i=0;i<44;i++){ const u=-5+i*0.18; ctx.beginPath(); [[u,0],[u+0.09,-0.3],[u+0.18,0]].forEach((q,j)=>{const p=T2(q[0],q[1]); j?ctx.lineTo(p.x,p.y):ctx.moveTo(p.x,p.y);}); ctx.closePath(); ctx.fill(); }
+        path([SAW.handle,SAW.hole],"#2d55b8","#142a66",1.4);
+        ctx.fillStyle="#111b3d"; for(const q of SAW.rivets){ const p=T2(q[0],q[1]); ctx.beginPath(); ctx.arc(p.x,p.y,2.2*k,0,7); ctx.fill(); }
+        const th=T2(SAW.toeHole[0],SAW.toeHole[1]); ctx.fillStyle="#0b1226"; ctx.beginPath(); ctx.arc(th.x,th.y,3.4*k,0,7); ctx.fill();
       }
     }
   }
@@ -751,11 +822,11 @@ function renderSide(){
   let h="";
   if(stage==="mounted"){
     const s=suelaLen(), secs=Math.round((performance.now()-tStart)/1000);
-    h+=`<div class="rep"><b>¡Tornapunta montado a 30°!</b><br>Durmientes 5 × 15 cm · ejiones 30 × 3 cm<br>Suela P–Q = <b>${isNaN(s)?"—":f1(s)} cm</b> (objetivo ${f1(EXP.P.x-EXP.Q.x>0?Math.hypot(EXP.P.x-EXP.Q.x,EXP.P.y-EXP.Q.y):0)} cm)<br>Errores: ${errors} · Tiempo: ${Math.floor(secs/60)} min ${secs%60} s</div>`;
+    h+=`<div class="rep"><b>¡Tornapunta montado a 30°!</b><br>Durmientes 5 × 15 cm · ejiones 20 × 3 cm<br>Suela P–Q = <b>${isNaN(s)?"—":f1(s)} cm</b> (objetivo ${f1(EXP.P.x-EXP.Q.x>0?Math.hypot(EXP.P.x-EXP.Q.x,EXP.P.y-EXP.Q.y):0)} cm)<br>Errores: ${errors} · Tiempo: ${Math.floor(secs/60)} min ${secs%60} s</div>`;
   } else if(stage==="trace" && cutsDone.length===4){
     h+=`<div class="dw btn big" data-key="mount">MONTAR A 30°</div>`;
   } else if(stage==="trace" && tool==="saw" && sawLock!=null){
-    h+=`<svg viewBox="0 0 240 52" width="150" height="34" style="flex:none"><path d="M6 30 L150 18 L150 44 L6 31 Z" fill="#c9d2e6" stroke="#4b5675" stroke-width="2"/><path d="M6 31 L150 44" stroke="#4b5675" stroke-width="1"/>${Array.from({length:19},(_,i)=>`<path d="M${10+i*7.5} ${31+i*0.68} l3.4 7 l3.4 -6.3" fill="#4b5675"/>`).join("")}<path d="M150 14 L214 14 Q232 14 232 30 Q232 48 214 48 L150 48 Z" fill="#8a5a2b" stroke="#3b2410" stroke-width="2"/><ellipse cx="196" cy="31" rx="15" ry="9" fill="#0b1226" stroke="#3b2410" stroke-width="2"/></svg><div class="row">`;
+    h+=sawSvg()+`<div class="row">`;
     for(const a of [90,60,45]) h+=`<div class="dw btn ${sawTilt===a?"sel":""}" data-key="tilt:${a}" style="${a===90?"min-width:170px;font-size:13px;height:48px;line-height:1.15":"height:48px;min-width:78px;font-size:13px;padding:4px 8px"}">${a===90?"90° perpendicular a la cara de la tabla":a+"° (a bisel)"}</div>`;
     h+=`</div>${cutErr?`<div class="rep" style="border-color:#ff5a5f;background:#2a0f16;color:#ffd0d3">${cutErr}</div>`:""}<div class="row"><div class="dw btn big" style="min-width:150px;height:56px;font-size:17px" data-key="cut">CORTAR</div><div class="dw btn small" data-key="sawcancel">Cancelar</div></div>`;
   } else {
@@ -841,7 +912,7 @@ function frame(now){
     holder.position.set(hx,hy-piv.position.y,0); holder.rotation.set(0,0,rad(-TH)*e);
     stageG.position.y=14*e; stageG.rotation.y=-0.42*e;
     camera.position.set(0,0,camZ0/zoomK*(1+1.5*e));
-    const f=Math.max(0,Math.min(1,(p-0.35)/0.5)); mBeam.opacity=f; mEj.opacity=f;
+    const f=Math.max(0,Math.min(1,(p-0.35)/0.5)); setAsmOpacity(f);
     if(stage==="mounting"&&p>=1){ stage="mounted"; sideDirty=true; say("Tornapunta montado: la suela queda horizontal y el corte 4 vertical","ok",9000); }
   }
   scene.updateMatrixWorld(true); camera.updateMatrixWorld(true);
@@ -875,16 +946,25 @@ function frame(now){
   drawLupa();
 
   renderer.render(scene,camera);
+  const showMini=stage==="trace"; miniEl.style.display=showMini?"block":"none";
+  if(showMini){
+    const r=miniEl.getBoundingClientRect(); miniRoot.rotation.copy(piv.rotation);
+    camera2.aspect=r.width/r.height; camera2.updateProjectionMatrix();
+    renderer.setScissorTest(true); renderer.setViewport(r.left,Hh-r.bottom,r.width,r.height); renderer.setScissor(r.left,Hh-r.bottom,r.width,r.height);
+    renderer.setClearColor(0x10193a,1); renderer.clear(); renderer.render(scene2,camera2);
+    renderer.setClearColor(0x000000,0); renderer.setScissorTest(false); renderer.setViewport(0,0,W,Hh);
+  }
+  updateLabels();
   requestAnimationFrame(frame);
 }
 /* indicador de ejes X (rojo), Y (verde), Z (azul): flecha en el extremo positivo; giro + = antihorario visto desde la punta */
 const GC=["#ff5a5f","#3ddc84","#4da3ff"], _m1=new THREE.Matrix4(), _m2=new THREE.Matrix4();
 function drawGizmo(ctx){
-  const cx=W-100, cy=238, R=50;
+  const x0=W-184, y0=124, w=170, h=114, cx=x0+w/2, cy=y0+46, R=34;
   _m1.makeRotationX(rad(view.x)); _m2.makeRotationY(rad(view.y));
   const dirs=[new THREE.Vector3(1,0,0), new THREE.Vector3(0,1,0).applyMatrix4(_m1), new THREE.Vector3(0,0,1).applyMatrix4(_m1.clone().multiply(_m2))];
   ctx.save(); ctx.fillStyle="#0b1226cc"; ctx.strokeStyle="#ffffff22"; ctx.lineWidth=1;
-  ctx.beginPath(); ctx.roundRect(cx-88,cy-68,176,150,12); ctx.fill(); ctx.stroke();
+  ctx.beginPath(); ctx.roundRect(x0,y0,w,h,12); ctx.fill(); ctx.stroke();
   const ord=[0,1,2].sort((i,j)=>dirs[i].z-dirs[j].z);
   for(const i of ord){
     const d=dirs[i], ex=cx+d.x*R, ey=cy-d.y*R, col=GC[i], len=Math.hypot(d.x,d.y);
@@ -892,15 +972,14 @@ function drawGizmo(ctx){
     if(len>0.12){
       ctx.beginPath(); ctx.moveTo(cx,cy); ctx.lineTo(ex,ey); ctx.stroke();
       const a=Math.atan2(-(d.y),d.x); ctx.beginPath();
-      ctx.moveTo(ex+Math.cos(a)*9,ey+Math.sin(a)*9); ctx.lineTo(ex+Math.cos(a+2.5)*9,ey+Math.sin(a+2.5)*9); ctx.lineTo(ex+Math.cos(a-2.5)*9,ey+Math.sin(a-2.5)*9); ctx.closePath(); ctx.fill();
-    } else { ctx.beginPath(); ctx.arc(cx,cy,9,0,7); ctx.stroke(); ctx.beginPath(); ctx.arc(cx,cy,3,0,7); ctx.fill(); }
-    ctx.font="800 13px system-ui"; ctx.textAlign="center"; ctx.textBaseline="middle";
-    ctx.fillText("XYZ"[i], ex+(len>0.12?d.x*12:14), ey-(len>0.12?d.y*12:14));
+      ctx.moveTo(ex+Math.cos(a)*8,ey+Math.sin(a)*8); ctx.lineTo(ex+Math.cos(a+2.5)*8,ey+Math.sin(a+2.5)*8); ctx.lineTo(ex+Math.cos(a-2.5)*8,ey+Math.sin(a-2.5)*8); ctx.closePath(); ctx.fill();
+    } else { ctx.beginPath(); ctx.arc(cx,cy,8,0,7); ctx.stroke(); ctx.beginPath(); ctx.arc(cx,cy,3,0,7); ctx.fill(); }
+    ctx.font="800 12px system-ui"; ctx.textAlign="center"; ctx.textBaseline="middle";
+    ctx.fillText("XYZ"[i], ex+(len>0.12?d.x*11:13), ey-(len>0.12?d.y*11:13));
   }
-  ctx.font="700 12.5px system-ui"; ctx.textAlign="left"; ctx.textBaseline="alphabetic";
-  const ang=AXN.map(a=>wrapA(U[a]));
-  ang.forEach((v,i)=>{ ctx.fillStyle=GC[i]; ctx.fillText(`${"XYZ"[i]} ${fmtA(v)}`, cx-80+i*58, cy+66); });
-  ctx.font="10.5px system-ui"; ctx.fillStyle="#9fb4e6"; ctx.fillText("+ = antihorario (mano derecha)",cx-80,cy+79);
+  ctx.font="700 12px system-ui"; ctx.textAlign="left"; ctx.textBaseline="alphabetic";
+  AXN.map(a=>wrapA(U[a])).forEach((v,i)=>{ ctx.fillStyle=GC[i]; ctx.fillText(`${"XYZ"[i]} ${fmtA(v)}`, x0+8+i*54, y0+h-20); });
+  ctx.font="10px system-ui"; ctx.fillStyle="#9fb4e6"; ctx.fillText("+ = antihorario (mano derecha)",x0+8,y0+h-6);
   ctx.restore();
 }
 requestAnimationFrame(frame);
