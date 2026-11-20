@@ -62,7 +62,7 @@
   .sl.hover{box-shadow:0 0 0 2px #35e0ff inset} .sl.hover .thumb{background:#ffd60a}
   #nomen{position:fixed;right:14px;top:246px;width:170px;z-index:3;border-radius:10px;overflow:hidden;border:1px solid #ffffff33;background:#fff;pointer-events:none}
   #nomen img{display:block;width:100%}
-  #orbit{align-self:center;width:112px;height:112px;border-radius:50%;position:relative;touch-action:none;border:2px solid #ffffff44;user-select:none}
+  #orbit{align-self:center;width:124px;height:124px;border-radius:50%;position:relative;touch-action:none;border:2px solid #ffffff44;user-select:none}
   #orbit::before{content:"";position:absolute;inset:16%;border-radius:50%;border:1.5px dashed #0008;box-shadow:0 0 0 1px #fff5}
   #orbit.hover{border-color:#35e0ff;box-shadow:0 0 18px #35e0ffcc}
   #orbit.on{border-color:#ffd60a;box-shadow:0 0 22px #ffd60add}
@@ -105,7 +105,7 @@
   <div class="row"><label>SENSIBILIDAD <b id="sv"></b></label><div class="sl" id="slSens"><div class="fill"></div><div class="thumb"></div></div></div>
   <div id="front" class="dw btn small" data-key="front">⟲ Vista frontal (ejes a 0°)</div>
   <div id="voiceBtn" class="dw btn small" data-key="voice" style="height:34px;font-size:13px;padding:4px 12px"></div>
-  <div id="orbit"></div><div id="orbitlab">Esfera: arrastra · anillo = Z</div>
+  <div id="orbit"></div><div id="orbitlab">Cubo: pellizca una cara · arrastra = girar</div>
 </div>
 <div id="mini"><span>MONTAJE FINAL</span></div>
 <svg id="l3svg"></svg>
@@ -118,7 +118,7 @@
 <div id="start">
   <div class="card">
     <h1>Tornapunta a 30°</h1>
-    <p>Traza con el <b>lápiz</b>, mide con el <b>flexómetro</b> y corta con el <b>serrucho</b> con la mano: <b>pellizca</b> (pulgar + índice) sobre cada punto o botón para pulsarlo. Para girar la tabla usa la <b>esfera</b> de la izquierda: pellizca dentro y arrastra (de 15° en 15°).<br>El vídeo no sale de tu equipo.</p>
+    <p>Traza con el <b>lápiz</b>, mide con el <b>flexómetro</b> y corta con el <b>serrucho</b> con la mano: <b>pellizca</b> (pulgar + índice) sobre cada punto o botón para pulsarlo. Para girar la tabla usa el <b>cubo</b> de la izquierda: pellizca una cara para ver la tabla desde ella, o arrastra dentro para girar de 15° en 15°.<br>El vídeo no sale de tu equipo.</p>
     <button id="go">Activar cámara</button>
     <button id="mouse">Probar con ratón</button>
   </div>
@@ -326,7 +326,13 @@ const ballTex=(()=>{ const c=document.createElement("canvas"); c.width=512; c.he
   g.strokeStyle="#00000030"; g.lineWidth=3; for(let i=0;i<4;i++){ g.beginPath(); g.moveTo(i*128,0); g.lineTo(i*128,256); g.stroke(); }
   const t=new THREE.CanvasTexture(c); t.colorSpace=THREE.SRGBColorSpace; t.wrapS=THREE.RepeatWrapping; return t; })();
 const ball=new THREE.Group(); scene3.add(ball);
-ball.add(new THREE.Mesh(new THREE.SphereGeometry(1,48,32),new THREE.MeshStandardMaterial({map:ballTex,roughness:.45})));
+const FACE_NAMES=["DERECHA","IZQUIERDA","SUPERIOR","INFERIOR","FRONTAL","TRASERA"];
+const cubeMats=FACE_NAMES.map((n,i)=>{ const c=document.createElement("canvas"); c.width=c.height=160; const g=c.getContext("2d");
+  g.fillStyle=i===4?"#d8eeff":"#eef1f8"; g.fillRect(0,0,160,160); g.strokeStyle="#6b7db3"; g.lineWidth=8; g.strokeRect(4,4,152,152);
+  g.fillStyle="#1c2a52"; g.font="800 21px system-ui"; g.textAlign="center"; g.textBaseline="middle"; g.fillText(n,80,82);
+  const t=new THREE.CanvasTexture(c); t.colorSpace=THREE.SRGBColorSpace; return new THREE.MeshStandardMaterial({map:t,roughness:.8}); });
+{ const disc=new THREE.Mesh(new THREE.CircleGeometry(2.72,56),new THREE.MeshBasicMaterial({color:0x0b1226,transparent:true,opacity:.88})); disc.position.z=-4; scene3.add(disc); }
+const cubeMesh=new THREE.Mesh(new THREE.BoxGeometry(1.7,1.7,1.7),cubeMats); ball.add(cubeMesh);
 camera3.position.set(0,0,6.6);
 { const cols=[0xff3b40,0x2ee27a,0x3d8bff], dirs=[new THREE.Vector3(1,0,0),new THREE.Vector3(0,1,0),new THREE.Vector3(0,0,1)];
   dirs.forEach((d,i)=>{
@@ -431,6 +437,7 @@ const AXN=["x","y","z"];
 
 /* ---- barras de zoom y sensibilidad ---- */
 let zoomPct=100, sensPct=35;
+let phaseKey=null, fxT=50, fx=50, fy=5, fwT=0, fw=0, zoomV=100; const _fv=new THREE.Vector3();
 try{ zoomPct=+localStorage.getItem("tp_zoomPct")||zoomPct; sensPct=+localStorage.getItem("tp_sensPct")||sensPct; }catch(e){}
 const SLIDERS=[
   {el:document.getElementById("slZoom"), lab:"zv", min:60, max:200, step:5, key:"tp_zoomPct", get:()=>zoomPct, set:v=>{zoomPct=v;}},
@@ -536,7 +543,7 @@ function suelaLen(){
   return on.length>=2 ? Math.hypot(on[0].x-on[1].x,on[0].y-on[1].y) : NaN;
 }
 
-function resetAll(){ lastNar=null;
+function resetAll(){ lastNar=null; phaseKey=null; fw=0; fwT=0; setSlider(SLIDERS[0],100); zoomV=100;
   resetState(); rebuildBoard();
   pieces.forEach(p=>{holder.remove(p.m);p.m.geometry.dispose();}); pieces.length=0;
   for(const a of AXN){U[a]=0;view[a]=0;} piv.rotation.set(0,0,0); piv.position.set(0,5.7,0);
@@ -551,6 +558,12 @@ function beginTrace(){
   say("Empieza por marcar el vértice E: la esquina inferior derecha de la tabla","",5000);
 }
 
+/* puntos donde el arco de 3 cm (radio H alrededor del punto inicial) corta las líneas trazadas por ese punto */
+function flexCands(S){ const out=[];
+  for(const l of lines){ if(distPtLine(S,l)>=0.05) continue; const d=dirOf(l.ang);
+    for(const sg of [1,-1]){ const e={x:S.x+d.x*H*sg,y:S.y+d.y*H*sg,a:l.ang,sg};
+      if(e.x>=-0.05&&e.x<=L+0.05&&e.y>=-0.05&&e.y<=HH+0.05&&!out.some(c=>Math.hypot(c.x-e.x,c.y-e.y)<0.05)) out.push(e); } }
+  return out; }
 /* ================= HOVER + DWELL ================= */
 let pb=null;                          // puntero en coordenadas de tabla (cm)
 function computeHover(){
@@ -583,16 +596,12 @@ function computeHover(){
       if(inPoly(pb,poly,0.05)) return {key:"fs:free",pt:{x:Math.round(pb.x*20)/20,y:Math.round(pb.y*20)/20}};
       return null;
     }
-    const S=tapeStart, v={x:pb.x-S.x,y:pb.y-S.y};
-    const dirs=[0,90]; lines.forEach(l=>{ if(distPtLine(S,l)<0.05 && !dirs.some(d=>angDiff(d,l.ang)<0.01)) dirs.push(l.ang); });
-    let a=Math.atan2(v.y,v.x)*180/Math.PI; if(a<0)a+=180; if(a>=180)a-=180;
-    let best=null,bd=99; for(const d of dirs){const dd=angDiff(a,d); if(dd<bd){bd=dd;best=d;}}
-    if(Math.hypot(v.x,v.y)<0.8||bd>8) { tapeDraw={s:S,a:null}; return {key:"fcancel"}; }
-    const d=dirOf(best), t=v.x*d.x+v.y*d.y, ts=Math.round(t/0.5)*0.5;
-    tapeDraw={s:S,a:best,t:ts};
-    if(Math.abs(ts)<0.5) return {key:"fcancel"};
-    const e={x:S.x+d.x*ts,y:S.y+d.y*ts};
-    return {key:"fe:"+best+":"+ts,pt:e};
+    const S=tapeStart, cands=flexCands(S);
+    if(Math.hypot(pb.x-S.x,pb.y-S.y)<0.8){ tapeDraw={s:S,a:null}; return {key:"fcancel"}; }
+    let best=null,bd=1.7; for(const c of cands){ const dd=Math.hypot(pb.x-c.x,pb.y-c.y); if(dd<bd){bd=dd;best=c;} }
+    if(!best){ tapeDraw={s:S,a:null}; return null; }
+    tapeDraw={s:S,a:best.a,t:H*best.sg};
+    return {key:"fe:"+best.a+":"+(H*best.sg),pt:{x:best.x,y:best.y}};
   }
   if(tool==="saw"){
     if(sawLock) return null;
@@ -625,7 +634,7 @@ function fire(h){
   else if(k.startsWith("pt:")){ const pt=(k==="pt:free")?{x:h.pt.x,y:h.pt.y}:h.pt; const m=addMark(pt.x,pt.y); anchor={x:m.x,y:m.y}; say("Punto marcado. Ahora elige una línea: apunta en su dirección y pellizca.","ok",3500); }
   else if(k==="anchorcancel"){ anchor=null; }
   else if(k.startsWith("ray:")){ addLine(anchor.x,anchor.y,h.ang); anchor=null; say("Línea trazada","ok",2000); }
-  else if(k.startsWith("fs:")){ tapeStart={x:h.pt.x,y:h.pt.y}; say("Alinea el flexómetro con una línea y avanza; pellizca para marcar el final de la medida.","",5000); }
+  else if(k.startsWith("fs:")){ tapeStart={x:h.pt.x,y:h.pt.y}; say("Arco de 3 cm fijado: pellizca donde cruza la línea para marcar el punto.","",5000); }
   else if(k==="fcancel"){ tapeStart=null; }
   else if(k.startsWith("fe:")){ const m=addMark(h.pt.x,h.pt.y); tapeStart=null; say(`Medida marcada: ${f1(Math.abs(parseFloat(k.split(":")[2])))} cm`,"ok",3000); }
   else if(k.startsWith("sl:")){ cutErr=""; sawLock=h.lineId; sideDirty=true; say("Hoja alineada. Elige la inclinación de la hoja y pulsa CORTAR.","",6000); }
@@ -634,6 +643,13 @@ function fire(h){
 const DRAG_PX=28, ARM_MS=400, GAIN_HAND=0.6, RESET_MS=1500;
 function refreshHover(){ pb=(ptrVisible&&stage==="trace")?screenToBoard(cur.x,cur.y):null; H0=computeHover(); hv.dom=H0&&H0.dom; }
 const padEl=document.getElementById("orbit");
+const rc3=new THREE.Raycaster();
+function pickFace(x,y){ const r=padEl.getBoundingClientRect();
+  ball.updateMatrixWorld(true); camera3.updateMatrixWorld(true);
+  rc3.setFromCamera(new THREE.Vector2((x-r.left)/r.width*2-1, -((y-r.top)/r.height*2-1)),camera3);
+  const hit=rc3.intersectObject(cubeMesh,false)[0]; return hit?hit.face.materialIndex:-1; }
+const FACE_T=[{y:-90},{y:90},{x:90},{x:-90},{},{y:180}];     // ángulos que ponen esa cara de cara al usuario
+function goFace(i){ const t=FACE_T[i]||{}; for(const a of AXN) U[a]+=wrapA((t[a]||0)-U[a]); say("Vista: "+FACE_NAMES[i],"ok",1500); sideDirty=true; }
 function padGeo(){ const r=padEl.getBoundingClientRect(); return {cx:r.left+r.width/2,cy:r.top+r.height/2,r:r.width/2}; }
 function padAt(x,y){ const g=padGeo(); return Math.hypot(x-g.cx,y-g.cy)<=g.r; }
 function pressStart(now){
@@ -653,6 +669,7 @@ function pressStart(now){
 function pressEnd(now){
   const P=press; press=null; if(!P) return;
   padEl.classList.remove("on");
+  if(P.mode==="orbit"&&!P.n.x&&!P.n.y&&!P.n.z){ const fi=pickFace(P.pos.x,P.pos.y); if(fi>=0) goFace(fi); }
   if(P.sl){ P.sl.el.classList.remove("on"); P.sl.el.querySelector(".thumb").style.transform=""; }
   if(P.mode==="pending"){
     const h=P.h;
@@ -695,7 +712,7 @@ function inputStep(now,dt){
   } else if(P.mode==="orbit"){
     const g=padGeo();
     if(Math.hypot(cur.x-g.cx,cur.y-g.cy)>g.r+8){                 // al salir de la esfera, la tabla deja de moverse
-      P.mode="none"; padEl.classList.remove("on"); say("Fuera de la esfera: la tabla queda quieta","",1600);
+      P.mode="none"; padEl.classList.remove("on"); say("Fuera del cubo: la tabla queda quieta","",1600);
     } else if(stage!=="mounting"){
       const stepPx=700/sensPct, dx=target.x-P.raw.x, dy=target.y-P.raw.y, out={};
       if(P.ring){                                                  // anillo exterior: giro en Z (como un volante)
@@ -754,7 +771,18 @@ function drawLayer(ctx,Tf,k,isLupa){
     }
     ctx.strokeStyle="#35e0ff"; ctx.lineWidth=2*k; ctx.beginPath(); ctx.arc(A.x,A.y,9*k,0,7); ctx.stroke();
   }
-  // flexómetro
+  // flexómetro: arco fijo de 3 cm y puntos de corte con las líneas
+  if(tool==="flex"&&tapeStart){
+    const S=tapeStart, N=96; ctx.save(); ctx.setLineDash([8*k,6*k]); ctx.strokeStyle="#ffd60a"; ctx.lineWidth=2.6*k; ctx.lineCap="butt"; ctx.beginPath(); let pen=false;
+    for(let i=0;i<=N;i++){ const t=i/N*Math.PI*2, p={x:S.x+H*Math.cos(t),y:S.y+H*Math.sin(t)};
+      if(p.x<-0.05||p.x>L+0.05||p.y<-0.05||p.y>HH+0.05){ pen=false; continue; }
+      const q=Tf(p); pen?ctx.lineTo(q.x,q.y):ctx.moveTo(q.x,q.y); pen=true; }
+    ctx.stroke(); ctx.restore();
+    const cs=flexCands(S);
+    for(const c of cs){ const q=Tf(c), hot=tapeDraw&&tapeDraw.a===c.a&&tapeDraw.t===H*c.sg;
+      ctx.fillStyle=hot?"#fff":"#ffd60a"; ctx.strokeStyle="#111"; ctx.lineWidth=1.5*k; ctx.beginPath(); ctx.arc(q.x,q.y,(hot?8:6)*k,0,7); ctx.fill(); ctx.stroke(); }
+    if(!isLupa&&cs[0]){ const t0=(cs[0].a+(cs[0].sg<0?180:0)+22)*Math.PI/180, q=Tf({x:S.x+(H+1.1)*Math.cos(t0),y:S.y+(H+1.1)*Math.sin(t0)}); pill(ctx,f1(H)+" cm",q.x,q.y,1.05,"#ffd60a"); }
+  }
   if(tapeDraw&&tapeDraw.a!==null&&tapeDraw.t!==undefined){
     const d=dirOf(tapeDraw.a), S=tapeDraw.s, ts=tapeDraw.t, sg=ts<0?-1:1;
     const a=Tf(S), b=Tf({x:S.x+d.x*ts,y:S.y+d.y*ts});
@@ -859,13 +887,13 @@ const ITEM_PT=[["E",EXP.E],["E",EXP.E],[null,null],["O",EXP.O],["O",EXP.O],["P",
 const DET=[
  "Lápiz: pellizca la esquina inferior derecha de la tabla (punto E).",
  "Pellizca E y elige la línea discontinua ↖ 60°.",
- "Flexómetro (tecla 2): pellizca E, avanza por esa línea y pellizca al llegar a 3 cm (punto M).",
+ "Flexómetro (tecla 2): pellizca E; aparece un arco de 3 cm. Pellizca donde el arco cruza la línea: ahí está M.",
  "Lápiz: pellizca M y elige ⊥ 90° hacia arriba, hasta el borde superior: ahí está O.",
  "Pellizca O (se pega solo) y elige la línea ↖ 60°, paralela a E–M. Es el corte 1.",
  "Pellizca P, donde la línea del corte 1 llega al borde derecho, y elige ↗ 30°. Es el corte 2 (la suela).",
  "CABEZA, igual que el pie pero en el extremo izquierdo: pellizca la esquina inferior izquierda de la tabla (E′).",
  "Pellizca E′ y elige la línea discontinua ↗ 30°.",
- "Flexómetro (tecla 2): pellizca E′, avanza por esa línea y pellizca a 3 cm (punto M′).",
+ "Flexómetro (tecla 2): pellizca E′; aparece un arco de 3 cm. Pellizca donde el arco cruza la línea: ahí está M′.",
  "Lápiz: pellizca M′ y elige ⊥ 90° hacia arriba, hasta el borde superior: ahí está O′.",
  "Pellizca O′ y elige la línea ↗ 30°, paralela a E′–M′. Es el corte 3.",
  "Pellizca P′, donde la línea del corte 3 llega al borde izquierdo, y elige ↖ 60°. Es el corte 4.",
@@ -878,13 +906,13 @@ const DET=[
 const NAR=[
  "Empieza marcando el vértice E, en la esquina inferior derecha de la tabla.",
  "Ahora, desde E, traza una línea que forme sesenta grados con la soga.",
- "Con el flexómetro, mide tres centímetros sobre esa línea y marca el punto M.",
+ "Con el flexómetro, toca E y verás un arco de tres centímetros. Pellizca donde cruza la línea y aparecerá el punto M.",
  "Desde M, traza una perpendicular a la soga, hasta el borde superior. Ahí está el punto O.",
  "Desde O, traza otra línea a sesenta grados con la soga, paralela a la anterior. Ese es el corte uno.",
  "Marca P, donde esa línea llega al borde derecho, y traza una perpendicular. Es el corte dos, la suela.",
  "Vamos con la cabeza. Marca el vértice E prima, en la esquina inferior izquierda de la tabla.",
  "Desde E prima, traza una línea que forme treinta grados con la soga.",
- "Con el flexómetro, mide tres centímetros sobre esa línea y marca el punto M prima.",
+ "Con el flexómetro, toca E prima y verás un arco de tres centímetros. Pellizca donde cruza la línea y aparecerá el punto M prima.",
  "Desde M prima, sube en perpendicular hasta el borde superior. Ahí está O prima.",
  "Desde O prima, traza una línea a treinta grados, paralela a la anterior. Es el corte tres.",
  "Marca P prima, donde esa línea llega al borde izquierdo, y traza una perpendicular. Es el corte cuatro.",
@@ -893,7 +921,7 @@ const NAR=[
  "Ahora el corte tres, en la cabeza. Hoja perpendicular a la cara y pulsa cortar.",
  "Y por último, el corte cuatro. Hoja perpendicular a la cara y pulsa cortar."];
 const NAR_DONE="Todos los cortes están hechos. Pulsa montar a treinta grados.";
-const NAR_INTRO="Este es el tornapunta ya montado. Puedes girarlo con la esfera. Cuando quieras, pulsa Comenzar a trazar y cortar el tornapunta.";
+const NAR_INTRO="Este es el tornapunta ya montado. Puedes girarlo con el cubo. Cuando quieras, pulsa Comenzar a trazar y cortar el tornapunta.";
 const NAR_MOUNTED="Montaje terminado. El tornapunta queda apoyado entre el durmiente vertical y el ejión.";
 let voiceOn=true; try{ voiceOn=localStorage.getItem("tp_voice")!=="0"; }catch(e){}
 const synth=window.speechSynthesis; let voiceObj=null, lastNar=null;
@@ -913,6 +941,8 @@ function narrate(){
   if(key===lastNar) return; lastNar=key;
   speak(key==="intro"?NAR_INTRO:key==="mounted"?NAR_MOUNTED:key==="done"?NAR_DONE:NAR[+key.slice(1)]);
 }
+function phaseOf(){ if(stage!=="trace") return null; if(cutsDone.length>=4) return "all"; const ni=nextStep(); if(ni<0) return "all";
+  return (ni<=5||ni===12||ni===13)?"pie":"head"; }
 const nextStep=()=>{ for(let i=0;i<ITEMS.length;i++) if(!ITEMS[i][2]()) return i; return -1; };
 paintVoice();
 const checkEl=$("check"); let lastCheck="";
@@ -933,7 +963,7 @@ function renderSide(){
   document.querySelectorAll(".tbtn[data-key^='tool:']").forEach(b=>b.classList.toggle("sel",b.dataset.key==="tool:"+tool&&stage==="trace"));
   let h="";
   if(stage==="intro"){
-    h+=`<div class="rep" style="background:#0e1f3a;border-color:#35e0ff"><b>Así quedará el tornapunta montado.</b><br>Gira la esfera (izquierda) para verlo desde todos los lados: el apuntalamiento se mueve con ella.</div><div class="dw btn big" data-key="begin" style="min-width:300px;height:76px;font-size:16px;line-height:1.2">COMENZAR A TRAZAR Y CORTAR EL TORNAPUNTA</div>`;
+    h+=`<div class="rep" style="background:#0e1f3a;border-color:#35e0ff"><b>Así quedará el tornapunta montado.</b><br>Gira el cubo (izquierda) para verlo desde todos los lados: el apuntalamiento se mueve con ella.</div><div class="dw btn big" data-key="begin" style="min-width:300px;height:76px;font-size:16px;line-height:1.2">COMENZAR A TRAZAR Y CORTAR EL TORNAPUNTA</div>`;
   } else if(stage==="mounted"){
     const s=suelaLen(), secs=Math.round((performance.now()-tStart)/1000);
     h+=`<div class="rep"><b>¡Tornapunta montado a 30°!</b><br>Durmientes 5 × 15 cm · ejiones 20 × 3 cm<br>Suela P–Q = <b>${isNaN(s)?"—":f1(s)} cm</b> (objetivo ${f1(EXP.P.x-EXP.Q.x>0?Math.hypot(EXP.P.x-EXP.Q.x,EXP.P.y-EXP.Q.y):0)} cm)<br>Errores: ${errors} · Tiempo: ${Math.floor(secs/60)} min ${secs%60} s</div>`;
@@ -944,21 +974,21 @@ function renderSide(){
     for(const a of [90,60,45]) h+=`<div class="dw btn ${sawTilt===a?"sel":""}" data-key="tilt:${a}" style="${a===90?"min-width:170px;font-size:13px;height:48px;line-height:1.15":"height:48px;min-width:78px;font-size:13px;padding:4px 8px"}">${a===90?"90° perpendicular a la cara de la tabla":a+"° (a bisel)"}</div>`;
     h+=`</div>${cutErr?`<div class="rep" style="border-color:#ff5a5f;background:#2a0f16;color:#ffd0d3">${cutErr}</div>`:""}<div class="row"><div class="dw btn big" style="min-width:150px;height:56px;font-size:17px" data-key="cut">CORTAR</div><div class="dw btn small" data-key="sawcancel">Cancelar</div></div>`;
   } else {
-    h+=`<div style="opacity:.85;line-height:1.45"><b>Pellizca</b> (pulgar + índice) sobre un punto, línea o botón para pulsarlo.<br><b>Pellizca dentro de la esfera</b> (izquierda) y arrastra para girar la tabla de 15° en 15°: el disco gira en X/Y y el anillo exterior en Z. Fuera de la esfera la tabla no se mueve.<br>Tabla: ${L} × ${HH} cm · ejión h = ${H} cm · θ = ${TH}°</div>`;
+    h+=`<div style="opacity:.85;line-height:1.45"><b>Pellizca</b> (pulgar + índice) sobre un punto, línea o botón para pulsarlo.<br><b>Cubo</b> (izquierda): pellizca una cara para ver la tabla desde ella, o arrastra para girar de 15° en 15° (anillo exterior = Z). Fuera del cubo la tabla no se mueve.<br>Tabla: ${L} × ${HH} cm · ejión h = ${H} cm · θ = ${TH}°</div>`;
   }
   $("resetBtn").style.display=(stage==="mounting"||stage==="intro")?"none":"flex"; $("tools").style.opacity=stage==="trace"?1:.35;
   sideEl.innerHTML=h;
 }
 function contextHint(){
   if(stage==="mounting") return "";
-  if(stage==="intro") return "Montaje terminado: gíralo con la esfera y pulsa COMENZAR";
+  if(stage==="intro") return "Montaje terminado: gíralo con el cubo y pulsa COMENZAR";
   if(stage==="mounted") return "Montaje terminado";
   if(!facing&&stage==="trace") return "La cara de trazado queda de espaldas: pulsa «Vista frontal»";
   if(cutsDone.length===4) return "Todos los cortes hechos. Pulsa MONTAR A 30°.";
   if(tool==="saw"&&sawLock!=null) return "Elige la inclinación de la hoja (90° vertical) y pulsa CORTAR";
   const ni=nextStep(); let t=ni>=0?`Paso ${ni+1} de ${ITEMS.length}: ${DET[ni]}`:"";
   if(tool==="pencil"&&anchor) t="Punto marcado. Elige ahora una línea discontinua apuntando en su dirección y pellizca.";
-  if(tool==="flex"&&tapeStart) t="Avanza por una línea trazada hasta la medida y pellizca para marcar el final.";
+  if(tool==="flex"&&tapeStart) t="Pellizca donde el arco de 3 cm cruza la línea para marcar el punto.";
   return t;
 }
 
@@ -1012,12 +1042,19 @@ function frame(now){
   if(press&&press.mode==="pending"){ cur.x=press.pos.x; cur.y=press.pos.y; }   // el clic no se desplaza al cerrar los dedos
   else { const k=pinched?0.5:0.35; cur.x+=(target.x-cur.x)*k; cur.y+=(target.y-cur.y)*k; }
 
-  const zoomK=zoomPct/100;
+  const f2=1-Math.exp(-dt/220); zoomV+=(zoomPct-zoomV)*f2; const zoomK=zoomV/100;
   if(stage!=="mounting"){ const f=1-Math.exp(-dt/70); for(const a of AXN) view[a]+=(U[a]-view[a])*f; }
   if(stage==="trace"){
     piv.position.set(0,5.7,0); piv.rotation.set(rad(view.x),rad(view.y),rad(view.z));
     holder.position.set(-L/2,-5,0); holder.rotation.set(0,0,0);
-    camera.position.set(0,0,camZ0/zoomK);
+    stageG.updateMatrixWorld(true);
+    const ph=phaseOf();
+    if(ph!==phaseKey){ phaseKey=ph;
+      if(ph==="pie"||ph==="head"){ fxT=ph==="pie"?L:0; fwT=1; setSlider(SLIDERS[0],150); say(ph==="pie"?"Zoom al extremo del PIE (punto E)":"Zoom al extremo de la CABEZA (punto E′)","",2600); }
+      else { fwT=0; setSlider(SLIDERS[0],100); } }
+    fw+=(fwT-fw)*f2; fx+=(fxT-fx)*f2;
+    const dz=camZ0/zoomK; _fv.set(fx,fy,T/2); holder.localToWorld(_fv);
+    camera.position.set(fw*_fv.x, fw*(_fv.y-0.29*dz*Math.tan(rad(15))), dz);
   } else {
     const fin=stage!=="mounting", p=fin?1:Math.min(1,(now-mountT0)/2600), e=ease(p);
     piv.rotation.set(rad(view0.x)*(1-e),rad(view0.y)*(1-e),rad(view0.z)*(1-e));
@@ -1072,7 +1109,7 @@ function frame(now){
   }
   { const r=padEl3.getBoundingClientRect(); if(stage==='intro'||stage==='mounted') ball.rotation.set(rad(view.x),rad(view.y),rad(view.z)); else ball.rotation.copy(piv.rotation);
     renderer.setScissorTest(true); renderer.setViewport(r.left,Hh-r.bottom,r.width,r.height); renderer.setScissor(r.left,Hh-r.bottom,r.width,r.height);
-    renderer.setClearColor(0x000000,0); renderer.clear(); renderer.render(scene3,camera3);
+    renderer.autoClear=false; renderer.clearDepth(); renderer.render(scene3,camera3); renderer.autoClear=true;
     renderer.setScissorTest(false); renderer.setViewport(0,0,W,Hh); }
   updateLabels();
   requestAnimationFrame(frame);
