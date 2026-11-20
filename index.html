@@ -17,7 +17,7 @@
     padding:6px 12px;border-radius:999px;background:#0b1226cc;border:1px solid #ffffff1a;max-width:34vw}
   #dot{width:10px;height:10px;border-radius:50%;background:#ffb020;flex:none}
   #dot.ok{background:#3ddc84}#dot.err{background:#ff5a5f}
-  #msg{position:fixed;left:50%;top:14px;transform:translateX(-50%);max-width:46vw;text-align:center;
+  #msg{position:fixed;left:50%;top:14px;transform:translateX(-50%);max-width:38vw;text-align:center;
     font-size:17px;font-weight:600;line-height:1.3;padding:9px 18px;border-radius:14px;background:#0b1226dd;
     border:1px solid #35e0ff55}
   #msg.err{border-color:#ff5a5f;background:#2a0f16ee}
@@ -30,14 +30,17 @@
   #check div.it.done{opacity:1;color:#8cf0b4}
   #check div.it.next{opacity:1;color:#fff;font-weight:700}
   #check .bx{flex:none;width:15px;height:15px;border:1.5px solid currentColor;border-radius:4px;font-size:11px;line-height:12px;text-align:center}
-  #tools{position:fixed;right:14px;top:56px;z-index:4;display:flex;flex-direction:column;gap:8px}
+  #tools{position:fixed;right:14px;bottom:58px;z-index:4;display:flex;flex-direction:column;gap:8px}
   .tbtn,.dw.btn{position:relative;border-radius:16px;background:#14203f;border:2px solid #ffffff22;text-align:center;
     font-weight:700;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:2px;user-select:none}
-  .tbtn{width:124px;height:96px;font-size:15px}
-  .tbtn .ic{font-size:36px;line-height:1}
+  .tbtn{width:124px;height:84px;font-size:15px}
+  .tbtn .ic{font-size:32px;line-height:1}
+  #sliders{position:fixed;right:290px;bottom:10px;width:340px;z-index:4;display:flex;gap:10px}
+  #sliders .row{flex:1}
+  #cubebox{position:fixed;right:14px;top:14px;width:124px;z-index:4;display:flex;flex-direction:column;align-items:center}
   .tbtn.sel{border-color:#35e0ff;background:#10324a}
   .dw.hover{border-color:#fff !important;box-shadow:0 0 22px #35e0ffaa;background:#1b3a63}
-  #side{position:fixed;right:148px;bottom:56px;width:236px;max-height:300px;z-index:4;display:flex;flex-direction:column;gap:6px;font-size:12.5px;overflow:hidden}
+  #side{position:fixed;right:150px;bottom:80px;width:340px;max-height:330px;z-index:4;display:flex;flex-direction:column;gap:6px;font-size:12.5px;overflow:hidden}
   #side .row{display:flex;gap:8px;flex-wrap:wrap}
   #side .btn{padding:10px 14px;font-size:15px;min-width:86px;height:56px}
   #side .btn.sel{border-color:#ffb020;background:#3a2c0c}
@@ -51,23 +54,23 @@
   #ptr svg{width:100%;height:100%;transform:rotate(-90deg)}
   #ptr .c0{fill:#35e0ff22;stroke:#35e0ff;stroke-width:3}
   #ptr.pinch .c0{fill:#ffb02077;stroke:#ffb020}
-  #panel{position:fixed;right:148px;left:auto;top:56px;width:236px;z-index:4;display:flex;flex-direction:column;gap:10px}
-  #panel .row{padding:6px 10px 7px;border-radius:14px;background:#0b1226d9;border:1px solid #ffffff1a}
-  #panel label{display:flex;justify-content:space-between;font-size:12px;letter-spacing:.06em;font-weight:700;opacity:.85;margin-bottom:3px}
-  #panel label b{color:#35e0ff}
+  #panel{position:fixed;right:150px;left:auto;top:14px;width:236px;z-index:4;display:flex;flex-direction:column;gap:10px}
+  #panel .row,#sliders .row{padding:6px 10px 7px;border-radius:14px;background:#0b1226d9;border:1px solid #ffffff1a}
+  #panel label,#sliders label{display:flex;justify-content:space-between;font-size:12px;letter-spacing:.06em;font-weight:700;opacity:.85;margin-bottom:3px}
+  #panel label b,#sliders label b{color:#35e0ff}
   .sl{position:relative;height:30px;border-radius:15px;background:#ffffff14;touch-action:none}
   .sl .fill{position:absolute;left:0;top:0;bottom:0;border-radius:18px;background:#35e0ff40}
   .sl .thumb{position:absolute;top:2px;width:26px;height:26px;margin-left:-13px;border-radius:50%;background:#35e0ff;box-shadow:0 0 12px #35e0ff88;transition:transform .05s}
   .sl.on .thumb{background:#ffd60a;box-shadow:0 0 18px #ffd60acc}
   .sl.hover{box-shadow:0 0 0 2px #35e0ff inset} .sl.hover .thumb{background:#ffd60a}
-  #nomen{position:fixed;left:14px;top:178px;width:170px;z-index:3;border-radius:10px;overflow:hidden;border:1px solid #ffffff33;background:#fff;pointer-events:none}
+  #nomen{position:fixed;left:14px;top:64px;width:170px;z-index:3;border-radius:10px;overflow:hidden;border:1px solid #ffffff33;background:#fff;pointer-events:none}
   #nomen img{display:block;width:100%}
-  #orbit{align-self:center;width:124px;height:124px;border-radius:50%;position:relative;touch-action:none;border:2px solid #ffffff44;user-select:none}
+  #orbit{width:124px;height:124px;border-radius:50%;position:relative;touch-action:none;border:2px solid #ffffff44;user-select:none}
   #orbit::before{content:"";position:absolute;inset:16%;border-radius:50%;border:1.5px dashed #0008;box-shadow:0 0 0 1px #fff5}
   #orbit.hover{border-color:#35e0ff;box-shadow:0 0 18px #35e0ffcc}
   #orbit.on{border-color:#ffd60a;box-shadow:0 0 22px #ffd60add}
-  #orbitlab{font-size:11px;text-align:center;opacity:.75;margin-top:-6px;white-space:nowrap}
-  #mini{position:fixed;left:14px;top:296px;width:170px;height:100px;z-index:3;border-radius:10px;border:1px solid #ffffff44;pointer-events:none}
+  #orbitlab{font-size:10px;line-height:1.2;text-align:center;opacity:.75;margin-top:2px;width:124px}
+  #mini{position:fixed;left:14px;top:184px;width:170px;height:100px;z-index:3;border-radius:10px;border:1px solid #ffffff44;pointer-events:none}
   #mini span{position:absolute;left:6px;top:3px;font-size:10px;font-weight:700;letter-spacing:.05em;color:#cfe0ff}
   #l3svg{position:fixed;inset:0;width:100%;height:100%;z-index:3;pointer-events:none}
   .l3{position:fixed;z-index:4;pointer-events:none;padding:3px 9px;border-radius:8px;font-size:12px;font-weight:800;letter-spacing:.04em;background:#0b1226e6;border:2px solid #fff;transform:translate(-50%,-50%);white-space:nowrap;display:none}
@@ -102,12 +105,13 @@
 </div>
 
 <div id="panel">
+  <div class="trow"><div id="front" class="dw btn small" data-key="front">⟲ Frontal</div><div id="voiceBtn" class="dw btn small" data-key="voice"></div></div>
+</div>
+<div id="sliders">
   <div class="row"><label>ZOOM <b id="zv"></b></label><div class="sl" id="slZoom"><div class="fill"></div><div class="thumb"></div></div></div>
   <div class="row"><label>SENSIBILIDAD <b id="sv"></b></label><div class="sl" id="slSens"><div class="fill"></div><div class="thumb"></div></div></div>
-  <div class="trow"><div id="front" class="dw btn small" data-key="front">⟲ Frontal</div><div id="voiceBtn" class="dw btn small" data-key="voice"></div></div>
-  <div class="trow"><div id="modeBtn" class="dw btn small" data-key="clickmode"></div><div id="calBtn" class="dw btn small" data-key="calib">🎯 Calibrar</div></div>
-  <div id="orbit"></div><div id="orbitlab">Cubo: pellizca una cara · o arrastra el fondo</div>
 </div>
+<div id="cubebox"><div id="orbit"></div><div id="orbitlab">Cubo: pellizca una cara, o arrastra el fondo</div></div>
 <div id="mini"><span>MONTAJE FINAL</span></div>
 <svg id="l3svg"></svg>
 <div id="nomen" title="Nombres de las caras y aristas de la tabla"><img alt="Caras y aristas de la tabla: tabla, canto, testa, tizón, soga, grueso" src="data:image/png;base64,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"></div>
@@ -119,7 +123,7 @@
 <div id="start">
   <div class="card">
     <h1>Tornapunta a 30°</h1>
-    <p>Traza con el <b>lápiz</b>, mide con el <b>flexómetro</b> y corta con el <b>serrucho</b> con la mano: <b>señala con el índice</b> y <b>dobla el pulgar</b> para hacer clic (al empezar hay una calibración de 5 s; también puedes cambiar a pellizco). Para girar la tabla usa el <b>cubo</b> de la izquierda: pellizca una cara para ver la tabla desde ella, o pellizca el fondo vacío y arrastra para girar de 15° en 15°.<br>El vídeo no sale de tu equipo.</p>
+    <p>Traza con el <b>lápiz</b>, mide con el <b>flexómetro</b> y corta con el <b>serrucho</b> con la mano: <b>pellizca</b> (pulgar + índice) sobre cada punto o botón para pulsarlo. Para girar la tabla usa el <b>cubo</b> de la izquierda: pellizca una cara para ver la tabla desde ella, o pellizca el fondo vacío y arrastra para girar de 15° en 15°.<br>El vídeo no sale de tu equipo.</p>
     <button id="go">Activar cámara</button>
     <button id="mouse">Probar con ratón</button>
   </div>
@@ -981,7 +985,7 @@ function renderSide(){
     for(const a of [90,60,45]) h+=`<div class="dw btn ${sawTilt===a?"sel":""}" data-key="tilt:${a}" style="min-width:0;flex:${a===90?"1.7":"1"};font-size:12px;height:46px;line-height:1.1;padding:2px 4px">${a===90?"90° perpendicular a la cara":a+"° bisel"}</div>`;
     h+=`</div>${cutErr?`<div class="rep" style="border-color:#ff5a5f;background:#2a0f16;color:#ffd0d3;font-size:11.5px;line-height:1.25;padding:5px 8px;max-height:84px;overflow:hidden">${cutErr}</div>`:""}<div class="row" style="flex-wrap:nowrap"><div class="dw btn big" style="flex:1;height:50px;font-size:16px;width:auto" data-key="cut">CORTAR</div><div class="dw btn small" data-key="sawcancel">Cancelar</div></div>`;
   } else {
-    h+=`<div style="opacity:.85;line-height:1.45"><b>Clic:</b> señala con el índice y dobla el pulgar (o pellizca) sobre un punto, línea o botón.<br><b>Vista:</b> pellizca una cara del cubo, o pellizca el <b>fondo vacío</b> y arrastra para girar de 15° en 15° (anillo del cubo = Z). Sobre la tabla el pellizco solo traza.<br>Tabla: ${L} × ${HH} cm · ejión h = ${H} cm · θ = ${TH}°</div>`;
+    h+=`<div style="opacity:.85;line-height:1.45"><b>Pellizca</b> (pulgar + índice) sobre un punto, línea o botón para pulsarlo.<br><b>Vista:</b> pellizca una cara del cubo, o pellizca el <b>fondo vacío</b> y arrastra para girar de 15° en 15° (anillo del cubo = Z). Sobre la tabla el pellizco solo traza.<br>Tabla: ${L} × ${HH} cm · ejión h = ${H} cm · θ = ${TH}°</div>`;
   }
   $("resetBtn").style.display=(stage==="mounting"||stage==="intro")?"none":"flex"; $("tools").style.opacity=stage==="trace"?1:.35;
   sideEl.innerHTML=h;
@@ -1019,7 +1023,7 @@ async function startCamera(){
 $("go").addEventListener("click",startCamera);
 $("mouse").addEventListener("click",()=>{ $("start").style.display="none"; setStatus("Modo ratón (prueba)"); });
 const clamp=v=>Math.max(0,Math.min(1,v));
-let clickMode="thumb"; try{ clickMode=localStorage.getItem("tp_click")||"thumb"; }catch(e){}
+let clickMode="pinch";
 let CAL={d0:1.25,d1:0.60,a0:165,a1:125}, calOk=false; try{ const c=JSON.parse(localStorage.getItem("tp_cal")||"null"); if(c&&c.d0){ CAL=c; calOk=true; } }catch(e){}
 let pinchG=false, thumbOn=false, thumbS=0, thumbFrames=0, cal=null;
 const med=a=>{ const b=[...a].sort((x,y)=>x-y); return b[b.length>>1]; };
@@ -1135,7 +1139,7 @@ function frame(now){
   const dpr=Math.min(devicePixelRatio,2);
   octx.setTransform(dpr,0,0,dpr,0,0); octx.clearRect(0,0,W,Hh);
   if(stage==="trace"){ if(facing) drawLayer(octx,p=>boardToScreen(p.x,p.y),1,false); }
-  if(stage!=="mounting") drawGizmo(octx);
+
   drawLupa();
 
   renderer.render(scene,camera);
