@@ -185,11 +185,13 @@ function turnBase(){            // tecla B: gira la capa inferior sola (prueba/a
   const {layer, pivot} = makePivot(1, -1);
   snap = {pivot, layer, axis:AX[1], from:0, to:-HALF, t0:performance.now(), dur:650};
 }
+const LOG = [];
+const lg = (t, o) => { LOG.push(Object.assign({t:Math.round(performance.now()), e:t}, o||{})); if (LOG.length > 60) LOG.shift(); };
 function grabStart(){
-  if (snap) return;
+  if (snap){ lg("grab-ignorado-snap"); return; }
   const h = pick(cur.x, cur.y);
-  if (h){ grab = {mode:"layer", h, x0:cur.x, y0:cur.y, axis:-1, x:cur.x}; setGlow([h.cubie]); }
-  else grab = {mode:"orbit", x:cur.x, y:cur.y};
+  if (h){ grab = {mode:"layer", h, x0:cur.x, y0:cur.y, axis:-1, x:cur.x}; setGlow([h.cubie]); lg("grab-capa", {x:Math.round(cur.x), y:Math.round(cur.y)}); }
+  else { grab = {mode:"orbit", x:cur.x, y:cur.y}; lg("grab-fondo", {x:Math.round(cur.x), y:Math.round(cur.y)}); }
 }
 // elige eje de giro según hacia dónde arrastras: el punto tocado debe "seguir" al dedo
 function lockAxis(dx, dy){
@@ -207,11 +209,12 @@ function lockAxis(dx, dy){
   grab.axis = best.i; grab.sx = best.sx; grab.sy = best.sy; grab.len2 = best.len*best.len;
   const side = Math.sign(coord(grab.h.cubie, best.i)) || 1;
   const {layer, pivot} = makePivot(best.i, side);
-  grab.layer = layer; grab.pivot = pivot; grab.angle = 0;
+  grab.layer = layer; grab.pivot = pivot; grab.angle = 0; lg("eje", {eje:best.i});
   setGlow(layer);
 }
 function grabEnd(){
   if (!grab) return;
+  lg("suelta", {modo:grab.mode, eje:grab.axis, grados:Math.round((grab.angle||0)*57.3)});
   if (grab.mode === "layer" && grab.pivot){
     const a = grab.angle, n = Math.max(0, Math.ceil(Math.abs(a)/HALF - 0.06));  // en cuanto empiezas a girar, completa hasta 90°; arrastrando más, 180°…
     snap = {pivot:grab.pivot, layer:grab.layer, axis:AX[grab.axis], from:a, to:Math.sign(a)*n*HALF,
@@ -241,7 +244,7 @@ addEventListener("mouseup", () => { if (performance.now() - lastHand > 1000) pin
 addEventListener("keydown", e => { if (e.key==="b"||e.key==="B") turnBase(); });
 
 function updatePointer(now){
-  if (now - lastHand > 500 && now - lastMouse > 1000 && handSeenOnce){ ptrVisible = false; pinched = false; }
+  if (now - lastHand > (grab ? 1000 : 500) && now - lastMouse > 1000 && handSeenOnce){ ptrVisible = false; pinched = false; ratioS = -1; }
   cur.x += (target.x - cur.x) * (pinched ? 0.5 : 0.35); cur.y += (target.y - cur.y) * (pinched ? 0.5 : 0.35);
   ptrEl.style.display = ptrVisible ? "block" : "none";
   ptrEl.style.transform = `translate(${cur.x}px,${cur.y}px)`;
@@ -271,7 +274,7 @@ function updatePointer(now){
 /* ---------- CÁMARA + MEDIAPIPE ---------- */
 const dot = $("dot"), stxt = $("stxt");
 function setStatus(t, cls){ stxt.textContent = t; dot.className = cls||""; }
-let landmarker = null, lastVideoTime = -1, pinchFrames = 0;
+let landmarker = null, lastVideoTime = -1, pinchFrames = 0, ratioS = -1;
 const VER = "0.10.14";
 const MODEL = "https://storage.googleapis.com/mediapipe-models/hand_landmarker/hand_landmarker/float16/1/hand_landmarker.task";
 
@@ -307,10 +310,11 @@ function detectHand(now){
   if (res.landmarks && res.landmarks.length){
     const L = res.landmarks[0], t4 = L[4], t8 = L[8];
     const palm = Math.hypot(L[5].x-L[17].x, L[5].y-L[17].y) || 0.1;
-    const ratio = Math.hypot(t4.x-t8.x, t4.y-t8.y) / palm;   // pulgar–índice relativo al tamaño de la mano
-    pinchFrames = ratio < (pinched ? 0.65 : 0.40) ? Math.min(pinchFrames+1, 6) : Math.max(pinchFrames-1, -6);
-    if (!pinched && pinchFrames >= 2) pinched = true;
-    if (pinched && pinchFrames <= -2) pinched = false;
+    const raw = Math.hypot(t4.x-t8.x, t4.y-t8.y) / palm;     // pulgar–índice relativo al tamaño de la mano
+    ratioS = ratioS < 0 ? raw : ratioS*0.5 + raw*0.5; const ratio = ratioS;
+    if (!pinched && ratio < 0.45){ if (++pinchFrames >= 2) { pinched = true; pinchFrames = 0; } }
+    else if (pinched && ratio > 0.72){ if (++pinchFrames >= 3) { pinched = false; pinchFrames = 0; } }
+    else pinchFrames = 0;
     // puntero = punto medio entre pulgar e índice (más estable que la punta sola)
     const mx = (t4.x + t8.x)/2, my = (t4.y + t8.y)/2;
     target.x = clamp(((1 - mx) - 0.10) / 0.80) * innerWidth;
@@ -349,7 +353,7 @@ function frame(now){
   requestAnimationFrame(frame);
 }
 requestAnimationFrame(frame);
-window.__cubo = {turnBase, pick, get busy(){return !!(grab||snap);}, get layerRot(){return cubies.map(c=>[c.position.x,c.position.y,c.position.z]);}}; // para pruebas
+window.__cubo = {log: LOG, turnBase, pick, get busy(){return !!(grab||snap);}, get layerRot(){return cubies.map(c=>[c.position.x,c.position.y,c.position.z]);}}; // para pruebas
 </script>
 </body>
 </html>
