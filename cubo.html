@@ -71,8 +71,10 @@
 </div>
 <div id="inputs">
   <div class="tg on" id="tgVoice">🎤 Voz <b>ON</b></div>
+  <div class="tg on" id="tgHead">🙂 Cabeza <b>ON</b></div>
   <div class="tg on" id="tgWink">😉 Guiño <b>ON</b></div>
   <div class="tg sm" id="tgSwap">⇄ Invertir guiños <b>NO</b></div>
+  <div id="headdbg" class="tg sm" style="cursor:default;display:block">cabeza: —</div>
   <div id="meters"></div>
   <div id="heard">Di: <b>derecha · izquierda · arriba · abajo</b><br>o guiña el ojo derecho / izquierdo</div>
 </div>
@@ -287,7 +289,7 @@ function stepSnap(now){
 }
 
 /* ---------- ÓRDENES POR VOZ Y POR GUIÑO ---------- */
-let selCubie = null, voiceOn = true, winkOn = true, swapWink = false, rec = null, faceLm = null, faceTick = 0, lastCmd = 0, blinkDbg = [0,0];
+let headOn = true, selCubie = null, voiceOn = true, winkOn = true, swapWink = false, rec = null, faceLm = null, faceTick = 0, lastCmd = 0, blinkDbg = [0,0];
 const WINK_MS = 350;
 const heardEl = document.getElementById("heard");
 const DIRTXT = {right:"➡ derecha", left:"⬅ izquierda", up:"⬆ arriba", down:"⬇ abajo"};
@@ -316,7 +318,7 @@ function command(dir, src){
   const {layer, pivot} = makePivot(best.i, side);
   snap = {pivot, layer, axis:AX[best.i], from:0, to:(best.dot >= 0 ? 1 : -1)*HALF, t0:performance.now(), dur:380};
   setGlow([c]); lastCmd = performance.now(); lg("orden", {dir, src, eje:best.i});
-  heardMsg(`${src === "voz" ? "🎤" : "😉"} ${DIRTXT[dir]}`);
+  heardMsg(`${src === "voz" ? "🎤" : src === "cabeza" ? "🙂" : "😉"} ${DIRTXT[dir]}`);
 }
 /* voz (Chrome: reconocimiento en español) */
 const SR = window.SpeechRecognition || window.webkitSpeechRecognition;
@@ -341,6 +343,23 @@ function startVoice(){
 }
 function stopVoice(){ const r = rec; rec = null; try{ if (r){ r.onend = null; r.stop(); } }catch(e){} }
 /* guiño (modelo de cara de MediaPipe) */
+/* cabeza: giro / inclinación → derecha·izquierda, cabeceo → arriba·abajo (respecto a tu postura neutra) */
+const HS = {yaw:1, pitch:1, roll:1};           // signos (ajustados con la prueba real)
+const HTH = {yaw:18, roll:14, pitch:12};        // grados desde la postura neutra
+const neu = {}; let headArmed = true, headT = 0;
+function feedHead(yaw, pitch, roll, now){
+  const c = {yaw:yaw*HS.yaw, pitch:pitch*HS.pitch, roll:roll*HS.roll}, dev = {};
+  for (const k in c){ if (!(k in neu)) neu[k] = c[k]; dev[k] = c[k] - neu[k]; if (Math.abs(dev[k]) < 8) neu[k] += dev[k]*0.02; }
+  document.getElementById("headdbg").textContent = `cabeza · giro ${dev.yaw.toFixed(0)}° · inclin. ${dev.roll.toFixed(0)}° · cabeceo ${dev.pitch.toFixed(0)}°`;
+  if (headArmed && now - lastCmd > 500){
+    let d = null;
+    if (dev.roll > HTH.roll || dev.yaw > HTH.yaw) d = "right";
+    else if (dev.roll < -HTH.roll || dev.yaw < -HTH.yaw) d = "left";
+    else if (dev.pitch > HTH.pitch) d = "up";
+    else if (dev.pitch < -HTH.pitch) d = "down";
+    if (d){ headArmed = false; command(d, "cabeza"); }
+  } else if (!headArmed && Math.abs(dev.yaw) < 7 && Math.abs(dev.roll) < 6 && Math.abs(dev.pitch) < 6) headArmed = true;
+}
 let winkSide = 0, winkT = 0, winkArmed = true, meterT = 0;
 const GESTOS = ["cheekPuff","cheekSquintLeft","cheekSquintRight","tongueOut","jawOpen","mouthSmileLeft","mouthSmileRight","mouthPucker","mouthLeft","mouthRight","browInnerUp"];
 const MX = {}, VAL = {}, metersEl = document.getElementById("meters");
@@ -362,19 +381,22 @@ function faceStep(now){
   const get = n => { const c = bs.categories.find(c => c.categoryName === n); return c ? c.score : 0; };
   let bl = get("eyeBlinkLeft"), br = get("eyeBlinkRight"); if (swapWink) [bl, br] = [br, bl];
   feedBlink(bl, br, now);
+  const M = res.facialTransformationMatrixes && res.facialTransformationMatrixes[0];
+  if (M && headOn){ const e = new THREE.Euler().setFromRotationMatrix(new THREE.Matrix4().fromArray(M.data), "YXZ"); feedHead(e.y*57.2958, e.x*57.2958, e.z*57.2958, now); }
   for (const n of GESTOS){ const v = get(n); MX[n] = Math.max(MX[n]||0, v); VAL[n] = v; }
   if (now - meterT > 150){ meterT = now; paintMeters(); }
   if (now - lastCmd > 1500) heardMsg(`😉 ojo izq ${bl.toFixed(2)} · ojo dcho ${br.toFixed(2)}`);
 }
 /* interruptores (se tocan con ratón o pellizco) */
-const TG = {voice:document.getElementById("tgVoice"), wink:document.getElementById("tgWink"), swap:document.getElementById("tgSwap")};
+const TG = {voice:document.getElementById("tgVoice"), wink:document.getElementById("tgWink"), swap:document.getElementById("tgSwap"), head:document.getElementById("tgHead")};
 function paintToggles(){
   const set = (el, on, yes="ON", no="OFF") => { el.classList.toggle("on", on); el.querySelector("b").textContent = on ? yes : no; };
-  set(TG.voice, voiceOn); set(TG.wink, winkOn); set(TG.swap, swapWink, "SÍ", "NO");
+  set(TG.voice, voiceOn); set(TG.head, headOn); set(TG.wink, winkOn); set(TG.swap, swapWink, "SÍ", "NO");
 }
 function tgAt(x, y){ for (const k in TG){ const r = TG[k].getBoundingClientRect(); if (x >= r.left && x <= r.right && y >= r.top && y <= r.bottom) return k; } return null; }
 function toggle(k){
   if (k === "voice"){ voiceOn = !voiceOn; voiceOn ? startVoice() : (stopVoice(), heardMsg("Voz desactivada")); }
+  else if (k === "head"){ headOn = !headOn; heardMsg(headOn ? (faceLm ? "Cabeza activada" : "Cabeza: necesita la cámara activada") : "Cabeza desactivada"); }
   else if (k === "wink"){ winkOn = !winkOn; heardMsg(winkOn ? (faceLm ? "Guiño activado" : "Guiño: necesita la cámara activada") : "Guiño desactivado"); }
   else { swapWink = !swapWink; heardMsg("Guiños " + (swapWink ? "invertidos" : "normales")); }
   paintToggles();
@@ -465,7 +487,7 @@ async function startCamera(){
     try{ landmarker = await HandLandmarker.createFromOptions(fs, opts("GPU")); }
     catch(e){ landmarker = await HandLandmarker.createFromOptions(fs, opts("CPU")); }
     try{
-      const fo = d => ({baseOptions:{modelAssetPath:"https://storage.googleapis.com/mediapipe-models/face_landmarker/face_landmarker/float16/1/face_landmarker.task", delegate:d}, runningMode:"VIDEO", numFaces:1, outputFaceBlendshapes:true});
+      const fo = d => ({baseOptions:{modelAssetPath:"https://storage.googleapis.com/mediapipe-models/face_landmarker/face_landmarker/float16/1/face_landmarker.task", delegate:d}, runningMode:"VIDEO", numFaces:1, outputFaceBlendshapes:true, outputFacialTransformationMatrixes:true});
       try{ faceLm = await FaceLandmarker.createFromOptions(fs, fo("GPU")); }catch(e){ faceLm = await FaceLandmarker.createFromOptions(fs, fo("CPU")); }
     }catch(e){ console.error(e); heardMsg("Guiño no disponible (no cargó el modelo de cara)"); }
     setStatus("Muestra tu mano a la cámara", "ok");
@@ -528,7 +550,7 @@ function frame(now){
   requestAnimationFrame(frame);
 }
 requestAnimationFrame(frame);
-window.__cubo = {log: LOG, MX, resetMx(){ for (const k in MX) delete MX[k]; }, selScreen:()=>{ensureSel(); const q=new THREE.Vector3(); selCubie.getWorldPosition(q); return toScreen(q);}, command, feedBlink, get sel(){return selCubie && selCubie.position.toArray();}, sim:(x,y,p)=>{lastHand=performance.now();handSeenOnce=true;target.x=x;target.y=y;ptrVisible=true;pinched=p;}, turnBase, pick, get busy(){return !!(grab||snap);}, get layerRot(){return cubies.map(c=>[c.position.x,c.position.y,c.position.z]);}}; // para pruebas
+window.__cubo = {log: LOG, feedHead, HS, MX, resetMx(){ for (const k in MX) delete MX[k]; }, selScreen:()=>{ensureSel(); const q=new THREE.Vector3(); selCubie.getWorldPosition(q); return toScreen(q);}, command, feedBlink, get sel(){return selCubie && selCubie.position.toArray();}, sim:(x,y,p)=>{lastHand=performance.now();handSeenOnce=true;target.x=x;target.y=y;ptrVisible=true;pinched=p;}, turnBase, pick, get busy(){return !!(grab||snap);}, get layerRot(){return cubies.map(c=>[c.position.x,c.position.y,c.position.z]);}}; // para pruebas
 </script>
 </body>
 </html>
