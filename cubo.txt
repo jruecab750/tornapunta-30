@@ -22,13 +22,14 @@
   #ptr{position:fixed;left:0;top:0;width:30px;height:30px;margin:-15px 0 0 -15px;border-radius:50%;pointer-events:none;
     border:3px solid #35e0ff;background:transparent;box-shadow:0 0 14px #35e0ffaa;display:none;z-index:5;transition:width .1s,height .1s,margin .1s,background .1s}
   #ptr.pinch{width:16px;height:16px;margin:-8px 0 0 -8px;background:#ffd60a;border-color:#ffd60a;box-shadow:0 0 18px #ffd60acc}
-  #panel{position:fixed;right:18px;bottom:18px;width:300px;padding:14px 16px 12px;border-radius:16px;background:#0b1226d9;border:1px solid #ffffff1a;z-index:4}
-  #panel .row{margin-bottom:12px} #panel .row:last-child{margin-bottom:0}
-  #panel label{display:flex;justify-content:space-between;font-size:13px;letter-spacing:.06em;font-weight:700;opacity:.85;margin-bottom:6px}
+  #panel{position:fixed;left:16px;top:68px;width:270px;z-index:4;display:flex;flex-direction:column;gap:30px}
+  #panel .row{padding:12px 14px 14px;border-radius:16px;background:#0b1226d9;border:1px solid #ffffff1a}
+  #panel label{display:flex;justify-content:space-between;font-size:13px;letter-spacing:.06em;font-weight:700;opacity:.85;margin-bottom:8px}
   #panel label b{color:#35e0ff}
   .sl{position:relative;height:40px;border-radius:20px;background:#ffffff14;cursor:pointer;touch-action:none}
   .sl .fill{position:absolute;left:0;top:0;bottom:0;border-radius:20px;background:#35e0ff40}
-  .sl .thumb{position:absolute;top:3px;width:34px;height:34px;margin-left:-17px;border-radius:50%;background:#35e0ff;box-shadow:0 0 12px #35e0ff88}
+  .sl .thumb{position:absolute;top:3px;width:34px;height:34px;margin-left:-17px;border-radius:50%;background:#35e0ff;box-shadow:0 0 12px #35e0ff88;transition:transform .05s}
+  .sl.on .thumb{background:#ffd60a;box-shadow:0 0 18px #ffd60acc}
   .sl.hover{box-shadow:0 0 0 2px #35e0ff inset} .sl.hover .thumb{background:#ffd60a;box-shadow:0 0 16px #ffd60acc}
   #start{position:fixed;inset:0;display:flex;align-items:center;justify-content:center;background:#060912d9;z-index:10}
   #start .card{max-width:560px;padding:30px 34px;border-radius:18px;background:#101a36;border:1px solid #ffffff1f;text-align:center}
@@ -40,7 +41,7 @@
   /* Pantalla vertical (iPhone): botón abajo, vídeo pequeño arriba a la derecha */
   @media (max-aspect-ratio: 1/1){
     #video{left:auto;right:12px;top:12px;bottom:auto;width:96px;height:128px}
-    #panel{left:50%;right:auto;transform:translateX(-50%);bottom:calc(54px + env(safe-area-inset-bottom));width:min(320px,90vw)}
+    #panel{top:56px;left:12px;width:min(240px,60vw);gap:22px}
     #status{left:12px;top:12px;font-size:13px;padding:6px 11px;max-width:calc(100vw - 140px)}
     #hint{bottom:calc(14px + env(safe-area-inset-bottom));font-size:13px;max-width:92vw}
     #start .card{margin:16px;padding:22px 20px}
@@ -59,7 +60,7 @@
   <div class="row"><label>ZOOM <b id="zv"></b></label><div class="sl" id="slZoom"><div class="fill"></div><div class="thumb"></div></div></div>
   <div class="row"><label>SENSIBILIDAD <b id="sv"></b></label><div class="sl" id="slSens"><div class="fill"></div><div class="thumb"></div></div></div>
 </div>
-<div id="hint">Pellizca una pieza y arrastra: la capa salta de 90° en 90°. Las barras de abajo se mueven también pellizcando</div>
+<div id="hint">Pellizca una pieza y arrastra: la capa salta de 90° en 90°. Las barras de la izquierda se manejan igual: pellizca y espera un momento</div>
 <div id="ptr"></div>
 
 <div id="start">
@@ -140,17 +141,25 @@ const shadow = new THREE.Mesh(new THREE.PlaneGeometry(3.2,3.2),
   new THREE.MeshBasicMaterial({map:new THREE.CanvasTexture(sc), transparent:true, depthWrite:false}));
 shadow.rotation.x = -Math.PI/2; shadow.position.set(0,-2.1,0); scene.add(shadow);
 
-/* ---------- BARRAS: ZOOM Y SENSIBILIDAD (se manejan con ratón o pellizco) ---------- */
+/* ---------- BARRAS: ZOOM Y SENSIBILIDAD ---------- */
+// se activan con un pellizco SOSTENIDO unas décimas de segundo sobre ellas, y avanzan de 5 en 5
 let zoom = 1.0, SENS = 0.55, baseZ = 8, baseY = 0;
-try{ zoom = +localStorage.getItem("cubo_zoom") || zoom; SENS = +localStorage.getItem("cubo_sens") || SENS; }catch(e){}
+const ARM_MS = 400, GAIN_HAND = 0.6;
+let zoomPct = 100, sensPct = 35;
+try{ zoomPct = +localStorage.getItem("cubo_zoomPct") || zoomPct; sensPct = +localStorage.getItem("cubo_sensPct") || sensPct; }catch(e){}
 function applyZoom(){ camera.position.z = baseZ/zoom; camera.position.y = baseY/zoom; camera.updateProjectionMatrix(); }
 const SLIDERS = [
-  {el:document.getElementById("slZoom"), min:0.6, max:2.0, get:()=>zoom, set:v=>{zoom=v; applyZoom(); document.getElementById("zv").textContent = Math.round(v*100)+"%"; try{localStorage.setItem("cubo_zoom",v)}catch(e){}}},
-  {el:document.getElementById("slSens"), min:0.2, max:1.2, get:()=>SENS, set:v=>{SENS=v; document.getElementById("sv").textContent = Math.round((v-0.2)/1.0*100)+"%"; try{localStorage.setItem("cubo_sens",v)}catch(e){}}},
+  {el:document.getElementById("slZoom"), lab:"zv", min:60, max:200, step:5, key:"cubo_zoomPct", get:()=>zoomPct,
+   set:v=>{ zoomPct = v; zoom = v/100; applyZoom(); }},
+  {el:document.getElementById("slSens"), lab:"sv", min:5, max:100, step:5, key:"cubo_sensPct", get:()=>sensPct,
+   set:v=>{ sensPct = v; SENS = 0.2 + v/100; }},          // 5 % → 0.25 … 100 % → 1.2
 ];
-function paintSlider(sl){ const t = (sl.get()-sl.min)/(sl.max-sl.min)*100; sl.el.querySelector(".fill").style.width = t+"%"; sl.el.querySelector(".thumb").style.left = t+"%"; }
-function setSliderFromX(sl, x){ const r = sl.el.getBoundingClientRect(); const t = Math.max(0, Math.min(1, (x - r.left)/r.width)); sl.set(sl.min + t*(sl.max-sl.min)); paintSlider(sl); }
-function sliderAt(x, y){ for (const sl of SLIDERS){ const r = sl.el.getBoundingClientRect(); if (x >= r.left-10 && x <= r.right+10 && y >= r.top-12 && y <= r.bottom+12) return sl; } return null; }
+function paintSlider(sl){ const t = (sl.get()-sl.min)/(sl.max-sl.min)*100;
+  sl.el.querySelector(".fill").style.width = t+"%"; sl.el.querySelector(".thumb").style.left = t+"%";
+  document.getElementById(sl.lab).textContent = sl.get()+"%"; }
+function setSlider(sl, v){ v = Math.max(sl.min, Math.min(sl.max, Math.round(v/sl.step)*sl.step));
+  if (v !== sl.get()){ sl.set(v); try{localStorage.setItem(sl.key, v)}catch(e){} } paintSlider(sl); }
+function sliderAt(x, y){ for (const sl of SLIDERS){ const r = sl.el.getBoundingClientRect(); if (x >= r.left-6 && x <= r.right+6 && y >= r.top-4 && y <= r.bottom+4) return sl; } return null; }
 SLIDERS.forEach(sl => { sl.set(sl.get()); paintSlider(sl); });
 
 /* ---------- AGARRE CON PELLIZCO: capas y órbita ---------- */
@@ -204,7 +213,10 @@ const lg = (t, o) => { LOG.push(Object.assign({t:Math.round(performance.now()), 
 function grabStart(){
   if (snap){ lg("grab-ignorado-snap"); return; }
   const sl = sliderAt(cur.x, cur.y);
-  if (sl){ grab = {mode:"slider", sl}; setGlow(null); setSliderFromX(sl, cur.x); lg("barra"); return; }
+  if (sl){
+    const hand = performance.now() - lastHand < 1000;
+    grab = {mode:"sliderArm", sl, t: hand ? 0 : ARM_MS, hand}; setGlow(null); lg("barra-armando"); return;   // con ratón no hace falta esperar
+  }
   const h = pick(cur.x, cur.y);
   if (h){ grab = {mode:"layer", h, x0:cur.x, y0:cur.y, axis:-1, x:cur.x}; setGlow([h.cubie]); lg("grab-capa", {x:Math.round(cur.x), y:Math.round(cur.y)}); }
   else { grab = {mode:"orbit", x:cur.x, y:cur.y}; lg("grab-fondo", {x:Math.round(cur.x), y:Math.round(cur.y)}); }
@@ -234,6 +246,7 @@ function lockAxis(dx, dy){
 }
 function grabEnd(){
   if (!grab) return;
+  if (grab.sl){ grab.sl.el.classList.remove("on"); grab.sl.el.querySelector(".thumb").style.transform = ""; }
   lg("suelta", {modo:grab.mode, eje:grab.axis, saltos:grab.n||0});
   if (grab.mode === "layer" && grab.pivot){
     snap = {pivot:grab.pivot, layer:grab.layer, axis:AX[grab.axis], from:grab.disp, to:grab.n*HALF,
@@ -274,7 +287,19 @@ function updatePointer(now, dt){
   wasPinched = pinched;
 
   if (grab){
-    if (grab.mode === "slider"){ setSliderFromX(grab.sl, cur.x); }
+    if (grab.mode === "sliderArm"){
+      if (sliderAt(cur.x, cur.y) !== grab.sl){ grab.mode = "none"; grab.sl.el.classList.remove("on"); grab.sl.el.querySelector(".thumb").style.transform = ""; lg("barra-cancelada"); }
+      else {
+        grab.t += dt; const p = Math.min(1, grab.t/ARM_MS);
+        grab.sl.el.querySelector(".thumb").style.transform = `scale(${1 + 0.45*p})`;
+        if (p >= 1){ grab.mode = "slider"; grab.x0 = cur.x; grab.v0 = grab.sl.get(); grab.sl.el.classList.add("on"); lg("barra-activa"); }
+      }
+    }
+    else if (grab.mode === "slider"){
+      const r = grab.sl.el.getBoundingClientRect(), gain = grab.hand ? GAIN_HAND : 1;
+      setSlider(grab.sl, grab.v0 + (cur.x - grab.x0)/r.width*(grab.sl.max-grab.sl.min)*gain);
+    }
+    else if (grab.mode === "none"){}
     else if (grab.mode === "layer"){
       const tx = cur.x - grab.x0, ty = cur.y - grab.y0;
       if (grab.axis < 0 && Math.hypot(tx, ty) > lockPx()) lockAxis(tx, ty);
@@ -382,7 +407,7 @@ function frame(now){
   requestAnimationFrame(frame);
 }
 requestAnimationFrame(frame);
-window.__cubo = {log: LOG, turnBase, pick, get busy(){return !!(grab||snap);}, get layerRot(){return cubies.map(c=>[c.position.x,c.position.y,c.position.z]);}}; // para pruebas
+window.__cubo = {log: LOG, sim:(x,y,p)=>{lastHand=performance.now();handSeenOnce=true;target.x=x;target.y=y;ptrVisible=true;pinched=p;}, turnBase, pick, get busy(){return !!(grab||snap);}, get layerRot(){return cubies.map(c=>[c.position.x,c.position.y,c.position.z]);}}; // para pruebas
 </script>
 </body>
 </html>
