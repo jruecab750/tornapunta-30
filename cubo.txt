@@ -197,15 +197,14 @@ function lockAxis(dx, dy){
   grab.axis = best.i; grab.sx = best.sx; grab.sy = best.sy; grab.len2 = best.len*best.len;
   const side = Math.sign(coord(grab.h.cubie, best.i)) || 1;
   const {layer, pivot} = makePivot(best.i, side);
-  grab.layer = layer; grab.pivot = pivot; grab.angle = 0; lg("eje", {eje:best.i});
+  grab.layer = layer; grab.pivot = pivot; grab.angle = 0; grab.n = 0; grab.disp = 0; lg("eje", {eje:best.i});
   setGlow(layer);
 }
 function grabEnd(){
   if (!grab) return;
-  lg("suelta", {modo:grab.mode, eje:grab.axis, grados:Math.round((grab.angle||0)*57.3)});
+  lg("suelta", {modo:grab.mode, eje:grab.axis, saltos:grab.n||0});
   if (grab.mode === "layer" && grab.pivot){
-    const a = grab.angle, n = Math.max(0, Math.ceil(Math.abs(a)/HALF - 0.06));  // en cuanto empiezas a girar, completa hasta 90°; arrastrando más, 180°…
-    snap = {pivot:grab.pivot, layer:grab.layer, axis:AX[grab.axis], from:a, to:Math.sign(a)*n*HALF,
+    snap = {pivot:grab.pivot, layer:grab.layer, axis:AX[grab.axis], from:grab.disp, to:grab.n*HALF,
             t0:performance.now(), dur:260};
   }
   grab = null;
@@ -231,7 +230,7 @@ addEventListener("mousedown", e => { if (performance.now() - lastHand > 1000){ t
 addEventListener("mouseup", () => { if (performance.now() - lastHand > 1000) pinched = false; });
 addEventListener("keydown", e => { if (e.key==="b"||e.key==="B") turnBase(); });
 
-function updatePointer(now){
+function updatePointer(now, dt){
   if (now - lastHand > (grab ? 1000 : 500) && now - lastMouse > 1000 && handSeenOnce){ ptrVisible = false; pinched = false; ratioS = -1; }
   cur.x += (target.x - cur.x) * (pinched ? 0.5 : 0.35); cur.y += (target.y - cur.y) * (pinched ? 0.5 : 0.35);
   ptrEl.style.display = ptrVisible ? "block" : "none";
@@ -247,8 +246,17 @@ function updatePointer(now){
       const tx = cur.x - grab.x0, ty = cur.y - grab.y0;
       if (grab.axis < 0 && Math.hypot(tx, ty) > 14) lockAxis(tx, ty);
       if (grab.axis >= 0){
-        grab.angle = (tx*grab.sx + ty*grab.sy)/grab.len2;
-        grab.pivot.quaternion.setFromAxisAngle(AX[grab.axis], grab.angle);
+        const raw = (tx*grab.sx + ty*grab.sy)/grab.len2, ar = Math.abs(raw)/HALF, sg = Math.sign(raw);
+        grab.angle = raw;
+        // saltos de 90°: el primero casi en cuanto empiezas, los siguientes cada ~90° de dedo (con histéresis)
+        let m = Math.abs(grab.n);
+        if (m > 0 && sg !== Math.sign(grab.n)) m = 0;
+        while (ar >= m + 0.11) m++;
+        while (m > 0 && ar < m - 1 + 0.03) m--;
+        if (sg*m !== grab.n) lg("salto", {n:sg*m});
+        grab.n = sg*m;
+        grab.disp += (grab.n*HALF - grab.disp) * (1 - Math.exp(-dt/55));   // llega al salto con suavidad
+        grab.pivot.quaternion.setFromAxisAngle(AX[grab.axis], grab.disp);
       }
     } else {
       const dx = cur.x - grab.x, dy = cur.y - grab.y; grab.x = cur.x; grab.y = cur.y;
@@ -334,7 +342,7 @@ let prev = performance.now();
 function frame(now){
   const dt = Math.min(100, now - prev); prev = now;
   detectHand(now);
-  updatePointer(now);
+  updatePointer(now, dt);
   stepSnap(now);
   cubeGroup.rotation.set(pitch, yaw, 0);
   renderer.render(scene, camera);
