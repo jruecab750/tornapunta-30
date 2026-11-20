@@ -50,6 +50,17 @@
   #ptr{position:fixed;left:0;top:0;width:44px;height:44px;margin:-22px 0 0 -22px;pointer-events:none;display:none;z-index:8}
   #ptr svg{width:100%;height:100%;transform:rotate(-90deg)}
   #ptr .c0{fill:#35e0ff22;stroke:#35e0ff;stroke-width:3}
+  #ptr.pinch .c0{fill:#ffb02077;stroke:#ffb020}
+  #panel{position:fixed;left:14px;top:56px;width:236px;z-index:4;display:flex;flex-direction:column;gap:10px}
+  #panel .row{padding:9px 12px 11px;border-radius:14px;background:#0b1226d9;border:1px solid #ffffff1a}
+  #panel label{display:flex;justify-content:space-between;font-size:12px;letter-spacing:.06em;font-weight:700;opacity:.85;margin-bottom:6px}
+  #panel label b{color:#35e0ff}
+  .sl{position:relative;height:36px;border-radius:18px;background:#ffffff14;touch-action:none}
+  .sl .fill{position:absolute;left:0;top:0;bottom:0;border-radius:18px;background:#35e0ff40}
+  .sl .thumb{position:absolute;top:3px;width:30px;height:30px;margin-left:-15px;border-radius:50%;background:#35e0ff;box-shadow:0 0 12px #35e0ff88;transition:transform .05s}
+  .sl.on .thumb{background:#ffd60a;box-shadow:0 0 18px #ffd60acc}
+  .sl.hover{box-shadow:0 0 0 2px #35e0ff inset} .sl.hover .thumb{background:#ffd60a}
+  #front{height:40px;font-size:14px;padding:6px 12px;border-radius:12px}
   #ptr .c1{fill:none;stroke:#fff;stroke-width:4;stroke-dasharray:119.4;stroke-dashoffset:119.4;stroke-linecap:round}
   #start{position:fixed;inset:0;display:flex;align-items:center;justify-content:center;background:#060912e6;z-index:20}
   #start .card{max-width:600px;padding:28px 34px;border-radius:18px;background:#101a36;border:1px solid #ffffff1f;text-align:center}
@@ -77,7 +88,12 @@
   <div id="side"></div>
 </div>
 
-<div id="resetBtn" class="dw btn small" data-key="reset" style="position:fixed;right:14px;bottom:10px;z-index:5;padding:6px 14px">↺ Reiniciar (mantén 2 s)</div>
+<div id="panel">
+  <div class="row"><label>ZOOM <b id="zv"></b></label><div class="sl" id="slZoom"><div class="fill"></div><div class="thumb"></div></div></div>
+  <div class="row"><label>SENSIBILIDAD <b id="sv"></b></label><div class="sl" id="slSens"><div class="fill"></div><div class="thumb"></div></div></div>
+  <div id="front" class="dw btn small" data-key="front">⟲ Vista frontal (ejes a 0°)</div>
+</div>
+<div id="resetBtn" class="dw btn small" data-key="reset" style="position:fixed;right:14px;bottom:10px;z-index:5;padding:6px 14px">↺ Reiniciar (pellizco 1,5 s)</div>
 <div id="lupa"><canvas id="lc" width="200" height="200" style="position:static;width:200px;height:200px"></canvas></div>
 <div id="lread"></div>
 <div id="ptr"><svg viewBox="0 0 44 44"><circle class="c0" cx="22" cy="22" r="14"/><circle class="c1" id="pring" cx="22" cy="22" r="19"/></svg></div>
@@ -85,7 +101,7 @@
 <div id="start">
   <div class="card">
     <h1>Tornapunta a 30°</h1>
-    <p>Traza con el <b>lápiz</b>, mide con el <b>flexómetro</b> y corta con el <b>serrucho</b> usando la punta del <b>dedo índice</b>: mantén el dedo quieto sobre cada punto o botón durante un momento para activarlo.<br>El vídeo no sale de tu equipo.</p>
+    <p>Traza con el <b>lápiz</b>, mide con el <b>flexómetro</b> y corta con el <b>serrucho</b> con la mano: <b>pellizca</b> (pulgar + índice) sobre cada punto o botón para pulsarlo. Pellizca sobre la tabla y <b>arrastra</b> para girarla en los ejes X, Y, Z de 15° en 15°.<br>El vídeo no sale de tu equipo.</p>
     <button id="go">Activar cámara</button>
     <button id="mouse">Probar con ratón</button>
   </div>
@@ -99,7 +115,6 @@ import * as THREE from "three";
 
 /* ================= DATOS DEL TORNAPUNTA (PDF P04, 30°) ================= */
 const qs = new URLSearchParams(location.search);
-const DWELL = +(qs.get("dwell") || 850);          // ms que hay que mantener el dedo
 const L = 50, HH = 10, T = 2, TH = 30, H = 3;      // longitud, tizón, grueso, ángulo, ancho del ejión (cm)
 const rad = a => a*Math.PI/180;
 const dirOf = a => ({x:Math.cos(rad(a)), y:Math.sin(rad(a))});
@@ -196,7 +211,9 @@ const key = new THREE.DirectionalLight(0xffffff,2.2); key.position.set(10,25,40)
 const fill = new THREE.DirectionalLight(0x88aaff,.7); fill.position.set(-30,-10,20); scene.add(fill);
 
 const stageG = new THREE.Group(); scene.add(stageG);
-const holder = new THREE.Group(); stageG.add(holder);
+const piv = new THREE.Group(); piv.position.set(0,5.7,0); stageG.add(piv);   // pivote en el centro de la tabla
+const holder = new THREE.Group(); piv.add(holder);
+piv.rotation.order = "XYZ";
 const matTop = new THREE.MeshStandardMaterial({color:0xeccf8e, roughness:.8});
 const matSide= new THREE.MeshStandardMaterial({color:0xc29a55, roughness:.85});
 const boardMesh = new THREE.Mesh(new THREE.BufferGeometry(), [matTop,matSide]);
@@ -246,7 +263,7 @@ function resize(){
   renderer.setSize(W,Hh,false);
   ov.width=W*Math.min(devicePixelRatio,2); ov.height=Hh*Math.min(devicePixelRatio,2);
   camera.aspect=W/Hh;
-  camZ0 = (L/0.80) / (2*Math.tan(rad(15))*camera.aspect);
+  camZ0 = (L/0.60) / (2*Math.tan(rad(15))*camera.aspect);
   camera.updateProjectionMatrix();
 }
 addEventListener("resize",resize); resize();
@@ -256,13 +273,16 @@ function boardToScreen(x,y){
   vA.set(x,y,T/2); holder.localToWorld(vA); vA.project(camera);
   return {x:(vA.x*.5+.5)*W, y:(-vA.y*.5+.5)*Hh};
 }
+let facing=true;
 function screenToBoard(sx,sy){
-  holder.updateMatrixWorld(true);
+  scene.updateMatrixWorld(true);
   rc.setFromCamera(new THREE.Vector2(sx/W*2-1, -(sy/Hh)*2+1), camera);
   vN.set(0,0,1).transformDirection(holder.matrixWorld);
   vB.set(0,0,T/2).applyMatrix4(holder.matrixWorld);
   pl.setFromNormalAndCoplanarPoint(vN,vB);
-  if(!rc.ray.intersectPlane(pl,vP)) return null;
+  vA.set(0,0,T/2).applyMatrix4(holder.matrixWorld); vP.copy(camera.position).sub(vA).normalize();
+  facing = vN.dot(vP) > 0.22;
+  if(!facing || !rc.ray.intersectPlane(pl,vP)) return null;
   holder.worldToLocal(vP);
   return {x:vP.x,y:vP.y};
 }
@@ -272,14 +292,39 @@ const $ = id => document.getElementById(id);
 const ptrEl=$("ptr"), pring=$("pring"), video=$("video");
 const target={x:0,y:0}, cur={x:0,y:0};
 let ptrVisible=false, lastHand=0, lastMouse=0, handSeen=false;
+let pinched=false, wasPinched=false, ratioS=-1, pinchFrames=0, press=null, ringP=0, H0=null;
+const hist=[];
 addEventListener("mousemove",e=>{
   lastMouse=performance.now();
-  if(lastMouse-lastHand>1000){ target.x=e.clientX; target.y=e.clientY; if(!ptrVisible){cur.x=target.x;cur.y=target.y;} ptrVisible=true; }
+  if(lastMouse-lastHand>1000){ target.x=e.clientX; target.y=e.clientY; if(!ptrVisible||!pinched){cur.x=target.x;cur.y=target.y;} ptrVisible=true; }
 });
+addEventListener("mousedown",e=>{ if(performance.now()-lastHand>1000){ lastMouse=performance.now(); target.x=cur.x=e.clientX; target.y=cur.y=e.clientY; ptrVisible=true; pinched=true; } });
+addEventListener("mouseup",()=>{ if(performance.now()-lastHand>1000) pinched=false; });
 addEventListener("keydown",e=>{
   if(e.key==="1") setTool("pencil"); if(e.key==="2") setTool("flex"); if(e.key==="3") setTool("saw");
   if(e.key==="z"||e.key==="Z") undo();
 });
+
+/* ---- giro de la tabla: ejes X, Y, Z de 15 en 15 grados (regla de la mano derecha: + = antihorario) ---- */
+const U={x:0,y:0,z:0}, view={x:0,y:0,z:0};         // objetivo y valor animado (grados)
+const wrapA=a=>{ a=((a%360)+360)%360; return a>180?a-360:a; };
+const fmtA=v=>v===0?"0°":(v>0?"+":"−")+Math.abs(v)+"°";
+const AXN=["x","y","z"];
+
+/* ---- barras de zoom y sensibilidad ---- */
+let zoomPct=100, sensPct=35;
+try{ zoomPct=+localStorage.getItem("tp_zoomPct")||zoomPct; sensPct=+localStorage.getItem("tp_sensPct")||sensPct; }catch(e){}
+const SLIDERS=[
+  {el:document.getElementById("slZoom"), lab:"zv", min:60, max:200, step:5, key:"tp_zoomPct", get:()=>zoomPct, set:v=>{zoomPct=v;}},
+  {el:document.getElementById("slSens"), lab:"sv", min:5, max:100, step:5, key:"tp_sensPct", get:()=>sensPct, set:v=>{sensPct=v;}},
+];
+function paintSlider(sl){ const t=(sl.get()-sl.min)/(sl.max-sl.min)*100;
+  sl.el.querySelector(".fill").style.width=t+"%"; sl.el.querySelector(".thumb").style.left=t+"%";
+  document.getElementById(sl.lab).textContent=sl.get()+"%"; }
+function setSlider(sl,v){ v=Math.max(sl.min,Math.min(sl.max,Math.round(v/sl.step)*sl.step));
+  if(v!==sl.get()){ sl.set(v); try{localStorage.setItem(sl.key,v)}catch(e){} } paintSlider(sl); }
+function sliderAt(x,y){ for(const sl of SLIDERS){ const r=sl.el.getBoundingClientRect(); if(x>=r.left-6&&x<=r.right+6&&y>=r.top-4&&y<=r.bottom+4) return sl; } return null; }
+SLIDERS.forEach(sl=>{ sl.set(sl.get()); paintSlider(sl); });
 
 /* ================= SNAP (imán) ================= */
 function getSnaps(){
@@ -345,8 +390,8 @@ function doCut(){
 }
 
 /* ---- montaje a 30° ---- */
-let mountT0=0;
-function startMount(){ stage="mounting"; mountT0=performance.now(); sideDirty=true; asm.visible=true; say("Colocando el tornapunta a 30° entre durmiente y ejión…","ok",3000); }
+let mountT0=0; const view0={x:0,y:0,z:0};
+function startMount(){ for(const a of AXN){ view0[a]=wrapA(view[a]); U[a]=0; } stage="mounting"; mountT0=performance.now(); sideDirty=true; asm.visible=true; say("Colocando el tornapunta a 30° entre durmiente y ejión…","ok",3000); }
 const ease=t=>t<.5?4*t*t*t:1-Math.pow(-2*t+2,3)/2;
 function suelaLen(){
   const l={x:EXP.P.x,y:EXP.P.y,ang:EXP.a5};
@@ -358,8 +403,9 @@ function resetAll(){
   resetState(); rebuildBoard();
   pieces.forEach(p=>{holder.remove(p.m);p.m.geometry.dispose();}); pieces.length=0;
   asm.visible=false; mBeam.opacity=0; mEj.opacity=0;
+  for(const a of AXN){U[a]=0;view[a]=0;} piv.rotation.set(0,0,0); piv.position.set(0,5.7,0);
   holder.rotation.set(0,0,0); stageG.rotation.set(0,0,0); stageG.position.set(0,0,0);
-  holder.position.set(-L/2,0.7,0);
+  holder.position.set(-L/2,-5,0);
   say("Empieza por marcar el vértice E: la esquina inferior derecha de la tabla");
 }
 
@@ -421,34 +467,100 @@ function computeHover(){
   return null;
 }
 
-let dk=null,dProg=0,dNeed=DWELL,dPos={x:0,y:0},blockPos=null,blockKey=null;
 function fire(h){
   const k=h.key;
   if(k.startsWith("tool:")) setTool(k.slice(5));
   else if(k==="undo") undo();
+  else if(k==="front"){ for(const a of AXN) U[a]-=wrapA(U[a]); say("Vista frontal: ejes X, Y, Z a 0°","ok",2000); }
   else if(k==="reset") resetAll();
   else if(k.startsWith("tilt:")){ sawTilt=+k.slice(5); sideDirty=true; }
   else if(k==="cut") doCut();
   else if(k==="sawcancel"){ sawLock=null; sawTilt=null; sideDirty=true; }
   else if(k==="mount") startMount();
-  else if(k.startsWith("pt:")){ const pt=(k==="pt:free")?{x:h.pt.x,y:h.pt.y}:h.pt; const m=addMark(pt.x,pt.y); anchor={x:m.x,y:m.y}; say("Punto marcado. Ahora elige una línea: mueve el dedo en su dirección y mantén.","ok",3500); }
+  else if(k.startsWith("pt:")){ const pt=(k==="pt:free")?{x:h.pt.x,y:h.pt.y}:h.pt; const m=addMark(pt.x,pt.y); anchor={x:m.x,y:m.y}; say("Punto marcado. Ahora elige una línea: apunta en su dirección y pellizca.","ok",3500); }
   else if(k==="anchorcancel"){ anchor=null; }
   else if(k.startsWith("ray:")){ addLine(anchor.x,anchor.y,h.ang); anchor=null; say("Línea trazada","ok",2000); }
-  else if(k.startsWith("fs:")){ tapeStart={x:h.pt.x,y:h.pt.y}; say("Alinea el flexómetro con una línea y avanza; mantén el dedo para marcar el final de la medida.","",5000); }
+  else if(k.startsWith("fs:")){ tapeStart={x:h.pt.x,y:h.pt.y}; say("Alinea el flexómetro con una línea y avanza; pellizca para marcar el final de la medida.","",5000); }
   else if(k==="fcancel"){ tapeStart=null; }
   else if(k.startsWith("fe:")){ const m=addMark(h.pt.x,h.pt.y); tapeStart=null; say(`Medida marcada: ${f1(Math.abs(parseFloat(k.split(":")[2])))} cm`,"ok",3000); }
   else if(k.startsWith("sl:")){ sawLock=h.lineId; sideDirty=true; say("Hoja alineada. Elige la inclinación de la hoja y pulsa CORTAR.","",6000); }
 }
-function dwellStep(h,dt){
-  if(blockPos && Math.hypot(cur.x-blockPos.x,cur.y-blockPos.y)>22) blockPos=null;
-  if(!h||!h.key){ dk=null; dProg=0; blockKey=null; return; }
-  if(h.dom){ if(blockKey&&h.key!==blockKey) blockKey=null; if(h.key===blockKey){dk=null;dProg=0;return;} }
-  else { blockKey=null; if(blockPos){dk=null;dProg=0;return;} }
-  if(h.key!==dk){ dk=h.key; dProg=0; dPos={x:cur.x,y:cur.y}; }
-  else if(!h.dom && Math.hypot(cur.x-dPos.x,cur.y-dPos.y)>16){ dProg=0; dPos={x:cur.x,y:cur.y}; }
-  dNeed=(h.key==="reset")?DWELL*3:DWELL;   // reiniciar exige más tiempo para evitar accidentes
-  dProg+=dt;
-  if(dProg>=dNeed){ fire(h); dProg=0; dk=null; blockPos={x:cur.x,y:cur.y}; if(h.dom) blockKey=h.key; }
+/* ================= ENTRADA: PELLIZCO = CLIC / ARRASTRE ================= */
+const DRAG_PX=28, ARM_MS=400, GAIN_HAND=0.6, RESET_MS=1500;
+function refreshHover(){ pb=(ptrVisible&&stage==="trace")?screenToBoard(cur.x,cur.y):null; H0=computeHover(); hv.dom=H0&&H0.dom; }
+function pressStart(now){
+  const hand=now-lastHand<1000;
+  let pos={x:cur.x,y:cur.y};
+  if(hand){ for(let i=hist.length-1;i>=0;i--){ pos=hist[i]; if(now-hist[i].t>=150) break; } }   // posición previa al gesto de pellizcar
+  const raw={x:target.x,y:target.y};
+  cur.x=pos.x; cur.y=pos.y; refreshHover();
+  press={t:now,raw,pos:{x:pos.x,y:pos.y},hand,mode:"pending",h:H0};
+  const sl=sliderAt(cur.x,cur.y);
+  if(sl){ press.mode="sliderArm"; press.sl=sl; press.at=hand?0:ARM_MS; }
+  else if(H0&&H0.dom) press.board=false;
+  else press.board=(stage==="trace");
+}
+function pressEnd(now){
+  const P=press; press=null; if(!P) return;
+  if(P.sl){ P.sl.el.classList.remove("on"); P.sl.el.querySelector(".thumb").style.transform=""; }
+  if(P.mode==="pending"){
+    const h=P.h;
+    if(h&&h.key){
+      if(h.key==="reset"&&now-P.t<RESET_MS) say("Para reiniciar, mantén el pellizco 1,5 s","err",2500);
+      else fire(h);
+    }
+  }
+}
+function dragStart(){
+  const P=press; P.mode="drag"; P.axis=-1; P.n=0; P.base={x:U.x,y:U.y,z:U.z};
+  P.cen=boardToScreen(L/2,HH/2); const e=boardToScreen(L,HH/2); P.R=Math.max(60,Math.hypot(e.x-P.cen.x,e.y-P.cen.y));
+}
+function inputStep(now,dt){
+  ringP=0;
+  if(pinched&&!wasPinched) pressStart(now);
+  if(!pinched&&wasPinched) pressEnd(now);
+  wasPinched=pinched;
+  ptrEl.classList.toggle("pinch",pinched);
+  const P=press;
+  if(!P){
+    const sl=(ptrVisible&&!(H0&&H0.dom))?sliderAt(cur.x,cur.y):null;
+    SLIDERS.forEach(o=>o.el.classList.toggle("hover",o===sl));
+    return;
+  }
+  if(P.mode==="sliderArm"){
+    if(sliderAt(cur.x,cur.y)!==P.sl){ P.mode="none"; P.sl.el.classList.remove("on"); P.sl.el.querySelector(".thumb").style.transform=""; }
+    else{
+      P.at+=dt; const p=Math.min(1,P.at/ARM_MS); ringP=p;
+      P.sl.el.querySelector(".thumb").style.transform=`scale(${1+0.45*p})`;
+      if(p>=1){ P.mode="slider"; P.x0=cur.x; P.v0=P.sl.get(); P.sl.el.classList.add("on"); }
+    }
+  } else if(P.mode==="slider"){
+    const r=P.sl.el.getBoundingClientRect(), gain=P.hand?GAIN_HAND:1;
+    setSlider(P.sl,P.v0+(cur.x-P.x0)/r.width*(P.sl.max-P.sl.min)*gain);
+  } else if(P.mode==="pending"){
+    P.h=H0;
+    if(P.h&&P.h.key==="reset") ringP=Math.min(1,(now-P.t)/RESET_MS);
+    if(P.board && Math.hypot(target.x-P.raw.x,target.y-P.raw.y)>DRAG_PX) dragStart();
+  } else if(P.mode==="drag"){
+    const d={x:target.x-P.raw.x,y:target.y-P.raw.y}, dxm=d.x, dym=-d.y;
+    const rx=P.pos.x-P.cen.x, ry=-(P.pos.y-P.cen.y), rl=Math.hypot(rx,ry), w=Math.min(1,rl/P.R);
+    const cz=rl>1?(rx*dym-ry*dxm)/rl:0;                       // componente tangencial: + = antihorario
+    const val=[-dym, dxm, cz];                                 // X: arrastrar abajo = +X · Y: derecha = +Y · Z: antihorario = +Z
+    if(P.axis<0){
+      const m=Math.hypot(d.x,d.y);
+      if(m>=DRAG_PX){
+        const sc=[Math.abs(dym),Math.abs(dxm),Math.abs(cz)*1.6*w];
+        const ord=[0,1,2].sort((i,j)=>sc[j]-sc[i]);
+        if(sc[ord[0]]>=1.35*sc[ord[1]]||m>=2.2*DRAG_PX){ P.axis=ord[0]; say(`Girando en el eje ${"XYZ"[P.axis]}`,"",1200); }
+      }
+    }
+    if(P.axis>=0){
+      const stepPx=1400/sensPct, u=val[P.axis]/stepPx;       // 15° cada stepPx píxeles
+      if(Math.abs(u-P.n)>0.62){ P.n=Math.round(u); }
+      const ax=AXN[P.axis], nv=P.base[ax]+P.n*15;
+      if(nv!==U[ax]){ U[ax]=nv; say(`Eje ${"XYZ"[P.axis]}: ${fmtA(wrapA(nv))}`,"",1600); }
+    }
+  }
 }
 
 /* ================= DIBUJO 2D (principal y lupa) ================= */
@@ -535,7 +647,7 @@ function drawLayer(ctx,Tf,k,isLupa){
 
 const lupa=$("lupa"), lc=$("lc"), lctx=lc.getContext("2d"), lread=$("lread");
 function drawLupa(){
-  const show = stage==="trace"&&ptrVisible&&pb&&!(tool==="pencil"&&anchor)&&pb.x>-3&&pb.x<L+3&&pb.y>-3&&pb.y<HH+3&&!hv.dom;
+  const show = stage==="trace"&&ptrVisible&&pb&&!(tool==="pencil"&&anchor)&&pb.x>-3&&pb.x<L+3&&pb.y>-3&&pb.y<HH+3&&!hv.dom&&!(press&&press.mode!=="pending");
   lupa.style.display=show?"block":"none";
   const reading = show&&tapeDraw&&tapeDraw.a!==null&&tapeDraw.t!==undefined;
   lread.style.display=reading?"block":"none";
@@ -598,7 +710,7 @@ function renderSide(){
     for(const a of [90,60,45]) h+=`<div class="dw btn ${sawTilt===a?"sel":""}" data-key="tilt:${a}">${a}°${a===90?" vertical":""}</div>`;
     h+=`</div><div class="row"><div class="dw btn big" style="min-width:150px;height:56px;font-size:17px" data-key="cut">CORTAR</div><div class="dw btn small" data-key="sawcancel">Cancelar</div></div>`;
   } else {
-    h+=`<div style="opacity:.8;line-height:1.45">Mantén la punta del índice quieta sobre un punto, línea o botón para activarlo.<br>Tabla: ${L} × ${HH} cm · ejión h = ${H} cm · θ = ${TH}°</div>`;
+    h+=`<div style="opacity:.85;line-height:1.45"><b>Pellizca</b> (pulgar + índice) sobre un punto, línea o botón para pulsarlo.<br><b>Pellizca y arrastra</b> sobre la tabla para girarla en X, Y o Z de 15° en 15° (se elige el eje por la dirección del arrastre).<br>Tabla: ${L} × ${HH} cm · ejión h = ${H} cm · θ = ${TH}°</div>`;
   }
   $("resetBtn").style.display=(stage==="mounting")?"none":"flex";
   sideEl.innerHTML=h;
@@ -606,10 +718,11 @@ function renderSide(){
 function contextHint(){
   if(stage==="mounting") return "";
   if(stage==="mounted") return "Montaje terminado";
+  if(!facing&&stage==="trace") return "La cara de trazado queda de espaldas: pulsa «Vista frontal»";
   if(cutsDone.length===4) return "Todos los cortes hechos. Pulsa MONTAR A 30°.";
-  if(tool==="pencil") return anchor?"Elige la línea: mueve el dedo en su dirección (líneas discontinuas) y mantén":"✏️ LÁPIZ · Sitúa el índice sobre un punto (se pega al vértice o cruce) y mantén para marcarlo";
-  if(tool==="flex") return tapeStart?"📏 Alinea el flexómetro con una línea trazada, avanza y mantén para marcar el final":"📏 FLEXÓMETRO · Marca el inicio de la medida (por ejemplo, un vértice)";
-  if(tool==="saw") return sawLock!=null?"Elige la inclinación de la hoja y pulsa CORTAR":"🪚 SERRUCHO · Lleva la hoja sobre un trazado y mantén para alinearla";
+  if(tool==="pencil") return anchor?"Elige la línea: apunta en su dirección (líneas discontinuas) y pellizca":"✏️ LÁPIZ · Sitúa el cursor sobre un punto (se pega al vértice o cruce) y pellizca para marcarlo";
+  if(tool==="flex") return tapeStart?"📏 Alinea el flexómetro con una línea trazada, avanza y pellizca para marcar el final":"📏 FLEXÓMETRO · Pellizca para marcar el inicio de la medida (por ejemplo, un vértice)";
+  if(tool==="saw") return sawLock!=null?"Elige la inclinación de la hoja y pulsa CORTAR":"🪚 SERRUCHO · Lleva la hoja sobre un trazado y pellizca para alinearla";
   return "";
 }
 
@@ -638,10 +751,17 @@ function detectHand(now){
   lastVT=video.currentTime;
   const r=landmarker.detectForVideo(video,now);
   if(r.landmarks&&r.landmarks.length){
-    const tip=r.landmarks[0][8];
-    target.x=clamp(((1-tip.x)-0.10)/0.80)*W; target.y=clamp((tip.y-0.08)/0.78)*Hh;
+    const Lm=r.landmarks[0], t4=Lm[4], t8=Lm[8];
+    const palm=Math.hypot(Lm[5].x-Lm[17].x,Lm[5].y-Lm[17].y)||0.1;
+    const raw=Math.hypot(t4.x-t8.x,t4.y-t8.y)/palm;            // pulgar–índice relativo al tamaño de la mano
+    ratioS=ratioS<0?raw:ratioS*0.5+raw*0.5; const ratio=ratioS;
+    if(!pinched&&ratio<0.45){ if(++pinchFrames>=2){pinched=true;pinchFrames=0;} }
+    else if(pinched&&ratio>0.72){ if(++pinchFrames>=3){pinched=false;pinchFrames=0;} }
+    else pinchFrames=0;
+    const mx=(t4.x+t8.x)/2, my=(t4.y+t8.y)/2;                    // puntero = punto medio pulgar–índice
+    target.x=clamp(((1-mx)-0.10)/0.80)*W; target.y=clamp((my-0.08)/0.78)*Hh;
     if(!ptrVisible){cur.x=target.x;cur.y=target.y;}
-    ptrVisible=true; lastHand=now; handSeen=true; setStatus("Mano detectada","ok");
+    ptrVisible=true; lastHand=now; handSeen=true; setStatus(`${pinched?"Pellizco":"Mano detectada"} · ${ratio.toFixed(2)}`,"ok");
   } else if(now-lastHand>500) setStatus("Muestra tu mano a la cámara","ok");
 }
 
@@ -651,26 +771,30 @@ let prev=performance.now();
 function frame(now){
   const dt=Math.min(100,now-prev); prev=now;
   detectHand(now);
-  if(now-lastHand>500&&now-lastMouse>1000&&handSeen) ptrVisible=false;
-  cur.x+=(target.x-cur.x)*0.35; cur.y+=(target.y-cur.y)*0.35;
+  hist.push({t:now,x:target.x,y:target.y}); while(hist.length&&now-hist[0].t>500) hist.shift();
+  if(now-lastHand>(press?1000:500)&&now-lastMouse>1000&&handSeen){ ptrVisible=false; pinched=false; ratioS=-1; }
+  if(press&&press.mode==="pending"){ cur.x=press.pos.x; cur.y=press.pos.y; }   // el clic no se desplaza al cerrar los dedos
+  else { const k=pinched?0.5:0.35; cur.x+=(target.x-cur.x)*k; cur.y+=(target.y-cur.y)*k; }
 
-  // animaciones de escena
-  const t=now/1000;
+  const zoomK=zoomPct/100;
   if(stage==="trace"){
-    holder.position.set(-L/2,0.7+Math.sin(t*1.2)*0.18,0);
-    holder.rotation.set(0.04,Math.sin(t*0.5)*0.03,0);
-    camera.position.set(0,0,camZ0);
+    const f=1-Math.exp(-dt/70);
+    for(const a of AXN) view[a]+=(U[a]-view[a])*f;
+    piv.position.set(0,5.7,0); piv.rotation.set(rad(view.x),rad(view.y),rad(view.z));
+    holder.position.set(-L/2,-5,0); holder.rotation.set(0,0,0);
+    camera.position.set(0,0,camZ0/zoomK);
   } else if(stage==="mounting"||stage==="mounted"){
     const p=stage==="mounted"?1:Math.min(1,(now-mountT0)/2600), e=ease(p);
-    holder.rotation.set(0.04*(1-e),Math.sin(t*0.5)*0.03*(1-e),rad(-TH)*e);
+    piv.rotation.set(rad(view0.x)*(1-e),rad(view0.y)*(1-e),rad(view0.z)*(1-e));
     const hx=-L/2+(ASM_POS.x+L/2)*e, hy=0.7+((ASM_POS.y+footY)-0.7)*e;
-    holder.position.set(hx,hy,0);
+    piv.position.set(0,5.7*(1-e),0);
+    holder.position.set(hx,hy-piv.position.y,0); holder.rotation.set(0,0,rad(-TH)*e);
     stageG.position.y=7*e; stageG.rotation.y=-0.42*e;
-    camera.position.set(0,0,camZ0*(1+1.2*e));
+    camera.position.set(0,0,camZ0/zoomK*(1+1.2*e));
     const f=Math.max(0,Math.min(1,(p-0.35)/0.5)); mBeam.opacity=f; mEj.opacity=f;
     if(stage==="mounting"&&p>=1){ stage="mounted"; sideDirty=true; say("Tornapunta montado: la suela queda horizontal y el corte 4 vertical","ok",9000); }
   }
-  holder.updateMatrixWorld(true); camera.updateMatrixWorld(true);
+  scene.updateMatrixWorld(true); camera.updateMatrixWorld(true);
   for(let i=pieces.length-1;i>=0;i--){
     const p=pieces[i]; p.t+=dt/1000; p.vy-=60*dt/1000; p.m.position.y+=p.vy*dt/1000; p.m.position.x+=p.vx*dt/1000; p.m.position.z+=p.vz*dt/1000;
     p.m.rotation.z+=p.rz*dt/1000; p.m.rotation.x+=p.rx*dt/1000;
@@ -678,15 +802,15 @@ function frame(now){
     if(p.t>1.6){ holder.remove(p.m); p.m.geometry.dispose(); pieces.splice(i,1); }
   }
 
-  pb = (ptrVisible&&stage==="trace") ? screenToBoard(cur.x,cur.y) : null;
-  const h=computeHover(); hv.dom=h&&h.dom;
+  refreshHover();
+  inputStep(now,dt);
+  const h=H0;
   if(h&&h.dom){ document.querySelectorAll(".dw").forEach(e=>e.classList.toggle("hover",e===h.el)); }
   else document.querySelectorAll(".dw.hover").forEach(e=>e.classList.remove("hover"));
-  dwellStep(h,dt);
 
   ptrEl.style.display=ptrVisible?"block":"none";
   ptrEl.style.transform=`translate(${cur.x}px,${cur.y}px)`;
-  pring.style.strokeDashoffset=String(119.4*(1-Math.min(1,dProg/dNeed)));
+  pring.style.strokeDashoffset=String(119.4*(1-ringP));
 
   if(sideDirty) renderSide();
   renderCheck();
@@ -695,14 +819,39 @@ function frame(now){
   else { msgEl.textContent=contextHint(); msgEl.className=""; }
   msgEl.style.display=msgEl.textContent?"block":"none";
 
-  // overlay principal
   const dpr=Math.min(devicePixelRatio,2);
   octx.setTransform(dpr,0,0,dpr,0,0); octx.clearRect(0,0,W,Hh);
-  if(stage==="trace") drawLayer(octx,p=>boardToScreen(p.x,p.y),1,false);
+  if(stage==="trace"){ if(facing) drawLayer(octx,p=>boardToScreen(p.x,p.y),1,false); drawGizmo(octx); }
   drawLupa();
 
   renderer.render(scene,camera);
   requestAnimationFrame(frame);
+}
+/* indicador de ejes X (rojo), Y (verde), Z (azul): flecha en el extremo positivo; giro + = antihorario visto desde la punta */
+const GC=["#ff5a5f","#3ddc84","#4da3ff"], _m1=new THREE.Matrix4(), _m2=new THREE.Matrix4();
+function drawGizmo(ctx){
+  const cx=W-100, cy=238, R=50;
+  _m1.makeRotationX(rad(view.x)); _m2.makeRotationY(rad(view.y));
+  const dirs=[new THREE.Vector3(1,0,0), new THREE.Vector3(0,1,0).applyMatrix4(_m1), new THREE.Vector3(0,0,1).applyMatrix4(_m1.clone().multiply(_m2))];
+  ctx.save(); ctx.fillStyle="#0b1226cc"; ctx.strokeStyle="#ffffff22"; ctx.lineWidth=1;
+  ctx.beginPath(); ctx.roundRect(cx-88,cy-68,176,150,12); ctx.fill(); ctx.stroke();
+  const ord=[0,1,2].sort((i,j)=>dirs[i].z-dirs[j].z);
+  for(const i of ord){
+    const d=dirs[i], ex=cx+d.x*R, ey=cy-d.y*R, col=GC[i], len=Math.hypot(d.x,d.y);
+    ctx.strokeStyle=col; ctx.fillStyle=col; ctx.lineWidth=3; ctx.lineCap="round";
+    if(len>0.12){
+      ctx.beginPath(); ctx.moveTo(cx,cy); ctx.lineTo(ex,ey); ctx.stroke();
+      const a=Math.atan2(-(d.y),d.x); ctx.beginPath();
+      ctx.moveTo(ex+Math.cos(a)*9,ey+Math.sin(a)*9); ctx.lineTo(ex+Math.cos(a+2.5)*9,ey+Math.sin(a+2.5)*9); ctx.lineTo(ex+Math.cos(a-2.5)*9,ey+Math.sin(a-2.5)*9); ctx.closePath(); ctx.fill();
+    } else { ctx.beginPath(); ctx.arc(cx,cy,9,0,7); ctx.stroke(); ctx.beginPath(); ctx.arc(cx,cy,3,0,7); ctx.fill(); }
+    ctx.font="800 13px system-ui"; ctx.textAlign="center"; ctx.textBaseline="middle";
+    ctx.fillText("XYZ"[i], ex+(len>0.12?d.x*12:14), ey-(len>0.12?d.y*12:14));
+  }
+  ctx.font="700 12.5px system-ui"; ctx.textAlign="left"; ctx.textBaseline="alphabetic";
+  const ang=AXN.map(a=>wrapA(U[a]));
+  ang.forEach((v,i)=>{ ctx.fillStyle=GC[i]; ctx.fillText(`${"XYZ"[i]} ${fmtA(v)}`, cx-80+i*58, cy+66); });
+  ctx.font="10.5px system-ui"; ctx.fillStyle="#9fb4e6"; ctx.fillText("+ = antihorario (mano derecha)",cx-80,cy+79);
+  ctx.restore();
 }
 requestAnimationFrame(frame);
 
@@ -710,7 +859,8 @@ window.__t={
   toScreen:(x,y)=>boardToScreen(x,y),
   get s(){return {marks,lines,polyLen:poly.length,cutsDone,stage,errors,checks:ITEMS.map(i=>i[2]()),suela:suelaLen(),tool,anchor:!!anchor};},
   dbg:()=>({sawLock,sawTilt,msgText,dk,dProg:Math.round(dProg),blockPos,tool,anchor,tapeStart,snap:snapShow,cur:{x:Math.round(cur.x),y:Math.round(cur.y)},pb}),
-  EXP, setPtr:(x,y)=>{lastMouse=performance.now();target.x=x;target.y=y;ptrVisible=true;}
+  EXP, U, view, get press(){return press&&press.mode;}, get facing(){return facing;}, setPtr:(x,y)=>{lastMouse=performance.now();target.x=x;target.y=y;ptrVisible=true;},
+  sim:(x,y,p)=>{lastHand=performance.now();handSeen=true;target.x=x;target.y=y;ptrVisible=true;pinched=p;}
 };
 </script>
 </body>
