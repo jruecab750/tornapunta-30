@@ -11,7 +11,7 @@
     background:radial-gradient(ellipse at 50% 30%,#17234a 0%,#0b1124 60%,#060912 100%)}
   canvas{position:fixed;inset:0;width:100%;height:100%;display:block}
   #ov{pointer-events:none}
-  #video{position:fixed;right:14px;top:14px;width:140px;height:105px;object-fit:cover;transform:scaleX(-1);
+  #video{position:fixed;left:196px;top:14px;width:112px;height:84px;object-fit:cover;transform:scaleX(-1);
     opacity:.3;border-radius:10px;border:1px solid #ffffff22;pointer-events:none;display:none}
   #status{position:fixed;left:14px;top:14px;display:flex;align-items:center;gap:9px;font-size:13px;
     padding:6px 12px;border-radius:999px;background:#0b1226cc;border:1px solid #ffffff1a;max-width:34vw}
@@ -22,7 +22,7 @@
     border:1px solid #35e0ff55}
   #msg.err{border-color:#ff5a5f;background:#2a0f16ee}
   #msg.ok{border-color:#3ddc84;background:#0e2619ee}
-  #bottom{position:fixed;left:0;right:0;bottom:0;height:238px;display:grid;grid-template-columns:1fr auto 1fr;
+  #bottom{position:fixed;left:0;right:auto;width:610px;bottom:0;height:238px;display:grid;grid-template-columns:1fr;
     gap:18px;padding:10px 18px 14px;background:linear-gradient(to top,#050810ee 70%,#05081000)}
   #check{display:grid;grid-template-columns:repeat(3,1fr);gap:12px;font-size:12.5px;line-height:1.25;overflow:hidden}
   #check h4{margin:0 0 5px;font-size:12px;letter-spacing:.08em;text-transform:uppercase;color:#8fb4ff}
@@ -30,18 +30,18 @@
   #check div.it.done{opacity:1;color:#8cf0b4}
   #check div.it.next{opacity:1;color:#fff;font-weight:700}
   #check .bx{flex:none;width:15px;height:15px;border:1.5px solid currentColor;border-radius:4px;font-size:11px;line-height:12px;text-align:center}
-  #tools{display:flex;gap:10px;align-items:flex-end;padding-bottom:4px}
+  #tools{position:fixed;right:14px;top:56px;z-index:4;display:flex;flex-direction:column;gap:8px}
   .tbtn,.dw.btn{position:relative;border-radius:16px;background:#14203f;border:2px solid #ffffff22;text-align:center;
     font-weight:700;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:2px;user-select:none}
-  .tbtn{width:124px;height:124px;font-size:16px}
-  .tbtn .ic{font-size:46px;line-height:1}
+  .tbtn{width:124px;height:96px;font-size:15px}
+  .tbtn .ic{font-size:36px;line-height:1}
   .tbtn.sel{border-color:#35e0ff;background:#10324a}
   .dw.hover{border-color:#fff !important;box-shadow:0 0 22px #35e0ffaa;background:#1b3a63}
-  #side{display:flex;flex-direction:column;gap:6px;font-size:13px;overflow:auto;padding-right:96px}
+  #side{position:fixed;right:148px;bottom:56px;width:236px;max-height:300px;z-index:4;display:flex;flex-direction:column;gap:6px;font-size:12.5px;overflow:hidden}
   #side .row{display:flex;gap:8px;flex-wrap:wrap}
   #side .btn{padding:10px 14px;font-size:15px;min-width:86px;height:56px}
   #side .btn.sel{border-color:#ffb020;background:#3a2c0c}
-  #side .big{font-size:19px;height:70px;min-width:230px;background:#0f4a2c;border-color:#3ddc84}
+  #side .big{font-size:17px;height:70px;min-width:0 !important;width:100%;background:#0f4a2c;border-color:#3ddc84}
   #side .small{height:36px;font-size:12px;padding:4px 10px;min-width:0;border-radius:10px}
   #side .rep{background:#0e2619;border:1px solid #3ddc84;border-radius:12px;padding:8px 12px;line-height:1.4;font-size:13.5px}
   #lupa{position:fixed;width:200px;height:200px;border-radius:50%;border:3px solid #35e0ff;overflow:hidden;display:none;
@@ -51,27 +51,28 @@
   #ptr svg{width:100%;height:100%;transform:rotate(-90deg)}
   #ptr .c0{fill:#35e0ff22;stroke:#35e0ff;stroke-width:3}
   #ptr.pinch .c0{fill:#ffb02077;stroke:#ffb020}
-  #panel{position:fixed;left:14px;top:56px;width:236px;z-index:4;display:flex;flex-direction:column;gap:10px}
-  #panel .row{padding:9px 12px 11px;border-radius:14px;background:#0b1226d9;border:1px solid #ffffff1a}
-  #panel label{display:flex;justify-content:space-between;font-size:12px;letter-spacing:.06em;font-weight:700;opacity:.85;margin-bottom:6px}
+  #panel{position:fixed;right:148px;left:auto;top:56px;width:236px;z-index:4;display:flex;flex-direction:column;gap:10px}
+  #panel .row{padding:6px 10px 7px;border-radius:14px;background:#0b1226d9;border:1px solid #ffffff1a}
+  #panel label{display:flex;justify-content:space-between;font-size:12px;letter-spacing:.06em;font-weight:700;opacity:.85;margin-bottom:3px}
   #panel label b{color:#35e0ff}
-  .sl{position:relative;height:36px;border-radius:18px;background:#ffffff14;touch-action:none}
+  .sl{position:relative;height:30px;border-radius:15px;background:#ffffff14;touch-action:none}
   .sl .fill{position:absolute;left:0;top:0;bottom:0;border-radius:18px;background:#35e0ff40}
-  .sl .thumb{position:absolute;top:3px;width:30px;height:30px;margin-left:-15px;border-radius:50%;background:#35e0ff;box-shadow:0 0 12px #35e0ff88;transition:transform .05s}
+  .sl .thumb{position:absolute;top:2px;width:26px;height:26px;margin-left:-13px;border-radius:50%;background:#35e0ff;box-shadow:0 0 12px #35e0ff88;transition:transform .05s}
   .sl.on .thumb{background:#ffd60a;box-shadow:0 0 18px #ffd60acc}
   .sl.hover{box-shadow:0 0 0 2px #35e0ff inset} .sl.hover .thumb{background:#ffd60a}
-  #nomen{position:fixed;right:14px;top:246px;width:170px;z-index:3;border-radius:10px;overflow:hidden;border:1px solid #ffffff33;background:#fff;pointer-events:none}
+  #nomen{position:fixed;left:14px;top:178px;width:170px;z-index:3;border-radius:10px;overflow:hidden;border:1px solid #ffffff33;background:#fff;pointer-events:none}
   #nomen img{display:block;width:100%}
   #orbit{align-self:center;width:124px;height:124px;border-radius:50%;position:relative;touch-action:none;border:2px solid #ffffff44;user-select:none}
   #orbit::before{content:"";position:absolute;inset:16%;border-radius:50%;border:1.5px dashed #0008;box-shadow:0 0 0 1px #fff5}
   #orbit.hover{border-color:#35e0ff;box-shadow:0 0 18px #35e0ffcc}
   #orbit.on{border-color:#ffd60a;box-shadow:0 0 22px #ffd60add}
   #orbitlab{font-size:11px;text-align:center;opacity:.75;margin-top:-6px;white-space:nowrap}
-  #mini{position:fixed;right:14px;top:354px;width:170px;height:100px;z-index:3;border-radius:10px;border:1px solid #ffffff44;pointer-events:none}
+  #mini{position:fixed;left:14px;top:296px;width:170px;height:100px;z-index:3;border-radius:10px;border:1px solid #ffffff44;pointer-events:none}
   #mini span{position:absolute;left:6px;top:3px;font-size:10px;font-weight:700;letter-spacing:.05em;color:#cfe0ff}
   #l3svg{position:fixed;inset:0;width:100%;height:100%;z-index:3;pointer-events:none}
   .l3{position:fixed;z-index:4;pointer-events:none;padding:3px 9px;border-radius:8px;font-size:12px;font-weight:800;letter-spacing:.04em;background:#0b1226e6;border:2px solid #fff;transform:translate(-50%,-50%);white-space:nowrap;display:none}
-  #front{height:40px;font-size:14px;padding:6px 12px;border-radius:12px}
+  .trow{display:flex;gap:8px}
+  .trow .btn{flex:1;height:36px;font-size:12px;padding:2px 4px;min-width:0;border-radius:10px}
   #ptr .c1{fill:none;stroke:#fff;stroke-width:4;stroke-dasharray:119.4;stroke-dashoffset:119.4;stroke-linecap:round}
   #start{position:fixed;inset:0;display:flex;align-items:center;justify-content:center;background:#060912e6;z-index:20}
   #start .card{max-width:600px;padding:28px 34px;border-radius:18px;background:#101a36;border:1px solid #ffffff1f;text-align:center}
@@ -103,9 +104,9 @@
 <div id="panel">
   <div class="row"><label>ZOOM <b id="zv"></b></label><div class="sl" id="slZoom"><div class="fill"></div><div class="thumb"></div></div></div>
   <div class="row"><label>SENSIBILIDAD <b id="sv"></b></label><div class="sl" id="slSens"><div class="fill"></div><div class="thumb"></div></div></div>
-  <div id="front" class="dw btn small" data-key="front">⟲ Vista frontal (ejes a 0°)</div>
-  <div id="voiceBtn" class="dw btn small" data-key="voice" style="height:34px;font-size:13px;padding:4px 12px"></div>
-  <div id="orbit"></div><div id="orbitlab">Cubo: pellizca una cara · arrastra = girar</div>
+  <div class="trow"><div id="front" class="dw btn small" data-key="front">⟲ Frontal</div><div id="voiceBtn" class="dw btn small" data-key="voice"></div></div>
+  <div class="trow"><div id="modeBtn" class="dw btn small" data-key="clickmode"></div><div id="calBtn" class="dw btn small" data-key="calib">🎯 Calibrar</div></div>
+  <div id="orbit"></div><div id="orbitlab">Cubo: pellizca una cara · o arrastra el fondo</div>
 </div>
 <div id="mini"><span>MONTAJE FINAL</span></div>
 <svg id="l3svg"></svg>
@@ -118,7 +119,7 @@
 <div id="start">
   <div class="card">
     <h1>Tornapunta a 30°</h1>
-    <p>Traza con el <b>lápiz</b>, mide con el <b>flexómetro</b> y corta con el <b>serrucho</b> con la mano: <b>pellizca</b> (pulgar + índice) sobre cada punto o botón para pulsarlo. Para girar la tabla usa el <b>cubo</b> de la izquierda: pellizca una cara para ver la tabla desde ella, o arrastra dentro para girar de 15° en 15°.<br>El vídeo no sale de tu equipo.</p>
+    <p>Traza con el <b>lápiz</b>, mide con el <b>flexómetro</b> y corta con el <b>serrucho</b> con la mano: <b>señala con el índice</b> y <b>dobla el pulgar</b> para hacer clic (al empezar hay una calibración de 5 s; también puedes cambiar a pellizco). Para girar la tabla usa el <b>cubo</b> de la izquierda: pellizca una cara para ver la tabla desde ella, o pellizca el fondo vacío y arrastra para girar de 15° en 15°.<br>El vídeo no sale de tu equipo.</p>
     <button id="go">Activar cámara</button>
     <button id="mouse">Probar con ratón</button>
   </div>
@@ -437,7 +438,7 @@ const AXN=["x","y","z"];
 
 /* ---- barras de zoom y sensibilidad ---- */
 let zoomPct=100, sensPct=35;
-let phaseKey=null, fxT=50, fx=50, fy=5, fwT=0, fw=0, zoomV=100; const _fv=new THREE.Vector3();
+let phaseKey=null, fxT=50, fx=50, fy=5, fwT=0, fw=0, zoomV=100, foT=0.11, fo=0.11; const _fv=new THREE.Vector3();
 try{ zoomPct=+localStorage.getItem("tp_zoomPct")||zoomPct; sensPct=+localStorage.getItem("tp_sensPct")||sensPct; }catch(e){}
 const SLIDERS=[
   {el:document.getElementById("slZoom"), lab:"zv", min:60, max:200, step:5, key:"tp_zoomPct", get:()=>zoomPct, set:v=>{zoomPct=v;}},
@@ -624,6 +625,8 @@ function fire(h){
   else if(k==="undo") undo();
   else if(k==="redo") redo();
   else if(k==="begin") beginTrace();
+  else if(k==="clickmode"){ clickMode=clickMode==="thumb"?"pinch":"thumb"; try{localStorage.setItem("tp_click",clickMode)}catch(e){} paintMode(); say(clickMode==="thumb"?"Clic: doblar el pulgar (señala con el índice)":"Clic: pellizco pulgar+índice","ok",2500); }
+  else if(k==="calib"){ if(landmarker) startCal(); else say("La calibración necesita la cámara activada","err",3000); }
   else if(k==="voice"){ voiceOn=!voiceOn; try{localStorage.setItem("tp_voice",voiceOn?"1":"0")}catch(e){} if(!voiceOn&&synth) synth.cancel(); paintVoice(); lastNar=null; }
   else if(k==="front"){ for(const a of AXN) U[a]-=wrapA(U[a]); say("Vista frontal: ejes X, Y, Z a 0°","ok",2000); }
   else if(k==="reset") resetAll();
@@ -665,11 +668,14 @@ function pressStart(now){
     const g=padGeo(); press.mode="orbit"; press.base={x:U.x,y:U.y,z:U.z}; press.n={x:0,y:0,z:0};
     press.ring=Math.hypot(cur.x-g.cx,cur.y-g.cy)>g.r*0.68; padEl.classList.add("on");
   }
+  else if(stage!=="mounting"&&!(H0&&H0.dom)&&!(stage==="trace"&&pb&&pb.x>-1.5&&pb.x<L+1.5&&pb.y>-1.5&&pb.y<HH+1.5)){
+    press.bgCand=true;   // pellizcar el fondo y arrastrar (>28 px) gira la vista; si no se mueve, sigue siendo un clic
+  }
 }
 function pressEnd(now){
   const P=press; press=null; if(!P) return;
   padEl.classList.remove("on");
-  if(P.mode==="orbit"&&!P.n.x&&!P.n.y&&!P.n.z){ const fi=pickFace(P.pos.x,P.pos.y); if(fi>=0) goFace(fi); }
+  if(P.mode==="orbit"&&!P.bg&&!P.n.x&&!P.n.y&&!P.n.z){ const fi=pickFace(P.pos.x,P.pos.y); if(fi>=0) goFace(fi); }
   if(P.sl){ P.sl.el.classList.remove("on"); P.sl.el.querySelector(".thumb").style.transform=""; }
   if(P.mode==="pending"){
     const h=P.h;
@@ -707,11 +713,12 @@ function inputStep(now,dt){
     const r=P.sl.el.getBoundingClientRect(), gain=P.hand?GAIN_HAND:1;
     setSlider(P.sl,P.v0+(cur.x-P.x0)/r.width*(P.sl.max-P.sl.min)*gain);
   } else if(P.mode==="pending"){
+    if(P.bgCand&&Math.hypot(target.x-P.raw.x,target.y-P.raw.y)>DRAG_PX){ P.mode="orbit"; P.bg=true; P.base={x:U.x,y:U.y,z:U.z}; P.n={x:0,y:0,z:0}; P.ring=false; P.raw={x:target.x,y:target.y}; P.pos={x:cur.x,y:cur.y}; say("Girando la vista…","",1200); return; }
     P.h=H0;
     if(P.h&&P.h.key==="reset") ringP=Math.min(1,(now-P.t)/RESET_MS);
   } else if(P.mode==="orbit"){
     const g=padGeo();
-    if(Math.hypot(cur.x-g.cx,cur.y-g.cy)>g.r+8){                 // al salir de la esfera, la tabla deja de moverse
+    if(!P.bg&&Math.hypot(cur.x-g.cx,cur.y-g.cy)>g.r+8){                 // al salir de la esfera, la tabla deja de moverse
       P.mode="none"; padEl.classList.remove("on"); say("Fuera del cubo: la tabla queda quieta","",1600);
     } else if(stage!=="mounting"){
       const stepPx=700/sensPct, dx=target.x-P.raw.x, dy=target.y-P.raw.y, out={};
@@ -932,7 +939,7 @@ function pickVoice(){
 }
 if(synth){ pickVoice(); synth.onvoiceschanged=pickVoice; }
 function speak(t){ if(!voiceOn||!synth||!t) return; try{ synth.cancel(); const u=new SpeechSynthesisUtterance(t); u.lang=voiceObj?voiceObj.lang:"es-ES"; if(voiceObj) u.voice=voiceObj; u.rate=0.95; u.pitch=1; u.volume=1; synth.speak(u); }catch(e){} }
-function paintVoice(){ const b=document.getElementById("voiceBtn"); if(b) b.textContent=voiceOn?"🔊 Voz activada":"🔇 Voz desactivada"; }
+function paintVoice(){ const b=document.getElementById("voiceBtn"); if(b) b.textContent=voiceOn?"🔊 Voz":"🔇 Sin voz"; }
 function narrate(){
   if(navigator.userActivation&&!navigator.userActivation.hasBeenActive) return;
   let key;
@@ -963,7 +970,7 @@ function renderSide(){
   document.querySelectorAll(".tbtn[data-key^='tool:']").forEach(b=>b.classList.toggle("sel",b.dataset.key==="tool:"+tool&&stage==="trace"));
   let h="";
   if(stage==="intro"){
-    h+=`<div class="rep" style="background:#0e1f3a;border-color:#35e0ff"><b>Así quedará el tornapunta montado.</b><br>Gira el cubo (izquierda) para verlo desde todos los lados: el apuntalamiento se mueve con ella.</div><div class="dw btn big" data-key="begin" style="min-width:300px;height:76px;font-size:16px;line-height:1.2">COMENZAR A TRAZAR Y CORTAR EL TORNAPUNTA</div>`;
+    h+=`<div class="rep" style="background:#0e1f3a;border-color:#35e0ff"><b>Así quedará el tornapunta montado.</b><br>Gira el cubo (o arrastra el fondo) para verlo desde todos los lados: el apuntalamiento se mueve con ella.</div><div class="dw btn big" data-key="begin" style="height:76px;font-size:15px;line-height:1.2">COMENZAR A TRAZAR Y CORTAR EL TORNAPUNTA</div>`;
   } else if(stage==="mounted"){
     const s=suelaLen(), secs=Math.round((performance.now()-tStart)/1000);
     h+=`<div class="rep"><b>¡Tornapunta montado a 30°!</b><br>Durmientes 5 × 15 cm · ejiones 20 × 3 cm<br>Suela P–Q = <b>${isNaN(s)?"—":f1(s)} cm</b> (objetivo ${f1(EXP.P.x-EXP.Q.x>0?Math.hypot(EXP.P.x-EXP.Q.x,EXP.P.y-EXP.Q.y):0)} cm)<br>Errores: ${errors} · Tiempo: ${Math.floor(secs/60)} min ${secs%60} s</div>`;
@@ -971,10 +978,10 @@ function renderSide(){
     h+=`<div class="dw btn big" data-key="mount">MONTAR A 30°</div>`;
   } else if(stage==="trace" && tool==="saw" && sawLock!=null){
     h+=sawSvg()+`<div class="row">`;
-    for(const a of [90,60,45]) h+=`<div class="dw btn ${sawTilt===a?"sel":""}" data-key="tilt:${a}" style="${a===90?"min-width:170px;font-size:13px;height:48px;line-height:1.15":"height:48px;min-width:78px;font-size:13px;padding:4px 8px"}">${a===90?"90° perpendicular a la cara de la tabla":a+"° (a bisel)"}</div>`;
-    h+=`</div>${cutErr?`<div class="rep" style="border-color:#ff5a5f;background:#2a0f16;color:#ffd0d3">${cutErr}</div>`:""}<div class="row"><div class="dw btn big" style="min-width:150px;height:56px;font-size:17px" data-key="cut">CORTAR</div><div class="dw btn small" data-key="sawcancel">Cancelar</div></div>`;
+    for(const a of [90,60,45]) h+=`<div class="dw btn ${sawTilt===a?"sel":""}" data-key="tilt:${a}" style="min-width:0;flex:${a===90?"1.7":"1"};font-size:12px;height:46px;line-height:1.1;padding:2px 4px">${a===90?"90° perpendicular a la cara":a+"° bisel"}</div>`;
+    h+=`</div>${cutErr?`<div class="rep" style="border-color:#ff5a5f;background:#2a0f16;color:#ffd0d3;font-size:11.5px;line-height:1.25;padding:5px 8px;max-height:84px;overflow:hidden">${cutErr}</div>`:""}<div class="row" style="flex-wrap:nowrap"><div class="dw btn big" style="flex:1;height:50px;font-size:16px;width:auto" data-key="cut">CORTAR</div><div class="dw btn small" data-key="sawcancel">Cancelar</div></div>`;
   } else {
-    h+=`<div style="opacity:.85;line-height:1.45"><b>Pellizca</b> (pulgar + índice) sobre un punto, línea o botón para pulsarlo.<br><b>Cubo</b> (izquierda): pellizca una cara para ver la tabla desde ella, o arrastra para girar de 15° en 15° (anillo exterior = Z). Fuera del cubo la tabla no se mueve.<br>Tabla: ${L} × ${HH} cm · ejión h = ${H} cm · θ = ${TH}°</div>`;
+    h+=`<div style="opacity:.85;line-height:1.45"><b>Clic:</b> señala con el índice y dobla el pulgar (o pellizca) sobre un punto, línea o botón.<br><b>Vista:</b> pellizca una cara del cubo, o pellizca el <b>fondo vacío</b> y arrastra para girar de 15° en 15° (anillo del cubo = Z). Sobre la tabla el pellizco solo traza.<br>Tabla: ${L} × ${HH} cm · ejión h = ${H} cm · θ = ${TH}°</div>`;
   }
   $("resetBtn").style.display=(stage==="mounting"||stage==="intro")?"none":"flex"; $("tools").style.opacity=stage==="trace"?1:.35;
   sideEl.innerHTML=h;
@@ -1012,6 +1019,28 @@ async function startCamera(){
 $("go").addEventListener("click",startCamera);
 $("mouse").addEventListener("click",()=>{ $("start").style.display="none"; setStatus("Modo ratón (prueba)"); });
 const clamp=v=>Math.max(0,Math.min(1,v));
+let clickMode="thumb"; try{ clickMode=localStorage.getItem("tp_click")||"thumb"; }catch(e){}
+let CAL={d0:1.25,d1:0.60,a0:165,a1:125}, calOk=false; try{ const c=JSON.parse(localStorage.getItem("tp_cal")||"null"); if(c&&c.d0){ CAL=c; calOk=true; } }catch(e){}
+let pinchG=false, thumbOn=false, thumbS=0, thumbFrames=0, cal=null;
+const med=a=>{ const b=[...a].sort((x,y)=>x-y); return b[b.length>>1]; };
+function thumbMetrics(Lm,palm){
+  const d=Math.hypot(Lm[4].x-Lm[5].x,Lm[4].y-Lm[5].y)/palm;
+  const v1={x:Lm[2].x-Lm[3].x,y:Lm[2].y-Lm[3].y}, v2={x:Lm[4].x-Lm[3].x,y:Lm[4].y-Lm[3].y};
+  const ang=Math.acos(Math.max(-1,Math.min(1,(v1.x*v2.x+v1.y*v2.y)/((Math.hypot(v1.x,v1.y)*Math.hypot(v2.x,v2.y))||1))))*180/Math.PI;
+  return {d,ang}; }
+function thumbScore(m){ const sd=(CAL.d0-m.d)/Math.max(0.15,CAL.d0-CAL.d1), sa=(CAL.a0-m.ang)/Math.max(15,CAL.a0-CAL.a1);
+  return Math.max(0,Math.min(1,0.6*sd+0.4*sa)); }
+function startCal(){ cal={ph:1,t0:performance.now(),A:[],B:[]}; pinched=false; pinchG=false; thumbOn=false; }
+function stepCal(now,m){
+  const t=(now-cal.t0)/1000;
+  if(cal.ph===1){ say(`Calibración 1/2: señala con el índice y deja el pulgar RELAJADO… ${Math.max(0,Math.ceil(2.4-t))}`,"ok",400); if(t>1&&m) cal.A.push(m); if(t>=2.4){ cal.ph=2; cal.t0=now; } }
+  else if(cal.ph===2){ say(`Calibración 2/2: ahora DOBLA el pulgar como si hicieras clic y mantenlo… ${Math.max(0,Math.ceil(2.6-t))}`,"ok",400); if(t>1.2&&m) cal.B.push(m); if(t>=2.6){
+      if(cal.A.length>5&&cal.B.length>5){ const c={d0:med(cal.A.map(x=>x.d)),d1:med(cal.B.map(x=>x.d)),a0:med(cal.A.map(x=>x.ang)),a1:med(cal.B.map(x=>x.ang))};
+        if(c.d0-c.d1<0.1&&c.a0-c.a1<12){ say("No se distingue el gesto: repite doblando más el pulgar (botón Calibrar)","err",6000); }
+        else { CAL=c; calOk=true; try{localStorage.setItem("tp_cal",JSON.stringify(c))}catch(e){} say("Calibrado ✓ Ya puedes clicar doblando el pulgar","ok",4000); }
+      } else say("No he visto bien tu mano: repite (botón Calibrar)","err",5000);
+      cal=null; } }
+}
 function detectHand(now){
   if(!landmarker||video.readyState<2||video.currentTime===lastVT) return;
   lastVT=video.currentTime;
@@ -1021,15 +1050,26 @@ function detectHand(now){
     const palm=Math.hypot(Lm[5].x-Lm[17].x,Lm[5].y-Lm[17].y)||0.1;
     const raw=Math.hypot(t4.x-t8.x,t4.y-t8.y)/palm;            // pulgar–índice relativo al tamaño de la mano
     ratioS=ratioS<0?raw:ratioS*0.5+raw*0.5; const ratio=ratioS;
-    if(!pinched&&ratio<0.45){ if(++pinchFrames>=2){pinched=true;pinchFrames=0;} }
-    else if(pinched&&ratio>0.72){ if(++pinchFrames>=3){pinched=false;pinchFrames=0;} }
+    if(!pinchG&&ratio<0.45){ if(++pinchFrames>=2){pinchG=true;pinchFrames=0;} }
+    else if(pinchG&&ratio>0.72){ if(++pinchFrames>=3){pinchG=false;pinchFrames=0;} }
     else pinchFrames=0;
-    const mx=(t4.x+t8.x)/2, my=(t4.y+t8.y)/2;                    // puntero = punto medio pulgar–índice
-    target.x=clamp(((1-mx)-0.10)/0.80)*W; target.y=clamp((my-0.08)/0.78)*Hh;
+    const m=thumbMetrics(Lm,palm);
+    thumbS=thumbS*0.5+thumbScore(m)*0.5;
+    if(!thumbOn&&thumbS>0.62){ if(++thumbFrames>=2){thumbOn=true;thumbFrames=0;} }
+    else if(thumbOn&&thumbS<0.38){ if(++thumbFrames>=2){thumbOn=false;thumbFrames=0;} }
+    else thumbFrames=0;
+    if(!cal&&clickMode==="thumb"&&!calOk&&!window.__calAsked){ window.__calAsked=true; startCal(); }
+    if(cal) stepCal(now,m);
+    pinched = cal ? false : (clickMode==="thumb" ? (thumbOn||pinchG) : pinchG);
+    const px=clickMode==="thumb"?t8.x:(t4.x+t8.x)/2, py=clickMode==="thumb"?t8.y:(t4.y+t8.y)/2;   // puntero = punta del índice (modo pulgar) o punto medio (pellizco)
+    target.x=clamp(((1-px)-0.10)/0.80)*W; target.y=clamp((py-0.08)/0.78)*Hh;
     if(!ptrVisible){cur.x=target.x;cur.y=target.y;}
-    ptrVisible=true; lastHand=now; handSeen=true; setStatus(`${pinched?"Pellizco":"Mano detectada"} · ${ratio.toFixed(2)}`,"ok");
+    ptrVisible=true; lastHand=now; handSeen=true;
+    setStatus(clickMode==="thumb"?`${pinched?"CLIC":"Señalando"} · pulgar ${(thumbS*100)|0}%`:`${pinched?"Pellizco":"Mano detectada"} · ${ratio.toFixed(2)}`,"ok");
   } else if(now-lastHand>500) setStatus("Muestra tu mano a la cámara","ok");
 }
+function paintMode(){ const b=document.getElementById("modeBtn"); if(b) b.textContent=clickMode==="thumb"?"👍 Clic: pulgar":"🤏 Clic: pellizco"; }
+paintMode();
 
 /* ================= BUCLE ================= */
 resetAll();
@@ -1038,7 +1078,7 @@ function frame(now){
   const dt=Math.min(100,now-prev); prev=now;
   detectHand(now);
   hist.push({t:now,x:target.x,y:target.y}); while(hist.length&&now-hist[0].t>500) hist.shift();
-  if(now-lastHand>(press?1000:500)&&now-lastMouse>1000&&handSeen){ ptrVisible=false; pinched=false; ratioS=-1; }
+  if(now-lastHand>(press?1000:500)&&now-lastMouse>1000&&handSeen){ ptrVisible=false; pinched=false; pinchG=false; thumbOn=false; ratioS=-1; }
   if(press&&press.mode==="pending"){ cur.x=press.pos.x; cur.y=press.pos.y; }   // el clic no se desplaza al cerrar los dedos
   else { const k=pinched?0.5:0.35; cur.x+=(target.x-cur.x)*k; cur.y+=(target.y-cur.y)*k; }
 
@@ -1050,11 +1090,11 @@ function frame(now){
     stageG.updateMatrixWorld(true);
     const ph=phaseOf();
     if(ph!==phaseKey){ phaseKey=ph;
-      if(ph==="pie"||ph==="head"){ fxT=ph==="pie"?L:0; fwT=1; setSlider(SLIDERS[0],150); say(ph==="pie"?"Zoom al extremo del PIE (punto E)":"Zoom al extremo de la CABEZA (punto E′)","",2600); }
+      if(ph==="pie"||ph==="head"){ fxT=ph==="pie"?L:0; foT=ph==="pie"?0.11:-0.4; fwT=1; setSlider(SLIDERS[0],130); say(ph==="pie"?"Zoom al extremo del PIE (punto E)":"Zoom al extremo de la CABEZA (punto E′)","",2600); }
       else { fwT=0; setSlider(SLIDERS[0],100); } }
-    fw+=(fwT-fw)*f2; fx+=(fxT-fx)*f2;
+    fw+=(fwT-fw)*f2; fx+=(fxT-fx)*f2; fo+=(foT-fo)*f2;
     const dz=camZ0/zoomK; _fv.set(fx,fy,T/2); holder.localToWorld(_fv);
-    camera.position.set(fw*_fv.x, fw*(_fv.y-0.29*dz*Math.tan(rad(15))), dz);
+    camera.position.set(fw*(_fv.x-fo*dz*Math.tan(rad(15))*camera.aspect), fw*(_fv.y-0.29*dz*Math.tan(rad(15))), dz);
   } else {
     const fin=stage!=="mounting", p=fin?1:Math.min(1,(now-mountT0)/2600), e=ease(p);
     piv.rotation.set(rad(view0.x)*(1-e),rad(view0.y)*(1-e),rad(view0.z)*(1-e));
@@ -1117,7 +1157,7 @@ function frame(now){
 /* indicador de ejes X (rojo), Y (verde), Z (azul): flecha en el extremo positivo; giro + = antihorario visto desde la punta */
 const GC=["#ff5a5f","#3ddc84","#4da3ff"], _m1=new THREE.Matrix4(), _m2=new THREE.Matrix4();
 function drawGizmo(ctx){
-  const x0=W-184, y0=124, w=170, h=114, cx=x0+w/2, cy=y0+46, R=34;
+  const x0=14, y0=56, w=170, h=114, cx=x0+w/2, cy=y0+46, R=34;
   _m1.makeRotationX(rad(view.x)); _m2.makeRotationY(rad(view.y));
   const dirs=[new THREE.Vector3(1,0,0), new THREE.Vector3(0,1,0).applyMatrix4(_m1), new THREE.Vector3(0,0,1).applyMatrix4(_m1.clone().multiply(_m2))];
   ctx.save(); ctx.fillStyle="#0b1226cc"; ctx.strokeStyle="#ffffff22"; ctx.lineWidth=1;
@@ -1145,7 +1185,7 @@ window.__t={
   toScreen:(x,y)=>boardToScreen(x,y),
   get s(){return {marks,lines,polyLen:poly.length,cutsDone,stage,errors,checks:ITEMS.map(i=>i[2]()),suela:suelaLen(),tool,anchor:!!anchor};},
   dbg:()=>({sawLock,sawTilt,msgText,dk,dProg:Math.round(dProg),blockPos,tool,anchor,tapeStart,snap:snapShow,cur:{x:Math.round(cur.x),y:Math.round(cur.y)},pb}),
-  hover:()=>H0&&{key:H0.key,dom:H0.dom}, pbv:()=>pb, EXP, U, view, get press(){return press&&press.mode;}, get facing(){return facing;}, setPtr:(x,y)=>{lastMouse=performance.now();target.x=x;target.y=y;ptrVisible=true;},
+  thumb:(Lm,palm)=>thumbScore(thumbMetrics(Lm,palm)), hover:()=>H0&&{key:H0.key,dom:H0.dom}, pbv:()=>pb, EXP, U, view, get press(){return press&&press.mode;}, get facing(){return facing;}, setPtr:(x,y)=>{lastMouse=performance.now();target.x=x;target.y=y;ptrVisible=true;},
   sim:(x,y,p)=>{lastHand=performance.now();handSeen=true;target.x=x;target.y=y;ptrVisible=true;pinched=p;}
 };
 </script>
