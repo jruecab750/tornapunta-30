@@ -22,7 +22,7 @@
     border:1px solid #35e0ff55}
   #msg.err{border-color:#ff5a5f;background:#2a0f16ee}
   #msg.ok{border-color:#3ddc84;background:#0e2619ee}
-  #bottom{position:fixed;left:0;right:0;bottom:0;height:238px;display:grid;grid-template-columns:1.25fr auto 1fr;
+  #bottom{position:fixed;left:0;right:0;bottom:0;height:238px;display:grid;grid-template-columns:1fr auto 1fr;
     gap:18px;padding:10px 18px 14px;background:linear-gradient(to top,#050810ee 70%,#05081000)}
   #check{display:grid;grid-template-columns:repeat(3,1fr);gap:12px;font-size:12.5px;line-height:1.25;overflow:hidden}
   #check h4{margin:0 0 5px;font-size:12px;letter-spacing:.08em;text-transform:uppercase;color:#8fb4ff}
@@ -30,11 +30,11 @@
   #check div.it.done{opacity:1;color:#8cf0b4}
   #check div.it.next{opacity:1;color:#fff;font-weight:700}
   #check .bx{flex:none;width:15px;height:15px;border:1.5px solid currentColor;border-radius:4px;font-size:11px;line-height:12px;text-align:center}
-  #tools{display:flex;gap:12px;align-items:flex-end;padding-bottom:4px}
+  #tools{display:flex;gap:10px;align-items:flex-end;padding-bottom:4px}
   .tbtn,.dw.btn{position:relative;border-radius:16px;background:#14203f;border:2px solid #ffffff22;text-align:center;
     font-weight:700;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:2px;user-select:none}
-  .tbtn{width:112px;height:104px;font-size:14px}
-  .tbtn .ic{font-size:38px;line-height:1}
+  .tbtn{width:124px;height:124px;font-size:16px}
+  .tbtn .ic{font-size:46px;line-height:1}
   .tbtn.sel{border-color:#35e0ff;background:#10324a}
   .dw.hover{border-color:#fff !important;box-shadow:0 0 22px #35e0ffaa;background:#1b3a63}
   #side{display:flex;flex-direction:column;gap:6px;font-size:13px;overflow:auto;padding-right:96px}
@@ -62,11 +62,11 @@
   .sl.hover{box-shadow:0 0 0 2px #35e0ff inset} .sl.hover .thumb{background:#ffd60a}
   #nomen{position:fixed;right:14px;top:246px;width:170px;z-index:3;border-radius:10px;overflow:hidden;border:1px solid #ffffff33;background:#fff;pointer-events:none}
   #nomen img{display:block;width:100%}
-  #orbit{align-self:center;width:104px;height:104px;border-radius:50%;position:relative;touch-action:none;border:2px solid #ffffff44;user-select:none}
+  #orbit{align-self:center;width:112px;height:112px;border-radius:50%;position:relative;touch-action:none;border:2px solid #ffffff44;user-select:none}
   #orbit::before{content:"";position:absolute;inset:16%;border-radius:50%;border:1.5px dashed #0008;box-shadow:0 0 0 1px #fff5}
   #orbit.hover{border-color:#35e0ff;box-shadow:0 0 18px #35e0ffcc}
   #orbit.on{border-color:#ffd60a;box-shadow:0 0 22px #ffd60add}
-  #orbitlab{font-size:11px;text-align:center;opacity:.75;margin-top:-4px}
+  #orbitlab{font-size:11px;text-align:center;opacity:.75;margin-top:-6px;white-space:nowrap}
   #mini{position:fixed;right:14px;top:354px;width:170px;height:100px;z-index:3;border-radius:10px;border:1px solid #ffffff44;pointer-events:none}
   #mini span{position:absolute;left:6px;top:3px;font-size:10px;font-weight:700;letter-spacing:.05em;color:#cfe0ff}
   #l3svg{position:fixed;inset:0;width:100%;height:100%;z-index:3;pointer-events:none}
@@ -95,6 +95,7 @@
     <div class="tbtn dw btn" data-key="tool:flex"><span class="ic">📏</span>Flexómetro</div>
     <div class="tbtn dw btn" data-key="tool:saw"><span class="ic">🪚</span>Serrucho</div>
     <div class="tbtn dw btn" data-key="undo"><span class="ic">↶</span>Deshacer</div>
+    <div class="tbtn dw btn" data-key="redo"><span class="ic">↷</span>Rehacer</div>
   </div>
   <div id="side"></div>
 </div>
@@ -103,7 +104,8 @@
   <div class="row"><label>ZOOM <b id="zv"></b></label><div class="sl" id="slZoom"><div class="fill"></div><div class="thumb"></div></div></div>
   <div class="row"><label>SENSIBILIDAD <b id="sv"></b></label><div class="sl" id="slSens"><div class="fill"></div><div class="thumb"></div></div></div>
   <div id="front" class="dw btn small" data-key="front">⟲ Vista frontal (ejes a 0°)</div>
-  <div id="orbit"></div><div id="orbitlab">Esfera: pellizca dentro y arrastra<br>(anillo = giro en Z)</div>
+  <div id="voiceBtn" class="dw btn small" data-key="voice" style="height:34px;font-size:13px;padding:4px 12px"></div>
+  <div id="orbit"></div><div id="orbitlab">Esfera: arrastra · anillo = Z</div>
 </div>
 <div id="mini"><span>MONTAJE FINAL</span></div>
 <svg id="l3svg"></svg>
@@ -148,10 +150,10 @@ function expected(th, L, h, HH){
 }
 const EXP = expected(TH, L, H, HH);
 const CUTS = [
-  {n:4, x:EXP.O.x,  y:EXP.O.y,  ang:EXP.a4},
-  {n:5, x:EXP.P.x,  y:EXP.P.y,  ang:EXP.a5},
-  {n:6, x:EXP.O2.x, y:EXP.O2.y, ang:EXP.a6},
-  {n:7, x:EXP.P2.x, y:EXP.P2.y, ang:EXP.a7},
+  {n:1, x:EXP.O.x,  y:EXP.O.y,  ang:EXP.a4},
+  {n:2, x:EXP.P.x,  y:EXP.P.y,  ang:EXP.a5},
+  {n:3, x:EXP.O2.x, y:EXP.O2.y, ang:EXP.a6},
+  {n:4, x:EXP.P2.x, y:EXP.P2.y, ang:EXP.a7},
 ];
 const NAMES = [["E",EXP.E],["M",EXP.M],["O",EXP.O],["P",EXP.P],["Q",EXP.Q],
                ["E′",EXP.E2],["M′",EXP.M2],["O′",EXP.O2],["P′",EXP.P2],["Q′",EXP.Q2]];
@@ -206,12 +208,12 @@ const area = p => Math.abs(p.reduce((s,a,i)=>{const b=p[(i+1)%p.length];return s
 /* ================= ESTADO ================= */
 let poly, marks, lines, history, tool, anchor, tapeStart, sawLock, sawTilt, cutsDone, stage, errors, tStart, idc, geoVer;
 let hv = {}, tapeDraw = null, snapShow = null, lastSnap = null, snapCache = null, sideDirty = true;
-let cutErr="", msgText = "", msgKind = "", msgUntil = 0;
+let redoSt=[], cutErr="", msgText = "", msgKind = "", msgUntil = 0;
 
 function resetState(){
   poly=[{x:0,y:0},{x:L,y:0},{x:L,y:HH},{x:0,y:HH}];
   marks=[]; lines=[]; history=[]; tool="pencil"; anchor=null; tapeStart=null; sawLock=null; sawTilt=null;
-  cutsDone=[]; stage="trace"; errors=0; tStart=performance.now(); idc=1; geoVer=1; snapCache=null; sideDirty=true; tapeDraw=null;
+  redoSt=[]; cutsDone=[]; stage="intro"; errors=0; tStart=performance.now(); idc=1; geoVer=1; snapCache=null; sideDirty=true; tapeDraw=null;
 }
 function say(t,k="",ms=4500){ msgText=t; msgKind=k; msgUntil=performance.now()+ms; }
 
@@ -244,13 +246,37 @@ function woodTexture(){
   const t=new THREE.CanvasTexture(c); t.wrapS=t.wrapT=THREE.RepeatWrapping; t.repeat.set(1/22,1/22); t.anisotropy=4; t.colorSpace=THREE.SRGBColorSpace; return t;
 }
 const matTop = new THREE.MeshStandardMaterial({map:woodTexture(), color:0xffffff, roughness:.85});
-const matSide= new THREE.MeshStandardMaterial({color:0xc29a55, roughness:.85});
-const boardMesh = new THREE.Mesh(new THREE.BufferGeometry(), [matTop,matSide]);
+const matSide= new THREE.MeshStandardMaterial({color:0xb48a47, roughness:.9});
+const matCut = new THREE.MeshStandardMaterial({color:0xf6e3b4, roughness:.8});   // madera recién cortada: tono más claro
+const boardMesh = new THREE.Mesh(new THREE.BufferGeometry(), [matTop,matSide,matCut]);
 boardMesh.position.z = -T/2; holder.add(boardMesh);
 
-function geoFromPoly(pts){
+function geoFromPoly(pts,off){
+  off=off||{x:0,y:0};
   const sh = new THREE.Shape(pts.map(p=>new THREE.Vector2(p.x,p.y)));
-  return new THREE.ExtrudeGeometry(sh,{depth:T,bevelEnabled:false});
+  const g = new THREE.ExtrudeGeometry(sh,{depth:T,bevelEnabled:false});
+  const pos=g.attributes.position, nor=g.attributes.normal, uv=g.attributes.uv, grp=g.groups.slice();
+  if(grp.length<2) return g;
+  const sideStart=grp[1].start, sideCount=grp[1].count, e=1e-3, near=(a,b)=>Math.abs(a-b)<e;
+  const orig=[], cut=[];
+  for(let t=0;t<sideCount;t+=3){
+    const i0=sideStart+t, X=[0,1,2].map(k=>pos.getX(i0+k)-off.x), Y=[0,1,2].map(k=>pos.getY(i0+k)-off.y);
+    const on = X.every(v=>near(v,0))||X.every(v=>near(v,L))||Y.every(v=>near(v,0))||Y.every(v=>near(v,HH));
+    (on?orig:cut).push(i0);
+  }
+  const order=[...orig,...cut];
+  const P=new Float32Array(sideCount*3), N=new Float32Array(sideCount*3), U=new Float32Array(sideCount*2);
+  order.forEach((i0,j)=>{ for(let k=0;k<3;k++){ const s0=i0+k, d=j*3+k;
+    P[d*3]=pos.getX(s0);P[d*3+1]=pos.getY(s0);P[d*3+2]=pos.getZ(s0);
+    N[d*3]=nor.getX(s0);N[d*3+1]=nor.getY(s0);N[d*3+2]=nor.getZ(s0); U[d*2]=uv.getX(s0);U[d*2+1]=uv.getY(s0); } });
+  const capN=sideStart, cat=(A,B)=>{ const r=new Float32Array(A.length+B.length); r.set(A); r.set(B,A.length); return r; };
+  const Pc=pos.array.slice(0,capN*3), Nc=nor.array.slice(0,capN*3), Uc=uv.array.slice(0,capN*2);
+  g.setAttribute("position",new THREE.BufferAttribute(cat(Pc,P),3));
+  g.setAttribute("normal",new THREE.BufferAttribute(cat(Nc,N),3));
+  g.setAttribute("uv",new THREE.BufferAttribute(cat(Uc,U),2));
+  g.clearGroups();
+  g.addGroup(0,capN,0); g.addGroup(capN,orig.length*3,1); g.addGroup(capN+orig.length*3,cut.length*3,2);
+  return g;
 }
 function rebuildBoard(){ boardMesh.geometry.dispose(); boardMesh.geometry = geoFromPoly(poly); }
 
@@ -271,8 +297,8 @@ const headX = EXP.P2.x*Math.cos(rad(-TH)) - EXP.P2.y*Math.sin(rad(-TH));
 const BEAM_T=5, BEAM_W=15, EJ_LEN=20;
 box(headX, footX+EJ_LEN+10, -BEAM_T, 0, BEAM_W, mBeamH);          // durmiente horizontal: topa contra el vertical
 box(headX-BEAM_T, headX, -BEAM_T, headY+EJ_LEN+6, BEAM_W, mBeamV); // durmiente vertical: llega hasta el suelo
-box(footX, footX+EJ_LEN, 0, H, BEAM_W, mEj);               // ejión del pie (apoya contra el corte 4)
-box(headX, headX+H, headY, headY+EJ_LEN, BEAM_W, mEj);     // ejión de la cabeza (junto al corte 7)
+box(footX, footX+EJ_LEN, 0, H, BEAM_W, mEj);               // ejión del pie (apoya contra el corte 1)
+box(headX, headX+H, headY, headY+EJ_LEN, BEAM_W, mEj);     // ejión de la cabeza (junto al corte 4)
 const ASM_POS = {x:-((headX-BEAM_T)+(footX+EJ_LEN+10))/2, y:-(headY+EJ_LEN+6-BEAM_T)/2};
 asm.position.set(ASM_POS.x, ASM_POS.y);
 
@@ -289,7 +315,7 @@ mbox(headX-BEAM_T, headX, -BEAM_T, headY+EJ_LEN+6, BEAM_W, SOFT.v);
 mbox(footX, footX+EJ_LEN, 0, H, BEAM_W, SOFT.e);
 mbox(headX, headX+H, headY, headY+EJ_LEN, BEAM_W, SOFT.e);
 { const tw=new THREE.Group(); tw.position.set(0,footY,0); tw.rotation.z=rad(-TH); miniAsm.add(tw);
-  const m=new THREE.Mesh(geoFromPoly(idealPoly()),[matTop,matSide]); m.position.z=-T/2; tw.add(m); }
+  const m=new THREE.Mesh(geoFromPoly(idealPoly()),[matTop,matSide,matCut]); m.position.z=-T/2; tw.add(m); }
 const miniEl=document.getElementById("mini");
 
 /* ---- balón de playa de 4 gajos (2 rojos, 2 blancos): gira igual que la tabla y sus ejes ---- */
@@ -299,8 +325,21 @@ const ballTex=(()=>{ const c=document.createElement("canvas"); c.width=512; c.he
   for(let i=0;i<4;i++){ g.fillStyle=i%2?"#f7f9fc":"#e8403f"; g.fillRect(i*128,0,128,256); }
   g.strokeStyle="#00000030"; g.lineWidth=3; for(let i=0;i<4;i++){ g.beginPath(); g.moveTo(i*128,0); g.lineTo(i*128,256); g.stroke(); }
   const t=new THREE.CanvasTexture(c); t.colorSpace=THREE.SRGBColorSpace; t.wrapS=THREE.RepeatWrapping; return t; })();
-const ball=new THREE.Mesh(new THREE.SphereGeometry(1,48,32),new THREE.MeshStandardMaterial({map:ballTex,roughness:.45}));
-scene3.add(ball);
+const ball=new THREE.Group(); scene3.add(ball);
+ball.add(new THREE.Mesh(new THREE.SphereGeometry(1,48,32),new THREE.MeshStandardMaterial({map:ballTex,roughness:.45})));
+camera3.position.set(0,0,6.6);
+{ const cols=[0xff3b40,0x2ee27a,0x3d8bff], dirs=[new THREE.Vector3(1,0,0),new THREE.Vector3(0,1,0),new THREE.Vector3(0,0,1)];
+  dirs.forEach((d,i)=>{
+    const mat=new THREE.MeshBasicMaterial({color:cols[i]});
+    const sh=new THREE.Mesh(new THREE.CylinderGeometry(.04,.04,1.3,10),mat); sh.position.copy(d).multiplyScalar(.65);
+    const cone=new THREE.Mesh(new THREE.ConeGeometry(.12,.26,14),mat); cone.position.copy(d).multiplyScalar(1.43);
+    const q=new THREE.Quaternion().setFromUnitVectors(new THREE.Vector3(0,1,0),d); sh.quaternion.copy(q); cone.quaternion.copy(q);
+    const c=document.createElement("canvas"); c.width=c.height=64; const g=c.getContext("2d");
+    g.fillStyle="#0b1226"; g.beginPath(); g.arc(32,32,28,0,7); g.fill(); g.lineWidth=5; g.strokeStyle="#"+cols[i].toString(16).padStart(6,"0"); g.stroke();
+    g.fillStyle="#fff"; g.font="800 36px system-ui"; g.textAlign="center"; g.textBaseline="middle"; g.fillText("XYZ"[i],32,34);
+    const sp=new THREE.Sprite(new THREE.SpriteMaterial({map:new THREE.CanvasTexture(c),depthTest:false,transparent:true}));
+    sp.scale.set(.36,.36,1); sp.position.copy(d).multiplyScalar(1.5); sp.renderOrder=5;
+    ball.add(sh,cone,sp); }); }
 const padEl3=document.getElementById("orbit");
 
 /* ---- nombres de las piezas del montaje final ---- */
@@ -312,7 +351,7 @@ const L3=[
 ].map(o=>{ o.el=document.createElement("div"); o.el.className="l3"; o.el.textContent=o.t; o.el.style.borderColor=o.col; o.el.style.color=o.col; document.body.appendChild(o.el);
   o.ln=document.createElementNS("http://www.w3.org/2000/svg","line"); o.ln.setAttribute("stroke",o.col); o.ln.setAttribute("stroke-width","2"); document.getElementById("l3svg").appendChild(o.ln); return o; });
 function updateLabels(){
-  const on=stage==="mounted";
+  const on=stage==="mounted"||stage==="intro";
   for(const o of L3){
     o.el.style.display=on?"block":"none"; o.ln.style.display=on?"block":"none"; if(!on) continue;
     const v=o.anchor().project(camera), x=(v.x+1)/2*W, y=(1-v.y)/2*Hh;
@@ -327,8 +366,8 @@ function updateLabels(){
 const pieces = [];
 function dropPiece(pts){
   const cx=pts.reduce((s,p)=>s+p.x,0)/pts.length, cy=pts.reduce((s,p)=>s+p.y,0)/pts.length;
-  const m=new THREE.Mesh(geoFromPoly(pts.map(p=>({x:p.x-cx,y:p.y-cy}))),
-    [matTop.clone(),matSide.clone()]);
+  const m=new THREE.Mesh(geoFromPoly(pts.map(p=>({x:p.x-cx,y:p.y-cy})),{x:-cx,y:-cy}),
+    [matTop.clone(),matSide.clone(),matCut.clone()]);
   m.material.forEach(x=>{x.transparent=true;});
   m.position.set(cx,cy,-T/2); holder.add(m);
   pieces.push({m,vy:0,vx:(Math.random()-.5)*6,vz:4+Math.random()*3,rz:(Math.random()-.5)*5,rx:(Math.random()-.5)*4,t:0});
@@ -438,17 +477,24 @@ function setTool(t){
 function undo(){
   if(stage!=="trace") return;
   const h=history.pop(); if(!h){ say("No hay nada que deshacer"); return; }
+  const obj=(h.t==="mark"?marks:lines).find(o=>o.id===h.id); if(obj) redoSt.push({t:h.t,obj});
   if(h.t==="mark") marks=marks.filter(m=>m.id!==h.id); else lines=lines.filter(l=>l.id!==h.id);
   anchor=null; tapeStart=null; geoVer++; say("Deshecho","");
 }
+function redo(){
+  if(stage!=="trace") return;
+  const r=redoSt.pop(); if(!r){ say("No hay nada que rehacer"); return; }
+  (r.t==="mark"?marks:lines).push(r.obj); history.push({t:r.t,id:r.obj.id});
+  anchor=null; tapeStart=null; geoVer++; say("Rehecho","");
+}
 function addMark(x,y){
   const e=marks.find(m=>Math.hypot(m.x-x,m.y-y)<0.05); if(e) return e;
-  const m={id:idc++,x:Math.round(x*1000)/1000,y:Math.round(y*1000)/1000}; marks.push(m); history.push({t:"mark",id:m.id}); geoVer++; return m;
+  const m={id:idc++,x:Math.round(x*1000)/1000,y:Math.round(y*1000)/1000}; marks.push(m); history.push({t:"mark",id:m.id}); redoSt.length=0; geoVer++; return m;
 }
 function addLine(x,y,ang){
   const dup=lines.find(l=>angDiff(l.ang,ang)<0.01&&distPtLine({x,y},l)<0.02);
   if(dup){ say("Esa línea ya está trazada"); return dup; }
-  const l={id:idc++,x,y,ang}; lines.push(l); history.push({t:"line",id:l.id}); geoVer++; return l;
+  const l={id:idc++,x,y,ang}; lines.push(l); history.push({t:"line",id:l.id}); redoSt.length=0; geoVer++; return l;
 }
 const matchCut=(l,c)=>angDiff(l.ang,c.ang)<0.6 && distPtLine({x:c.x,y:c.y},l)<TOL;
 
@@ -461,17 +507,17 @@ function sawSvg(){
   let t=""; for(let i=0;i<40;i++){ const u=-5+i*0.2; t+=`M${X(u)} ${Y(0)} L${X(u+.1)} ${Y(-.35)} L${X(u+.2)} ${Y(0)} Z `; }
   return `<svg viewBox="0 0 150 66" width="118" height="38" style="flex:none"><defs><linearGradient id="sg" x1="0" x2="1"><stop offset="0" stop-color="#9aa3b3"/><stop offset=".5" stop-color="#e3e7ee"/><stop offset="1" stop-color="#a8b0bf"/></linearGradient></defs><path d="${P(SAW.blade)}" fill="url(#sg)" stroke="#4b5675" stroke-width="1.2"/><path d="${t}" fill="#4b5675"/><path fill-rule="evenodd" d="${P(SAW.handle)} ${P(SAW.hole)}" fill="#2d55b8" stroke="#142a66" stroke-width="1.4"/>${SAW.rivets.map(q=>`<circle cx="${X(q[0])}" cy="${Y(q[1])}" r="1.8" fill="#111b3d"/>`).join("")}<circle cx="${X(SAW.toeHole[0])}" cy="${Y(SAW.toeHole[1])}" r="2.6" fill="#0b1226"/></svg>`;
 }
-const CUTITEM={4:4,5:5,6:10,7:11};
+const CUTITEM={1:4,2:5,3:10,4:11};
 function cutFail(t){ errors++; cutErr=t; sideDirty=true; say(t,"err",12000); }
 function doCut(){
   const l=lines.find(x=>x.id===sawLock); if(!l) return;
   cutErr="";
   if(sawTilt==null){ cutFail("Elige primero la inclinación de la hoja (90° vertical)."); errors--; return; }
   const c=CUTS.find(c=>matchCut(l,c));
-  const next=[4,5,6,7].find(n=>!cutsDone.includes(n));
+  const next=[1,2,3,4].find(n=>!cutsDone.includes(n));
   if(!c){ cutFail(`La línea elegida no es una línea de corte. Ahora toca el corte ${next}: «${ITEMS[CUTITEM[next]][1]}». Comprueba que está trazada por ese punto y con ese ángulo; las líneas auxiliares (como la perpendicular desde M o M′) no se cortan.`); return; }
   if(cutsDone.includes(c.n)){ cutFail("Ese corte ya está hecho."); errors--; return; }
-  if(c.n!==next){ cutFail(`Esa línea es el corte ${c.n}, pero el orden es 4, 5, 6 y 7: ahora toca el corte ${next} («${ITEMS[CUTITEM[next]][1]}»).`); return; }
+  if(c.n!==next){ cutFail(`Esa línea es el corte ${c.n}, pero el orden es 1, 2, 3 y 4: ahora toca el corte ${next} («${ITEMS[CUTITEM[next]][1]}»).`); return; }
   if(sawTilt!==90){ cutFail(`Con la hoja a ${sawTilt}° el corte sale a bisel y el apoyo no queda plano. Hazlo a 90° (vertical).`); return; }
   const A=clipHalf(poly,l,1), B=clipHalf(poly,l,-1);
   const keep=area(A)>=area(B)?A:B, drop=keep===A?B:A;
@@ -490,14 +536,19 @@ function suelaLen(){
   return on.length>=2 ? Math.hypot(on[0].x-on[1].x,on[0].y-on[1].y) : NaN;
 }
 
-function resetAll(){
+function resetAll(){ lastNar=null;
   resetState(); rebuildBoard();
   pieces.forEach(p=>{holder.remove(p.m);p.m.geometry.dispose();}); pieces.length=0;
-  asm.visible=false; setAsmOpacity(0);
   for(const a of AXN){U[a]=0;view[a]=0;} piv.rotation.set(0,0,0); piv.position.set(0,5.7,0);
   holder.rotation.set(0,0,0); stageG.rotation.set(0,0,0); stageG.position.set(0,0,0);
   holder.position.set(-L/2,-5,0);
-  say("Empieza por marcar el vértice E: la esquina inferior derecha de la tabla");
+  poly=idealPoly(); rebuildBoard();            // pantalla inicial: el montaje terminado
+  asm.visible=true; setAsmOpacity(1); sideDirty=true;
+}
+function beginTrace(){
+  resetAll(); stage="trace"; poly=[{x:0,y:0},{x:L,y:0},{x:L,y:HH},{x:0,y:HH}]; rebuildBoard();
+  asm.visible=false; setAsmOpacity(0); tStart=performance.now(); sideDirty=true; lastNar=null;
+  say("Empieza por marcar el vértice E: la esquina inferior derecha de la tabla","",5000);
 }
 
 /* ================= HOVER + DWELL ================= */
@@ -562,6 +613,9 @@ function fire(h){
   const k=h.key;
   if(k.startsWith("tool:")) setTool(k.slice(5));
   else if(k==="undo") undo();
+  else if(k==="redo") redo();
+  else if(k==="begin") beginTrace();
+  else if(k==="voice"){ voiceOn=!voiceOn; try{localStorage.setItem("tp_voice",voiceOn?"1":"0")}catch(e){} if(!voiceOn&&synth) synth.cancel(); paintVoice(); lastNar=null; }
   else if(k==="front"){ for(const a of AXN) U[a]-=wrapA(U[a]); say("Vista frontal: ejes X, Y, Z a 0°","ok",2000); }
   else if(k==="reset") resetAll();
   else if(k.startsWith("tilt:")){ sawTilt=+k.slice(5); sideDirty=true; }
@@ -591,7 +645,7 @@ function pressStart(now){
   press={t:now,raw,pos:{x:pos.x,y:pos.y},hand,mode:"pending",h:H0};
   const sl=sliderAt(cur.x,cur.y);
   if(sl){ press.mode="sliderArm"; press.sl=sl; press.at=hand?0:ARM_MS; }
-  else if(stage==="trace"&&padAt(cur.x,cur.y)){
+  else if(stage!=="mounting"&&padAt(cur.x,cur.y)){
     const g=padGeo(); press.mode="orbit"; press.base={x:U.x,y:U.y,z:U.z}; press.n={x:0,y:0,z:0};
     press.ring=Math.hypot(cur.x-g.cx,cur.y-g.cy)>g.r*0.68; padEl.classList.add("on");
   }
@@ -622,7 +676,7 @@ function inputStep(now,dt){
   if(!P){
     const sl=(ptrVisible&&!(H0&&H0.dom))?sliderAt(cur.x,cur.y):null;
     SLIDERS.forEach(o=>o.el.classList.toggle("hover",o===sl));
-    padEl.classList.toggle("hover",ptrVisible&&stage==="trace"&&padAt(cur.x,cur.y));
+    padEl.classList.toggle("hover",ptrVisible&&stage!=="mounting"&&padAt(cur.x,cur.y));
     return;
   }
   if(P.mode==="sliderArm"){
@@ -642,7 +696,7 @@ function inputStep(now,dt){
     const g=padGeo();
     if(Math.hypot(cur.x-g.cx,cur.y-g.cy)>g.r+8){                 // al salir de la esfera, la tabla deja de moverse
       P.mode="none"; padEl.classList.remove("on"); say("Fuera de la esfera: la tabla queda quieta","",1600);
-    } else if(stage==="trace"){
+    } else if(stage!=="mounting"){
       const stepPx=700/sensPct, dx=target.x-P.raw.x, dy=target.y-P.raw.y, out={};
       if(P.ring){                                                  // anillo exterior: giro en Z (como un volante)
         const rx=P.pos.x-g.cx, ry=-(P.pos.y-g.cy), rl=Math.hypot(rx,ry)||1;
@@ -671,9 +725,19 @@ function drawLayer(ctx,Tf,k,isLupa){
     ctx.beginPath(); poly.forEach((p,i)=>{const s=Tf(p); i?ctx.lineTo(s.x,s.y):ctx.moveTo(s.x,s.y);}); ctx.closePath();
     ctx.fillStyle="#ecd08f"; ctx.fill(); ctx.strokeStyle="#8a6a2f"; ctx.lineWidth=2; ctx.stroke();
   }
+  { const R=[{x:0,y:0},{x:L,y:0},{x:L,y:HH},{x:0,y:HH}];
+    if(poly.length!==4||area(poly)<L*HH-1e-6){
+      ctx.save(); ctx.beginPath();
+      R.forEach((p,i)=>{const q=Tf(p); i?ctx.lineTo(q.x,q.y):ctx.moveTo(q.x,q.y);}); ctx.closePath();
+      poly.forEach((p,i)=>{const q=Tf(p); i?ctx.lineTo(q.x,q.y):ctx.moveTo(q.x,q.y);}); ctx.closePath();
+      ctx.fillStyle="rgba(240,200,120,.16)"; ctx.fill("evenodd");
+      ctx.beginPath(); R.forEach((p,i)=>{const q=Tf(p); i?ctx.lineTo(q.x,q.y):ctx.moveTo(q.x,q.y);}); ctx.closePath();
+      ctx.setLineDash([7*k,5*k]); ctx.strokeStyle="#e0b866"; ctx.lineWidth=1.8*k; ctx.stroke(); ctx.restore();
+    } }
   ctx.lineCap="round";
+  const RECT=[{x:0,y:0},{x:L,y:0},{x:L,y:HH},{x:0,y:HH}];
   for(const l of lines){
-    const seg=clipLine(l,poly); if(!seg) continue;
+    const seg=clipLine(l,RECT); if(!seg) continue;
     const a=Tf(seg[0]), b=Tf(seg[1]), hl=(hv.lineId===l.id||sawLock===l.id);
     ctx.strokeStyle=hl?"#ff8a00":"#26262e"; ctx.lineWidth=(hl?3.4:1.9)*k;
     ctx.beginPath(); ctx.moveTo(a.x,a.y); ctx.lineTo(b.x,b.y); ctx.stroke();
@@ -743,7 +807,7 @@ function drawLayer(ctx,Tf,k,isLupa){
   // guía: el siguiente punto que hace falta, con su nombre
   if(stage==="trace"){
     const ni=nextStep(), g=ni>=0&&ni<ITEM_PT.length?ITEM_PT[ni]:null;
-    if(g&&!hasMark(g[1])){
+    if(g&&g[0]&&!hasMark(g[1])){
       const q=Tf(g[1]), pu=1+0.25*Math.sin(performance.now()/260);
       ctx.setLineDash([4*k,4*k]); ctx.strokeStyle="#ffd60a"; ctx.lineWidth=2.4*k; ctx.beginPath(); ctx.arc(q.x,q.y,13*k*pu,0,7); ctx.stroke(); ctx.setLineDash([]);
       ctx.fillStyle="#ffd60a"; ctx.beginPath(); ctx.arc(q.x,q.y,2.6*k,0,7); ctx.fill();
@@ -778,39 +842,79 @@ const ITEMS=[
  ["Pie",`Desde E, línea a 90°−θ (${90-TH}° con la soga)`,()=>hasLine(EXP.E,EXP.a2)],
  ["Pie",`Mide h = ${H} cm sobre ella: marca M`,()=>hasMark(EXP.M)],
  ["Pie","Desde M, perpendicular a la soga hasta O",()=>hasLine(EXP.M,90)],
- ["Pie","Corte 4: por O, paralela a E–M",()=>hasLine(EXP.O,EXP.a4)],
- ["Pie","Corte 5 (suela): por P, perpendicular a O–P",()=>hasLine(EXP.P,EXP.a5)],
+ ["Pie","Corte 1: por O, paralela a E–M",()=>hasLine(EXP.O,EXP.a4)],
+ ["Pie","Corte 2 (suela): por P, perpendicular a O–P",()=>hasLine(EXP.P,EXP.a5)],
  ["Cabeza","Marca E′: vértice de la cabeza",()=>hasMark(EXP.E2)],
  ["Cabeza",`Desde E′, línea a θ = ${TH}° con la soga`,()=>hasLine(EXP.E2,TH)],
  ["Cabeza",`Mide h = ${H} cm sobre ella: marca M′`,()=>hasMark(EXP.M2)],
  ["Cabeza","Desde M′, perpendicular a la soga hasta O′",()=>hasLine(EXP.M2,90)],
- ["Cabeza","Corte 6: por O′, paralela a E′–M′",()=>hasLine(EXP.O2,EXP.a6)],
- ["Cabeza","Corte 7: por P′, perpendicular a O′–P′",()=>hasLine(EXP.P2,EXP.a7)],
+ ["Cabeza","Corte 3: por O′, paralela a E′–M′",()=>hasLine(EXP.O2,EXP.a6)],
+ ["Cabeza","Corte 4: por P′, perpendicular a O′–P′",()=>hasLine(EXP.P2,EXP.a7)],
+ ["Cortes","Serrucho: corte 1",()=>cutsDone.includes(1)],
+ ["Cortes","Serrucho: corte 2",()=>cutsDone.includes(2)],
+ ["Cortes","Serrucho: corte 3",()=>cutsDone.includes(3)],
  ["Cortes","Serrucho: corte 4",()=>cutsDone.includes(4)],
- ["Cortes","Serrucho: corte 5",()=>cutsDone.includes(5)],
- ["Cortes","Serrucho: corte 6",()=>cutsDone.includes(6)],
- ["Cortes","Serrucho: corte 7",()=>cutsDone.includes(7)],
 ];
-const ITEM_PT=[["E",EXP.E],["E",EXP.E],["M",EXP.M],["O",EXP.O],["O",EXP.O],["P",EXP.P],["E′",EXP.E2],["E′",EXP.E2],["M′",EXP.M2],["O′",EXP.O2],["O′",EXP.O2],["P′",EXP.P2]];
+const ITEM_PT=[["E",EXP.E],["E",EXP.E],[null,null],["O",EXP.O],["O",EXP.O],["P",EXP.P],["E′",EXP.E2],["E′",EXP.E2],[null,null],["O′",EXP.O2],["O′",EXP.O2],["P′",EXP.P2]];
 const DET=[
  "Lápiz: pellizca la esquina inferior derecha de la tabla (punto E).",
  "Pellizca E y elige la línea discontinua ↖ 60°.",
  "Flexómetro (tecla 2): pellizca E, avanza por esa línea y pellizca al llegar a 3 cm (punto M).",
  "Lápiz: pellizca M y elige ⊥ 90° hacia arriba, hasta el borde superior: ahí está O.",
- "Pellizca O (se pega solo) y elige la línea ↖ 60°, paralela a E–M. Es el corte 4.",
- "Pellizca P, donde la línea del corte 4 llega al borde derecho, y elige ↗ 30°. Es el corte 5 (la suela).",
+ "Pellizca O (se pega solo) y elige la línea ↖ 60°, paralela a E–M. Es el corte 1.",
+ "Pellizca P, donde la línea del corte 1 llega al borde derecho, y elige ↗ 30°. Es el corte 2 (la suela).",
  "CABEZA, igual que el pie pero en el extremo izquierdo: pellizca la esquina inferior izquierda de la tabla (E′).",
  "Pellizca E′ y elige la línea discontinua ↗ 30°.",
  "Flexómetro (tecla 2): pellizca E′, avanza por esa línea y pellizca a 3 cm (punto M′).",
  "Lápiz: pellizca M′ y elige ⊥ 90° hacia arriba, hasta el borde superior: ahí está O′.",
- "Pellizca O′ y elige la línea ↗ 30°, paralela a E′–M′. Es el corte 6.",
- "Pellizca P′, donde la línea del corte 6 llega al borde izquierdo, y elige ↖ 60°. Es el corte 7.",
- "Serrucho (tecla 3): pellizca la línea del corte 4, elige 90° vertical y pulsa CORTAR.",
- "Serrucho: pellizca la línea del corte 5, elige 90° y pulsa CORTAR.",
- "Serrucho: pellizca la línea del corte 6, elige 90° y pulsa CORTAR.",
- "Serrucho: pellizca la línea del corte 7, elige 90° y pulsa CORTAR.",
+ "Pellizca O′ y elige la línea ↗ 30°, paralela a E′–M′. Es el corte 3.",
+ "Pellizca P′, donde la línea del corte 3 llega al borde izquierdo, y elige ↖ 60°. Es el corte 4.",
+ "Serrucho (tecla 3): pellizca la línea del corte 1, elige 90° vertical y pulsa CORTAR.",
+ "Serrucho: pellizca la línea del corte 2, elige 90° y pulsa CORTAR.",
+ "Serrucho: pellizca la línea del corte 3, elige 90° y pulsa CORTAR.",
+ "Serrucho: pellizca la línea del corte 4, elige 90° y pulsa CORTAR.",
 ];
+/* ---- narración por voz (una sola vez por instrucción) ---- */
+const NAR=[
+ "Empieza marcando el vértice E, en la esquina inferior derecha de la tabla.",
+ "Ahora, desde E, traza una línea que forme sesenta grados con la soga.",
+ "Con el flexómetro, mide tres centímetros sobre esa línea y marca el punto M.",
+ "Desde M, traza una perpendicular a la soga, hasta el borde superior. Ahí está el punto O.",
+ "Desde O, traza otra línea a sesenta grados con la soga, paralela a la anterior. Ese es el corte uno.",
+ "Marca P, donde esa línea llega al borde derecho, y traza una perpendicular. Es el corte dos, la suela.",
+ "Vamos con la cabeza. Marca el vértice E prima, en la esquina inferior izquierda de la tabla.",
+ "Desde E prima, traza una línea que forme treinta grados con la soga.",
+ "Con el flexómetro, mide tres centímetros sobre esa línea y marca el punto M prima.",
+ "Desde M prima, sube en perpendicular hasta el borde superior. Ahí está O prima.",
+ "Desde O prima, traza una línea a treinta grados, paralela a la anterior. Es el corte tres.",
+ "Marca P prima, donde esa línea llega al borde izquierdo, y traza una perpendicular. Es el corte cuatro.",
+ "Ahora, con el serrucho, corta por la línea del corte uno. Elige la hoja perpendicular a la cara de la tabla y pulsa cortar.",
+ "Sigue con el serrucho por la línea del corte dos, la suela. Hoja perpendicular a la cara y pulsa cortar.",
+ "Ahora el corte tres, en la cabeza. Hoja perpendicular a la cara y pulsa cortar.",
+ "Y por último, el corte cuatro. Hoja perpendicular a la cara y pulsa cortar."];
+const NAR_DONE="Todos los cortes están hechos. Pulsa montar a treinta grados.";
+const NAR_INTRO="Este es el tornapunta ya montado. Puedes girarlo con la esfera. Cuando quieras, pulsa Comenzar a trazar y cortar el tornapunta.";
+const NAR_MOUNTED="Montaje terminado. El tornapunta queda apoyado entre el durmiente vertical y el ejión.";
+let voiceOn=true; try{ voiceOn=localStorage.getItem("tp_voice")!=="0"; }catch(e){}
+const synth=window.speechSynthesis; let voiceObj=null, lastNar=null;
+function pickVoice(){
+  if(!synth) return; const vs=synth.getVoices().filter(v=>/^es/i.test(v.lang)); if(!vs.length) return;
+  const score=v=>{ let p=0; if(/natural|neural|online|google/i.test(v.name)) p+=50; if(/m[oó]nica|paulina|elvira|jorge|[aá]lvaro|helena|laura|luc[ií]a|pablo|conchita|sabina|marisol/i.test(v.name)) p+=30; if(/^es-ES/i.test(v.lang)) p+=20; if(/compact|eloquence|novelty/i.test(v.name)) p-=40; return p; };
+  voiceObj=vs.sort((a,b)=>score(b)-score(a))[0];
+}
+if(synth){ pickVoice(); synth.onvoiceschanged=pickVoice; }
+function speak(t){ if(!voiceOn||!synth||!t) return; try{ synth.cancel(); const u=new SpeechSynthesisUtterance(t); u.lang=voiceObj?voiceObj.lang:"es-ES"; if(voiceObj) u.voice=voiceObj; u.rate=0.95; u.pitch=1; u.volume=1; synth.speak(u); }catch(e){} }
+function paintVoice(){ const b=document.getElementById("voiceBtn"); if(b) b.textContent=voiceOn?"🔊 Voz activada":"🔇 Voz desactivada"; }
+function narrate(){
+  if(navigator.userActivation&&!navigator.userActivation.hasBeenActive) return;
+  let key;
+  if(stage==="mounted") key="mounted"; else if(stage==="intro") key="intro"; else if(stage==="mounting") return;
+  else if(cutsDone.length===4) key="done"; else key="s"+nextStep();
+  if(key===lastNar) return; lastNar=key;
+  speak(key==="intro"?NAR_INTRO:key==="mounted"?NAR_MOUNTED:key==="done"?NAR_DONE:NAR[+key.slice(1)]);
+}
 const nextStep=()=>{ for(let i=0;i<ITEMS.length;i++) if(!ITEMS[i][2]()) return i; return -1; };
+paintVoice();
 const checkEl=$("check"); let lastCheck="";
 function renderCheck(){
   const st=ITEMS.map(i=>i[2]()); const sig=st.join("");
@@ -828,7 +932,9 @@ function renderSide(){
   sideDirty=false;
   document.querySelectorAll(".tbtn[data-key^='tool:']").forEach(b=>b.classList.toggle("sel",b.dataset.key==="tool:"+tool&&stage==="trace"));
   let h="";
-  if(stage==="mounted"){
+  if(stage==="intro"){
+    h+=`<div class="rep" style="background:#0e1f3a;border-color:#35e0ff"><b>Así quedará el tornapunta montado.</b><br>Gira la esfera (izquierda) para verlo desde todos los lados: el apuntalamiento se mueve con ella.</div><div class="dw btn big" data-key="begin" style="min-width:300px;height:76px;font-size:16px;line-height:1.2">COMENZAR A TRAZAR Y CORTAR EL TORNAPUNTA</div>`;
+  } else if(stage==="mounted"){
     const s=suelaLen(), secs=Math.round((performance.now()-tStart)/1000);
     h+=`<div class="rep"><b>¡Tornapunta montado a 30°!</b><br>Durmientes 5 × 15 cm · ejiones 20 × 3 cm<br>Suela P–Q = <b>${isNaN(s)?"—":f1(s)} cm</b> (objetivo ${f1(EXP.P.x-EXP.Q.x>0?Math.hypot(EXP.P.x-EXP.Q.x,EXP.P.y-EXP.Q.y):0)} cm)<br>Errores: ${errors} · Tiempo: ${Math.floor(secs/60)} min ${secs%60} s</div>`;
   } else if(stage==="trace" && cutsDone.length===4){
@@ -840,11 +946,12 @@ function renderSide(){
   } else {
     h+=`<div style="opacity:.85;line-height:1.45"><b>Pellizca</b> (pulgar + índice) sobre un punto, línea o botón para pulsarlo.<br><b>Pellizca dentro de la esfera</b> (izquierda) y arrastra para girar la tabla de 15° en 15°: el disco gira en X/Y y el anillo exterior en Z. Fuera de la esfera la tabla no se mueve.<br>Tabla: ${L} × ${HH} cm · ejión h = ${H} cm · θ = ${TH}°</div>`;
   }
-  $("resetBtn").style.display=(stage==="mounting")?"none":"flex";
+  $("resetBtn").style.display=(stage==="mounting"||stage==="intro")?"none":"flex"; $("tools").style.opacity=stage==="trace"?1:.35;
   sideEl.innerHTML=h;
 }
 function contextHint(){
   if(stage==="mounting") return "";
+  if(stage==="intro") return "Montaje terminado: gíralo con la esfera y pulsa COMENZAR";
   if(stage==="mounted") return "Montaje terminado";
   if(!facing&&stage==="trace") return "La cara de trazado queda de espaldas: pulsa «Vista frontal»";
   if(cutsDone.length===4) return "Todos los cortes hechos. Pulsa MONTAR A 30°.";
@@ -906,22 +1013,21 @@ function frame(now){
   else { const k=pinched?0.5:0.35; cur.x+=(target.x-cur.x)*k; cur.y+=(target.y-cur.y)*k; }
 
   const zoomK=zoomPct/100;
+  if(stage!=="mounting"){ const f=1-Math.exp(-dt/70); for(const a of AXN) view[a]+=(U[a]-view[a])*f; }
   if(stage==="trace"){
-    const f=1-Math.exp(-dt/70);
-    for(const a of AXN) view[a]+=(U[a]-view[a])*f;
     piv.position.set(0,5.7,0); piv.rotation.set(rad(view.x),rad(view.y),rad(view.z));
     holder.position.set(-L/2,-5,0); holder.rotation.set(0,0,0);
     camera.position.set(0,0,camZ0/zoomK);
-  } else if(stage==="mounting"||stage==="mounted"){
-    const p=stage==="mounted"?1:Math.min(1,(now-mountT0)/2600), e=ease(p);
+  } else {
+    const fin=stage!=="mounting", p=fin?1:Math.min(1,(now-mountT0)/2600), e=ease(p);
     piv.rotation.set(rad(view0.x)*(1-e),rad(view0.y)*(1-e),rad(view0.z)*(1-e));
     const hx=-L/2+(ASM_POS.x+L/2)*e, hy=0.7+((ASM_POS.y+footY)-0.7)*e;
     piv.position.set(0,5.7*(1-e),0);
     holder.position.set(hx,hy-piv.position.y,0); holder.rotation.set(0,0,rad(-TH)*e);
-    stageG.position.y=14*e; stageG.rotation.y=-0.42*e;
+    stageG.position.y=14*e; stageG.rotation.set(fin?rad(view.x):0,(fin?rad(view.y):0)-0.42*e,fin?rad(view.z):0);
     camera.position.set(0,0,camZ0/zoomK*(1+1.5*e));
     const f=Math.max(0,Math.min(1,(p-0.35)/0.5)); setAsmOpacity(f);
-    if(stage==="mounting"&&p>=1){ stage="mounted"; sideDirty=true; say("Tornapunta montado: la suela queda horizontal y el corte 4 vertical","ok",9000); }
+    if(stage==="mounting"&&p>=1){ stage="mounted"; for(const a of AXN){view[a]=0;U[a]=0;} sideDirty=true; say("Tornapunta montado: la suela queda horizontal y el corte 1 vertical","ok",9000); }
   }
   scene.updateMatrixWorld(true); camera.updateMatrixWorld(true);
   for(let i=pieces.length-1;i>=0;i--){
@@ -937,6 +1043,7 @@ function frame(now){
   if(h&&h.dom){ document.querySelectorAll(".dw").forEach(e=>e.classList.toggle("hover",e===h.el)); }
   else document.querySelectorAll(".dw.hover").forEach(e=>e.classList.remove("hover"));
 
+  narrate();
   ptrEl.style.display=ptrVisible?"block":"none";
   ptrEl.style.transform=`translate(${cur.x}px,${cur.y}px)`;
   pring.style.strokeDashoffset=String(119.4*(1-ringP));
@@ -950,7 +1057,8 @@ function frame(now){
 
   const dpr=Math.min(devicePixelRatio,2);
   octx.setTransform(dpr,0,0,dpr,0,0); octx.clearRect(0,0,W,Hh);
-  if(stage==="trace"){ if(facing) drawLayer(octx,p=>boardToScreen(p.x,p.y),1,false); drawGizmo(octx); }
+  if(stage==="trace"){ if(facing) drawLayer(octx,p=>boardToScreen(p.x,p.y),1,false); }
+  if(stage!=="mounting") drawGizmo(octx);
   drawLupa();
 
   renderer.render(scene,camera);
@@ -962,7 +1070,7 @@ function frame(now){
     renderer.setClearColor(0x10193a,1); renderer.clear(); renderer.render(scene2,camera2);
     renderer.setClearColor(0x000000,0); renderer.setScissorTest(false); renderer.setViewport(0,0,W,Hh);
   }
-  { const r=padEl3.getBoundingClientRect(); ball.rotation.copy(piv.rotation);
+  { const r=padEl3.getBoundingClientRect(); if(stage==='intro'||stage==='mounted') ball.rotation.set(rad(view.x),rad(view.y),rad(view.z)); else ball.rotation.copy(piv.rotation);
     renderer.setScissorTest(true); renderer.setViewport(r.left,Hh-r.bottom,r.width,r.height); renderer.setScissor(r.left,Hh-r.bottom,r.width,r.height);
     renderer.setClearColor(0x000000,0); renderer.clear(); renderer.render(scene3,camera3);
     renderer.setScissorTest(false); renderer.setViewport(0,0,W,Hh); }
@@ -1000,7 +1108,7 @@ window.__t={
   toScreen:(x,y)=>boardToScreen(x,y),
   get s(){return {marks,lines,polyLen:poly.length,cutsDone,stage,errors,checks:ITEMS.map(i=>i[2]()),suela:suelaLen(),tool,anchor:!!anchor};},
   dbg:()=>({sawLock,sawTilt,msgText,dk,dProg:Math.round(dProg),blockPos,tool,anchor,tapeStart,snap:snapShow,cur:{x:Math.round(cur.x),y:Math.round(cur.y)},pb}),
-  EXP, U, view, get press(){return press&&press.mode;}, get facing(){return facing;}, setPtr:(x,y)=>{lastMouse=performance.now();target.x=x;target.y=y;ptrVisible=true;},
+  hover:()=>H0&&{key:H0.key,dom:H0.dom}, pbv:()=>pb, EXP, U, view, get press(){return press&&press.mode;}, get facing(){return facing;}, setPtr:(x,y)=>{lastMouse=performance.now();target.x=x;target.y=y;ptrVisible=true;},
   sim:(x,y,p)=>{lastHand=performance.now();handSeen=true;target.x=x;target.y=y;ptrVisible=true;pinched=p;}
 };
 </script>
