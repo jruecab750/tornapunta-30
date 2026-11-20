@@ -1,0 +1,717 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Tornapunta a 30° – trazado y corte con la mano</title>
+<style>
+  *{box-sizing:border-box}
+  html,body{margin:0;height:100%;overflow:hidden;color:#e8eefc;
+    font-family:system-ui,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;
+    background:radial-gradient(ellipse at 50% 30%,#17234a 0%,#0b1124 60%,#060912 100%)}
+  canvas{position:fixed;inset:0;width:100%;height:100%;display:block}
+  #ov{pointer-events:none}
+  #video{position:fixed;right:14px;top:14px;width:176px;height:132px;object-fit:cover;transform:scaleX(-1);
+    opacity:.3;border-radius:10px;border:1px solid #ffffff22;pointer-events:none;display:none}
+  #status{position:fixed;left:14px;top:14px;display:flex;align-items:center;gap:9px;font-size:13px;
+    padding:6px 12px;border-radius:999px;background:#0b1226cc;border:1px solid #ffffff1a;max-width:34vw}
+  #dot{width:10px;height:10px;border-radius:50%;background:#ffb020;flex:none}
+  #dot.ok{background:#3ddc84}#dot.err{background:#ff5a5f}
+  #msg{position:fixed;left:50%;top:14px;transform:translateX(-50%);max-width:46vw;text-align:center;
+    font-size:17px;font-weight:600;line-height:1.3;padding:9px 18px;border-radius:14px;background:#0b1226dd;
+    border:1px solid #35e0ff55}
+  #msg.err{border-color:#ff5a5f;background:#2a0f16ee}
+  #msg.ok{border-color:#3ddc84;background:#0e2619ee}
+  #bottom{position:fixed;left:0;right:0;bottom:0;height:238px;display:grid;grid-template-columns:1.25fr auto 1fr;
+    gap:18px;padding:10px 18px 14px;background:linear-gradient(to top,#050810ee 70%,#05081000)}
+  #check{display:grid;grid-template-columns:repeat(3,1fr);gap:12px;font-size:12.5px;line-height:1.25;overflow:hidden}
+  #check h4{margin:0 0 5px;font-size:12px;letter-spacing:.08em;text-transform:uppercase;color:#8fb4ff}
+  #check div.it{display:flex;gap:6px;margin-bottom:4px;opacity:.55}
+  #check div.it.done{opacity:1;color:#8cf0b4}
+  #check div.it.next{opacity:1;color:#fff;font-weight:700}
+  #check .bx{flex:none;width:15px;height:15px;border:1.5px solid currentColor;border-radius:4px;font-size:11px;line-height:12px;text-align:center}
+  #tools{display:flex;gap:12px;align-items:flex-end;padding-bottom:4px}
+  .tbtn,.dw.btn{position:relative;border-radius:16px;background:#14203f;border:2px solid #ffffff22;text-align:center;
+    font-weight:700;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:2px;user-select:none}
+  .tbtn{width:112px;height:104px;font-size:14px}
+  .tbtn .ic{font-size:38px;line-height:1}
+  .tbtn.sel{border-color:#35e0ff;background:#10324a}
+  .dw.hover{border-color:#fff !important;box-shadow:0 0 22px #35e0ffaa;background:#1b3a63}
+  #side{display:flex;flex-direction:column;gap:8px;font-size:13px;overflow:hidden}
+  #side .row{display:flex;gap:8px;flex-wrap:wrap}
+  #side .btn{padding:10px 14px;font-size:15px;min-width:86px;height:56px}
+  #side .btn.sel{border-color:#ffb020;background:#3a2c0c}
+  #side .big{font-size:19px;height:70px;min-width:230px;background:#0f4a2c;border-color:#3ddc84}
+  #side .small{height:36px;font-size:12px;padding:4px 10px;min-width:0;border-radius:10px}
+  #side .rep{background:#0e2619;border:1px solid #3ddc84;border-radius:12px;padding:8px 12px;line-height:1.4;font-size:13.5px}
+  #lupa{position:fixed;width:200px;height:200px;border-radius:50%;border:3px solid #35e0ff;overflow:hidden;display:none;
+    box-shadow:0 0 24px #000a;pointer-events:none;z-index:6;background:#0a0f1f}
+  #lread{position:fixed;display:none;z-index:7;font-size:26px;font-weight:800;color:#ffd60a;text-shadow:0 2px 6px #000;pointer-events:none}
+  #ptr{position:fixed;left:0;top:0;width:44px;height:44px;margin:-22px 0 0 -22px;pointer-events:none;display:none;z-index:8}
+  #ptr svg{width:100%;height:100%;transform:rotate(-90deg)}
+  #ptr .c0{fill:#35e0ff22;stroke:#35e0ff;stroke-width:3}
+  #ptr .c1{fill:none;stroke:#fff;stroke-width:4;stroke-dasharray:119.4;stroke-dashoffset:119.4;stroke-linecap:round}
+  #start{position:fixed;inset:0;display:flex;align-items:center;justify-content:center;background:#060912e6;z-index:20}
+  #start .card{max-width:600px;padding:28px 34px;border-radius:18px;background:#101a36;border:1px solid #ffffff1f;text-align:center}
+  #start h1{margin:0 0 8px;font-size:25px}#start p{margin:8px 0 18px;line-height:1.5;opacity:.88;font-size:15px}
+  #start button{font:inherit;font-weight:600;padding:12px 22px;border-radius:12px;border:0;cursor:pointer;margin:4px}
+  #go{background:#35e0ff;color:#04202a}#mouse{background:#233157;color:#e8eefc}
+</style>
+</head>
+<body>
+<canvas id="gl"></canvas>
+<canvas id="ov"></canvas>
+<video id="video" playsinline muted></video>
+
+<div id="status"><span id="dot"></span><span id="stxt">Sin cámara</span></div>
+<div id="msg">Cargando…</div>
+
+<div id="bottom">
+  <div id="check"></div>
+  <div id="tools">
+    <div class="tbtn dw btn" data-key="tool:pencil"><span class="ic">✏️</span>Lápiz</div>
+    <div class="tbtn dw btn" data-key="tool:flex"><span class="ic">📏</span>Flexómetro</div>
+    <div class="tbtn dw btn" data-key="tool:saw"><span class="ic">🪚</span>Serrucho</div>
+    <div class="tbtn dw btn" data-key="undo"><span class="ic">↶</span>Deshacer</div>
+  </div>
+  <div id="side"></div>
+</div>
+
+<div id="resetBtn" class="dw btn small" data-key="reset" style="position:fixed;right:14px;bottom:10px;z-index:5;padding:6px 14px">↺ Reiniciar (mantén 2 s)</div>
+<div id="lupa"><canvas id="lc" width="200" height="200" style="position:static;width:200px;height:200px"></canvas></div>
+<div id="lread"></div>
+<div id="ptr"><svg viewBox="0 0 44 44"><circle class="c0" cx="22" cy="22" r="14"/><circle class="c1" id="pring" cx="22" cy="22" r="19"/></svg></div>
+
+<div id="start">
+  <div class="card">
+    <h1>Tornapunta a 30°</h1>
+    <p>Traza con el <b>lápiz</b>, mide con el <b>flexómetro</b> y corta con el <b>serrucho</b> usando la punta del <b>dedo índice</b>: mantén el dedo quieto sobre cada punto o botón durante un momento para activarlo.<br>El vídeo no sale de tu equipo.</p>
+    <button id="go">Activar cámara</button>
+    <button id="mouse">Probar con ratón</button>
+  </div>
+</div>
+
+<script type="importmap">
+{"imports":{"three":"https://cdn.jsdelivr.net/npm/three@0.160.0/build/three.module.js"}}
+</script>
+<script type="module">
+import * as THREE from "three";
+
+/* ================= DATOS DEL TORNAPUNTA (PDF P04, 30°) ================= */
+const qs = new URLSearchParams(location.search);
+const DWELL = +(qs.get("dwell") || 850);          // ms que hay que mantener el dedo
+const L = 50, HH = 10, T = 2, TH = 30, H = 3;      // longitud, tizón, grueso, ángulo, ancho del ejión (cm)
+const rad = a => a*Math.PI/180;
+const dirOf = a => ({x:Math.cos(rad(a)), y:Math.sin(rad(a))});
+const f1 = v => v.toFixed(1).replace(".", ",");
+
+function expected(th, L, h, HH){
+  const E={x:L,y:0}, a2=90+th;
+  const M={x:E.x+h*Math.cos(rad(a2)), y:E.y+h*Math.sin(rad(a2))};
+  const O={x:M.x,y:HH}, a4=a2;
+  const P={x:L, y:O.y+(L-O.x)*Math.tan(rad(a4))}, a5=th;
+  const Q={x:P.x-P.y/Math.tan(rad(a5)), y:0};
+  const E2={x:0,y:0}, M2={x:h*Math.cos(rad(th)), y:h*Math.sin(rad(th))}, O2={x:M2.x,y:HH}, a6=th;
+  const P2={x:0, y:O2.y+(0-O2.x)*Math.tan(rad(a6))}, a7=th+90;
+  const Q2={x:P2.x-P2.y/Math.tan(rad(a7)), y:0};
+  return {E,M,O,P,Q,E2,M2,O2,P2,Q2,a2,a4,a5,a6,a7};
+}
+const EXP = expected(TH, L, H, HH);
+const CUTS = [
+  {n:4, x:EXP.O.x,  y:EXP.O.y,  ang:EXP.a4},
+  {n:5, x:EXP.P.x,  y:EXP.P.y,  ang:EXP.a5},
+  {n:6, x:EXP.O2.x, y:EXP.O2.y, ang:EXP.a6},
+  {n:7, x:EXP.P2.x, y:EXP.P2.y, ang:EXP.a7},
+];
+const NAMES = [["E",EXP.E],["M",EXP.M],["O",EXP.O],["P",EXP.P],["Q",EXP.Q],
+               ["E′",EXP.E2],["M′",EXP.M2],["O′",EXP.O2],["P′",EXP.P2],["Q′",EXP.Q2]];
+const CAND = [30,45,60,90,120,135,150];            // líneas candidatas (ángulo con la soga)
+const candLabel = a => a<90 ? `↗ ${a}°` : a===90 ? `⊥ 90°` : `↖ ${180-a}°`;
+const TOL = 0.2;                                    // tolerancia: 2 mm
+
+/* ================= GEOMETRÍA ================= */
+const angDiff = (a,b) => { let d = Math.abs(a-b)%180; return d>90 ? 180-d : d; };
+function distPtLine(p,l){ const d=dirOf(l.ang); return Math.abs(d.x*(p.y-l.y)-d.y*(p.x-l.x)); }
+function lineLine(a,b){
+  const da=dirOf(a.ang), db=dirOf(b.ang), det=da.x*db.y-da.y*db.x;
+  if(Math.abs(det)<1e-6) return null;
+  const t=((b.x-a.x)*db.y-(b.y-a.y)*db.x)/det;
+  return {x:a.x+da.x*t, y:a.y+da.y*t};
+}
+function lineSeg(l,p,q){
+  const d=dirOf(l.ang), ex=q.x-p.x, ey=q.y-p.y, det=d.x*ey-d.y*ex;
+  if(Math.abs(det)<1e-9) return null;
+  const dx=p.x-l.x, dy=p.y-l.y, t=(dx*ey-dy*ex)/det, u=(dx*d.y-dy*d.x)/det;
+  if(u<-1e-9||u>1+1e-9) return null;
+  return {x:l.x+d.x*t, y:l.y+d.y*t, t};
+}
+function clipLine(l,poly){
+  let lo=1e9, hi=-1e9, pl=null, ph=null;
+  for(let i=0;i<poly.length;i++){
+    const h=lineSeg(l,poly[i],poly[(i+1)%poly.length]);
+    if(h){ if(h.t<lo){lo=h.t;pl=h;} if(h.t>hi){hi=h.t;ph=h;} }
+  }
+  return (pl&&ph&&hi-lo>1e-6) ? [pl,ph] : null;
+}
+function inPoly(p,poly,eps=1e-6){
+  for(let i=0;i<poly.length;i++){
+    const a=poly[i], b=poly[(i+1)%poly.length];
+    if((b.x-a.x)*(p.y-a.y)-(b.y-a.y)*(p.x-a.x) < -eps) return false;
+  }
+  return true;
+}
+function clipHalf(poly,l,sign){
+  const d=dirOf(l.ang), f=p=>sign*(d.x*(p.y-l.y)-d.y*(p.x-l.x)), out=[];
+  for(let i=0;i<poly.length;i++){
+    const a=poly[i], b=poly[(i+1)%poly.length], fa=f(a), fb=f(b);
+    if(fa>=-1e-9) out.push(a);
+    if((fa>1e-9&&fb<-1e-9)||(fa<-1e-9&&fb>1e-9)){
+      const t=fa/(fa-fb); out.push({x:a.x+(b.x-a.x)*t, y:a.y+(b.y-a.y)*t});
+    }
+  }
+  return out.filter((p,i)=>{ const q=out[(i+1)%out.length]; return Math.hypot(p.x-q.x,p.y-q.y)>1e-5; });
+}
+const area = p => Math.abs(p.reduce((s,a,i)=>{const b=p[(i+1)%p.length];return s+a.x*b.y-b.x*a.y;},0))/2;
+
+/* ================= ESTADO ================= */
+let poly, marks, lines, history, tool, anchor, tapeStart, sawLock, sawTilt, cutsDone, stage, errors, tStart, idc, geoVer;
+let hv = {}, tapeDraw = null, snapShow = null, lastSnap = null, snapCache = null, sideDirty = true;
+let msgText = "", msgKind = "", msgUntil = 0;
+
+function resetState(){
+  poly=[{x:0,y:0},{x:L,y:0},{x:L,y:HH},{x:0,y:HH}];
+  marks=[]; lines=[]; history=[]; tool="pencil"; anchor=null; tapeStart=null; sawLock=null; sawTilt=null;
+  cutsDone=[]; stage="trace"; errors=0; tStart=performance.now(); idc=1; geoVer=1; snapCache=null; sideDirty=true; tapeDraw=null;
+}
+function say(t,k="",ms=4500){ msgText=t; msgKind=k; msgUntil=performance.now()+ms; }
+
+/* ================= ESCENA 3D ================= */
+const glc = document.getElementById("gl");
+const renderer = new THREE.WebGLRenderer({canvas:glc, antialias:true, alpha:true});
+renderer.setPixelRatio(Math.min(devicePixelRatio,2));
+const scene = new THREE.Scene();
+const camera = new THREE.PerspectiveCamera(30,1,0.1,500);
+scene.add(new THREE.AmbientLight(0xffffff,1.05));
+const key = new THREE.DirectionalLight(0xffffff,2.2); key.position.set(10,25,40); scene.add(key);
+const fill = new THREE.DirectionalLight(0x88aaff,.7); fill.position.set(-30,-10,20); scene.add(fill);
+
+const stageG = new THREE.Group(); scene.add(stageG);
+const holder = new THREE.Group(); stageG.add(holder);
+const matTop = new THREE.MeshStandardMaterial({color:0xeccf8e, roughness:.8});
+const matSide= new THREE.MeshStandardMaterial({color:0xc29a55, roughness:.85});
+const boardMesh = new THREE.Mesh(new THREE.BufferGeometry(), [matTop,matSide]);
+boardMesh.position.z = -T/2; holder.add(boardMesh);
+
+function geoFromPoly(pts){
+  const sh = new THREE.Shape(pts.map(p=>new THREE.Vector2(p.x,p.y)));
+  return new THREE.ExtrudeGeometry(sh,{depth:T,bevelEnabled:false});
+}
+function rebuildBoard(){ boardMesh.geometry.dispose(); boardMesh.geometry = geoFromPoly(poly); }
+
+// montaje final (durmientes y ejiones), sale al montar
+const asm = new THREE.Group(); asm.visible=false; stageG.add(asm);
+const mBeam = new THREE.MeshStandardMaterial({color:0x2f5da8, roughness:.6, transparent:true, opacity:0});
+const mEj   = new THREE.MeshStandardMaterial({color:0x7fa8ee, roughness:.6, transparent:true, opacity:0});
+function box(x0,x1,y0,y1,d,m){ const b=new THREE.Mesh(new THREE.BoxGeometry(x1-x0,y1-y0,d),m); b.position.set((x0+x1)/2,(y0+y1)/2,0); asm.add(b); return b; }
+box(-1.75,62,-6,0,10,mBeam);           // durmiente horizontal
+box(-1.75,4.25,-6,44,10,mBeam);        // durmiente vertical
+const footY = (()=>{ // el apoyo de la suela queda a Y=0
+  const r=rad(-TH); return -(EXP.Q.x*Math.sin(r)+EXP.Q.y*Math.cos(r)); })();
+const footX = EXP.P.x*Math.cos(rad(-TH)) - EXP.P.y*Math.sin(rad(-TH));
+const headY = EXP.P2.x*Math.sin(rad(-TH)) + EXP.P2.y*Math.cos(rad(-TH)) + footY;
+const headX = EXP.P2.x*Math.cos(rad(-TH)) - EXP.P2.y*Math.sin(rad(-TH));
+box(footX, footX+8, 0, H, 6, mEj);               // ejión del pie (apoya contra el corte 4)
+box(headX, headX+H, headY, headY+8, 6, mEj);     // ejión de la cabeza (sobre el corte 6)
+const ASM_POS = {x:-26,y:-14};
+asm.position.set(ASM_POS.x, ASM_POS.y);
+// el durmiente vertical debe tocar el corte 7: se ajusta su cara derecha a headX
+asm.children[1].position.x = headX - 3; // anchura 6 → centro a headX-3
+
+/* piezas que caen al cortar */
+const pieces = [];
+function dropPiece(pts){
+  const cx=pts.reduce((s,p)=>s+p.x,0)/pts.length, cy=pts.reduce((s,p)=>s+p.y,0)/pts.length;
+  const m=new THREE.Mesh(geoFromPoly(pts.map(p=>({x:p.x-cx,y:p.y-cy}))),
+    [matTop.clone(),matSide.clone()]);
+  m.material.forEach(x=>{x.transparent=true;});
+  m.position.set(cx,cy,-T/2); holder.add(m);
+  pieces.push({m,vy:0,vx:(Math.random()-.5)*6,vz:4+Math.random()*3,rz:(Math.random()-.5)*5,rx:(Math.random()-.5)*4,t:0});
+}
+
+/* cámara y proyección */
+let W=innerWidth, Hh=innerHeight, camZ0=60;
+const ov = document.getElementById("ov"), octx = ov.getContext("2d");
+function resize(){
+  W=innerWidth; Hh=innerHeight;
+  renderer.setSize(W,Hh,false);
+  ov.width=W*Math.min(devicePixelRatio,2); ov.height=Hh*Math.min(devicePixelRatio,2);
+  camera.aspect=W/Hh;
+  camZ0 = (L/0.80) / (2*Math.tan(rad(15))*camera.aspect);
+  camera.updateProjectionMatrix();
+}
+addEventListener("resize",resize); resize();
+
+const rc=new THREE.Raycaster(), pl=new THREE.Plane(), vA=new THREE.Vector3(), vB=new THREE.Vector3(), vN=new THREE.Vector3(), vP=new THREE.Vector3();
+function boardToScreen(x,y){
+  vA.set(x,y,T/2); holder.localToWorld(vA); vA.project(camera);
+  return {x:(vA.x*.5+.5)*W, y:(-vA.y*.5+.5)*Hh};
+}
+function screenToBoard(sx,sy){
+  holder.updateMatrixWorld(true);
+  rc.setFromCamera(new THREE.Vector2(sx/W*2-1, -(sy/Hh)*2+1), camera);
+  vN.set(0,0,1).transformDirection(holder.matrixWorld);
+  vB.set(0,0,T/2).applyMatrix4(holder.matrixWorld);
+  pl.setFromNormalAndCoplanarPoint(vN,vB);
+  if(!rc.ray.intersectPlane(pl,vP)) return null;
+  holder.worldToLocal(vP);
+  return {x:vP.x,y:vP.y};
+}
+
+/* ================= PUNTERO ================= */
+const $ = id => document.getElementById(id);
+const ptrEl=$("ptr"), pring=$("pring"), video=$("video");
+const target={x:0,y:0}, cur={x:0,y:0};
+let ptrVisible=false, lastHand=0, lastMouse=0, handSeen=false;
+addEventListener("mousemove",e=>{
+  lastMouse=performance.now();
+  if(lastMouse-lastHand>1000){ target.x=e.clientX; target.y=e.clientY; if(!ptrVisible){cur.x=target.x;cur.y=target.y;} ptrVisible=true; }
+});
+addEventListener("keydown",e=>{
+  if(e.key==="1") setTool("pencil"); if(e.key==="2") setTool("flex"); if(e.key==="3") setTool("saw");
+  if(e.key==="z"||e.key==="Z") undo();
+});
+
+/* ================= SNAP (imán) ================= */
+function getSnaps(){
+  if(snapCache && snapCache.v===geoVer+"|"+marks.length+"|"+lines.length) return snapCache.list;
+  const list=[];
+  poly.forEach(p=>list.push({x:p.x,y:p.y}));
+  marks.forEach(m=>list.push({x:m.x,y:m.y}));
+  for(const l of lines){
+    for(let i=0;i<poly.length;i++){ const h=lineSeg(l,poly[i],poly[(i+1)%poly.length]); if(h) list.push({x:h.x,y:h.y}); }
+  }
+  for(let i=0;i<lines.length;i++) for(let j=i+1;j<lines.length;j++){
+    const p=lineLine(lines[i],lines[j]); if(p&&inPoly(p,poly,1e-4)) list.push(p);
+  }
+  snapCache={v:geoVer+"|"+marks.length+"|"+lines.length,list};
+  return list;
+}
+function nearestSnap(){
+  let best=null, bd=1e9;
+  for(const t of getSnaps()){
+    const s=boardToScreen(t.x,t.y), d=Math.hypot(s.x-cur.x,s.y-cur.y);
+    const lim=(lastSnap&&Math.hypot(lastSnap.x-t.x,lastSnap.y-t.y)<1e-6)?26:17;
+    if(d<lim&&d<bd){bd=d;best=t;}
+  }
+  lastSnap=best; return best;
+}
+
+/* ================= HERRAMIENTAS ================= */
+function setTool(t){
+  if(stage!=="trace") return;
+  tool=t; anchor=null; tapeStart=null; sawLock=null; sawTilt=null; tapeDraw=null; sideDirty=true;
+}
+function undo(){
+  if(stage!=="trace") return;
+  const h=history.pop(); if(!h){ say("No hay nada que deshacer"); return; }
+  if(h.t==="mark") marks=marks.filter(m=>m.id!==h.id); else lines=lines.filter(l=>l.id!==h.id);
+  anchor=null; tapeStart=null; geoVer++; say("Deshecho","");
+}
+function addMark(x,y){
+  const e=marks.find(m=>Math.hypot(m.x-x,m.y-y)<0.05); if(e) return e;
+  const m={id:idc++,x:Math.round(x*1000)/1000,y:Math.round(y*1000)/1000}; marks.push(m); history.push({t:"mark",id:m.id}); geoVer++; return m;
+}
+function addLine(x,y,ang){
+  const dup=lines.find(l=>angDiff(l.ang,ang)<0.01&&distPtLine({x,y},l)<0.02);
+  if(dup){ say("Esa línea ya está trazada"); return dup; }
+  const l={id:idc++,x,y,ang}; lines.push(l); history.push({t:"line",id:l.id}); geoVer++; return l;
+}
+const matchCut=(l,c)=>angDiff(l.ang,c.ang)<0.6 && distPtLine({x:c.x,y:c.y},l)<TOL;
+
+function doCut(){
+  const l=lines.find(x=>x.id===sawLock); if(!l) return;
+  if(sawTilt==null){ say("Elige primero la inclinación de la hoja","err"); return; }
+  const c=CUTS.find(c=>matchCut(l,c));
+  if(!c){ errors++; say("Ese trazado no es un corte del tornapunta. Revisa el método (pasos 4 a 7).","err",6000); return; }
+  if(cutsDone.includes(c.n)){ say("Ese corte ya está hecho","err"); return; }
+  const next=[4,5,6,7].find(n=>!cutsDone.includes(n));
+  if(c.n!==next){ errors++; say(`Orden de los cortes: 4, 5, 6 y 7. Ahora toca el corte ${next}.`,"err",6000); return; }
+  if(sawTilt!==90){ errors++; say(`Con la hoja a ${sawTilt}° el corte sale a bisel y el apoyo no queda plano. Hazlo a 90° (vertical).`,"err",7000); return; }
+  const A=clipHalf(poly,l,1), B=clipHalf(poly,l,-1);
+  const keep=area(A)>=area(B)?A:B, drop=keep===A?B:A;
+  dropPiece(drop); poly=keep; rebuildBoard();
+  cutsDone.push(c.n); sawLock=null; sawTilt=null; geoVer++; sideDirty=true;
+  say(`Corte ${c.n} correcto ✓`,"ok");
+}
+
+/* ---- montaje a 30° ---- */
+let mountT0=0;
+function startMount(){ stage="mounting"; mountT0=performance.now(); sideDirty=true; asm.visible=true; say("Colocando el tornapunta a 30° entre durmiente y ejión…","ok",3000); }
+const ease=t=>t<.5?4*t*t*t:1-Math.pow(-2*t+2,3)/2;
+function suelaLen(){
+  const l={x:EXP.P.x,y:EXP.P.y,ang:EXP.a5};
+  const on=poly.filter(p=>distPtLine(p,l)<0.02);
+  return on.length>=2 ? Math.hypot(on[0].x-on[1].x,on[0].y-on[1].y) : NaN;
+}
+
+function resetAll(){
+  resetState(); rebuildBoard();
+  pieces.forEach(p=>{holder.remove(p.m);p.m.geometry.dispose();}); pieces.length=0;
+  asm.visible=false; mBeam.opacity=0; mEj.opacity=0;
+  holder.rotation.set(0,0,0); stageG.rotation.set(0,0,0); stageG.position.set(0,0,0);
+  holder.position.set(-L/2,0.7,0);
+  say("Empieza por marcar el vértice E: la esquina inferior derecha de la tabla");
+}
+
+/* ================= HOVER + DWELL ================= */
+let pb=null;                          // puntero en coordenadas de tabla (cm)
+function computeHover(){
+  hv={}; tapeDraw=null; snapShow=null;
+  if($("start").style.display!=="none") return null;
+  for(const el of document.querySelectorAll(".dw")){
+    if(!el.getClientRects().length) continue;
+    const r=el.getBoundingClientRect();
+    if(cur.x>=r.left-6&&cur.x<=r.right+6&&cur.y>=r.top-6&&cur.y<=r.bottom+6) return {key:el.dataset.key,dom:true,el};
+  }
+  if(stage!=="trace"||!ptrVisible||!pb) return null;
+
+  if(tool==="pencil"){
+    if(anchor){
+      const v={x:pb.x-anchor.x,y:pb.y-anchor.y}, dist=Math.hypot(v.x,v.y);
+      if(dist<1.2) return {key:"anchorcancel"};
+      let a=Math.atan2(v.y,v.x)*180/Math.PI; if(a<0)a+=180; if(a>=180)a-=180;
+      let best=null,bd=99; for(const c of CAND){const d=angDiff(a,c); if(d<bd){bd=d;best=c;}}
+      if(bd<7){ hv.rayAng=best; return {key:"ray:"+best,ang:best}; }
+    }
+    const s=nearestSnap(); snapShow=s;
+    if(s) return {key:"pt:"+s.x.toFixed(2)+","+s.y.toFixed(2),pt:s};
+    if(inPoly(pb,poly,0.05)) return {key:"pt:free",pt:{x:Math.round(pb.x*20)/20,y:Math.round(pb.y*20)/20}};
+    return null;
+  }
+  if(tool==="flex"){
+    if(!tapeStart){
+      const s=nearestSnap(); snapShow=s;
+      if(s) return {key:"fs:"+s.x.toFixed(2)+","+s.y.toFixed(2),pt:s};
+      if(inPoly(pb,poly,0.05)) return {key:"fs:free",pt:{x:Math.round(pb.x*20)/20,y:Math.round(pb.y*20)/20}};
+      return null;
+    }
+    const S=tapeStart, v={x:pb.x-S.x,y:pb.y-S.y};
+    const dirs=[0,90]; lines.forEach(l=>{ if(distPtLine(S,l)<0.05 && !dirs.some(d=>angDiff(d,l.ang)<0.01)) dirs.push(l.ang); });
+    let a=Math.atan2(v.y,v.x)*180/Math.PI; if(a<0)a+=180; if(a>=180)a-=180;
+    let best=null,bd=99; for(const d of dirs){const dd=angDiff(a,d); if(dd<bd){bd=dd;best=d;}}
+    if(Math.hypot(v.x,v.y)<0.8||bd>8) { tapeDraw={s:S,a:null}; return {key:"fcancel"}; }
+    const d=dirOf(best), t=v.x*d.x+v.y*d.y, ts=Math.round(t/0.5)*0.5;
+    tapeDraw={s:S,a:best,t:ts};
+    if(Math.abs(ts)<0.5) return {key:"fcancel"};
+    const e={x:S.x+d.x*ts,y:S.y+d.y*ts};
+    return {key:"fe:"+best+":"+ts,pt:e};
+  }
+  if(tool==="saw"){
+    if(sawLock) return null;
+    let best=null,bd=0.9;
+    for(const l of lines){
+      const seg=clipLine(l,poly); if(!seg) continue;
+      const d=distPtLine(pb,l); if(d>=bd) continue;
+      const dd=dirOf(l.ang), t=(pb.x-l.x)*dd.x+(pb.y-l.y)*dd.y;
+      if(t<seg[0].t-1||t>seg[1].t+1) continue;
+      bd=d; best=l;
+    }
+    if(best){ hv.lineId=best.id; return {key:"sl:"+best.id,lineId:best.id}; }
+  }
+  return null;
+}
+
+let dk=null,dProg=0,dNeed=DWELL,dPos={x:0,y:0},blockPos=null,blockKey=null;
+function fire(h){
+  const k=h.key;
+  if(k.startsWith("tool:")) setTool(k.slice(5));
+  else if(k==="undo") undo();
+  else if(k==="reset") resetAll();
+  else if(k.startsWith("tilt:")){ sawTilt=+k.slice(5); sideDirty=true; }
+  else if(k==="cut") doCut();
+  else if(k==="sawcancel"){ sawLock=null; sawTilt=null; sideDirty=true; }
+  else if(k==="mount") startMount();
+  else if(k.startsWith("pt:")){ const pt=(k==="pt:free")?{x:h.pt.x,y:h.pt.y}:h.pt; const m=addMark(pt.x,pt.y); anchor={x:m.x,y:m.y}; say("Punto marcado. Ahora elige una línea: mueve el dedo en su dirección y mantén.","ok",3500); }
+  else if(k==="anchorcancel"){ anchor=null; }
+  else if(k.startsWith("ray:")){ addLine(anchor.x,anchor.y,h.ang); anchor=null; say("Línea trazada","ok",2000); }
+  else if(k.startsWith("fs:")){ tapeStart={x:h.pt.x,y:h.pt.y}; say("Alinea el flexómetro con una línea y avanza; mantén el dedo para marcar el final de la medida.","",5000); }
+  else if(k==="fcancel"){ tapeStart=null; }
+  else if(k.startsWith("fe:")){ const m=addMark(h.pt.x,h.pt.y); tapeStart=null; say(`Medida marcada: ${f1(Math.abs(parseFloat(k.split(":")[2])))} cm`,"ok",3000); }
+  else if(k.startsWith("sl:")){ sawLock=h.lineId; sideDirty=true; say("Hoja alineada. Elige la inclinación de la hoja y pulsa CORTAR.","",6000); }
+}
+function dwellStep(h,dt){
+  if(blockPos && Math.hypot(cur.x-blockPos.x,cur.y-blockPos.y)>22) blockPos=null;
+  if(!h||!h.key){ dk=null; dProg=0; blockKey=null; return; }
+  if(h.dom){ if(blockKey&&h.key!==blockKey) blockKey=null; if(h.key===blockKey){dk=null;dProg=0;return;} }
+  else { blockKey=null; if(blockPos){dk=null;dProg=0;return;} }
+  if(h.key!==dk){ dk=h.key; dProg=0; dPos={x:cur.x,y:cur.y}; }
+  else if(!h.dom && Math.hypot(cur.x-dPos.x,cur.y-dPos.y)>16){ dProg=0; dPos={x:cur.x,y:cur.y}; }
+  dNeed=(h.key==="reset")?DWELL*3:DWELL;   // reiniciar exige más tiempo para evitar accidentes
+  dProg+=dt;
+  if(dProg>=dNeed){ fire(h); dProg=0; dk=null; blockPos={x:cur.x,y:cur.y}; if(h.dom) blockKey=h.key; }
+}
+
+/* ================= DIBUJO 2D (principal y lupa) ================= */
+function markName(m){ for(const [n,p] of NAMES) if(Math.hypot(p.x-m.x,p.y-m.y)<TOL) return n; return null; }
+function pill(ctx,txt,x,y,k,col){
+  ctx.font=`700 ${12*k}px system-ui`; const w=ctx.measureText(txt).width+10*k, h=18*k;
+  ctx.fillStyle="#0b1226e6"; ctx.strokeStyle=col; ctx.lineWidth=1.2*k;
+  ctx.beginPath(); ctx.roundRect(x-w/2,y-h/2,w,h,6*k); ctx.fill(); ctx.stroke();
+  ctx.fillStyle=col; ctx.textAlign="center"; ctx.textBaseline="middle"; ctx.fillText(txt,x,y+.5*k);
+}
+function drawLayer(ctx,Tf,k,isLupa){
+  if(isLupa){
+    ctx.fillStyle="#0a0f1f"; ctx.fillRect(0,0,200,200);
+    ctx.beginPath(); poly.forEach((p,i)=>{const s=Tf(p); i?ctx.lineTo(s.x,s.y):ctx.moveTo(s.x,s.y);}); ctx.closePath();
+    ctx.fillStyle="#ecd08f"; ctx.fill(); ctx.strokeStyle="#8a6a2f"; ctx.lineWidth=2; ctx.stroke();
+  }
+  ctx.lineCap="round";
+  for(const l of lines){
+    const seg=clipLine(l,poly); if(!seg) continue;
+    const a=Tf(seg[0]), b=Tf(seg[1]), hl=(hv.lineId===l.id||sawLock===l.id);
+    ctx.strokeStyle=hl?"#ff8a00":"#26262e"; ctx.lineWidth=(hl?3.4:1.9)*k;
+    ctx.beginPath(); ctx.moveTo(a.x,a.y); ctx.lineTo(b.x,b.y); ctx.stroke();
+  }
+  // candidatas desde el punto marcado
+  if(tool==="pencil"&&anchor){
+    const A=Tf(anchor);
+    for(const c of CAND){
+      const d=dirOf(c), e1=Tf({x:anchor.x-d.x*6.5,y:anchor.y-d.y*6.5}), e2=Tf({x:anchor.x+d.x*6.5,y:anchor.y+d.y*6.5});
+      const hot=(hv.rayAng===c);
+      ctx.setLineDash([6*k,5*k]); ctx.strokeStyle=hot?"#fff":"#35e0ffcc"; ctx.lineWidth=(hot?3:1.6)*k;
+      ctx.beginPath(); ctx.moveTo(e1.x,e1.y); ctx.lineTo(e2.x,e2.y); ctx.stroke(); ctx.setLineDash([]);
+      if(!isLupa) pill(ctx,candLabel(c),e2.x,e2.y,1,hot?"#fff":"#35e0ff");
+    }
+    ctx.strokeStyle="#35e0ff"; ctx.lineWidth=2*k; ctx.beginPath(); ctx.arc(A.x,A.y,9*k,0,7); ctx.stroke();
+  }
+  // flexómetro
+  if(tapeDraw&&tapeDraw.a!==null&&tapeDraw.t!==undefined){
+    const d=dirOf(tapeDraw.a), S=tapeDraw.s, ts=tapeDraw.t, sg=ts<0?-1:1;
+    const a=Tf(S), b=Tf({x:S.x+d.x*ts,y:S.y+d.y*ts});
+    ctx.strokeStyle="#ffd60a"; ctx.lineWidth=7*k; ctx.lineCap="butt"; ctx.beginPath(); ctx.moveTo(a.x,a.y); ctx.lineTo(b.x,b.y); ctx.stroke(); ctx.lineCap="round";
+    const n=Math.round(Math.abs(ts)/0.5), step=isLupa?0.1:0.5, N=Math.round(Math.abs(ts)/step);
+    const nx=-(b.y-a.y), ny=(b.x-a.x), nl=Math.hypot(nx,ny)||1;
+    ctx.strokeStyle="#111"; ctx.fillStyle="#111"; ctx.font=`700 ${10*k}px system-ui`; ctx.textAlign="center";
+    for(let i=0;i<=N;i++){
+      const dd=i*step*sg, p=Tf({x:S.x+d.x*dd,y:S.y+d.y*dd});
+      const big=Math.abs((i*step)%1)<1e-6, half=Math.abs((i*step)%0.5)<1e-6;
+      const len=(big?5:half?3.6:2.2)*k;
+      ctx.lineWidth=1*k; ctx.beginPath(); ctx.moveTo(p.x-nx/nl*len,p.y-ny/nl*len); ctx.lineTo(p.x+nx/nl*len,p.y+ny/nl*len); ctx.stroke();
+    }
+    const q=b; ctx.fillStyle="#ffd60a"; ctx.beginPath(); ctx.arc(q.x,q.y,5*k,0,7); ctx.fill();
+    if(!isLupa) pill(ctx,f1(Math.abs(ts))+" cm",q.x+ nx/nl*22,q.y+ny/nl*22,1.15,"#ffd60a");
+  } else if(tool==="flex"&&tapeStart){
+    const a=Tf(tapeStart); ctx.strokeStyle="#ffd60a"; ctx.lineWidth=2*k; ctx.beginPath(); ctx.arc(a.x,a.y,9*k,0,7); ctx.stroke();
+  }
+  // serrucho
+  if(tool==="saw"){
+    const lid=sawLock||hv.lineId, l=lines.find(x=>x.id===lid);
+    if(l){
+      const seg=clipLine(l,poly);
+      if(seg){
+        const d=dirOf(l.ang); let c;
+        if(sawLock||!pb) c={x:(seg[0].x+seg[1].x)/2,y:(seg[0].y+seg[1].y)/2};
+        else { const t=(pb.x-l.x)*d.x+(pb.y-l.y)*d.y; c={x:l.x+d.x*t,y:l.y+d.y*t}; }
+        const n={x:-d.y,y:d.x}, s=sawLock?1:1;
+        const P1={x:c.x-d.x*4,y:c.y-d.y*4}, P2={x:c.x+d.x*4,y:c.y+d.y*4}, P3={x:P2.x+n.x*1.3,y:P2.y+n.y*1.3}, P4={x:P1.x+n.x*1.3,y:P1.y+n.y*1.3};
+        ctx.beginPath(); [P1,P2,P3,P4].forEach((p,i)=>{const q=Tf(p); i?ctx.lineTo(q.x,q.y):ctx.moveTo(q.x,q.y);}); ctx.closePath();
+        ctx.fillStyle="#b9c2d6dd"; ctx.fill(); ctx.strokeStyle="#4b5675"; ctx.lineWidth=1.5*k; ctx.stroke();
+        ctx.strokeStyle="#4b5675"; ctx.lineWidth=1*k; ctx.beginPath();
+        for(let i=0;i<=20;i++){ const u={x:P1.x+(P2.x-P1.x)*i/20,y:P1.y+(P2.y-P1.y)*i/20}, q1=Tf(u), q2=Tf({x:u.x+n.x*0.35,y:u.y+n.y*0.35}); ctx.moveTo(q1.x,q1.y); ctx.lineTo(q2.x,q2.y); }
+        ctx.stroke();
+        const hdl=Tf({x:c.x+d.x*5+n.x*.65,y:c.y+d.y*5+n.y*.65}); ctx.fillStyle="#7a4a1d"; ctx.beginPath(); ctx.arc(hdl.x,hdl.y,9*k,0,7); ctx.fill();
+      }
+    }
+  }
+  // puntos
+  for(const m of marks){
+    const p=Tf(m), nm=markName(m);
+    ctx.fillStyle=nm?"#16a34a":"#d62828"; ctx.beginPath(); ctx.arc(p.x,p.y,4.2*k,0,7); ctx.fill();
+    ctx.strokeStyle="#fff"; ctx.lineWidth=1.2*k; ctx.stroke();
+    if(nm){ ctx.fillStyle="#0b3d1d"; ctx.font=`800 ${14*k}px system-ui`; ctx.textAlign="center"; ctx.textBaseline="alphabetic"; ctx.fillText(nm,p.x+11*k,p.y-8*k); }
+  }
+  if(snapShow){ const s=Tf(snapShow); ctx.strokeStyle="#35e0ff"; ctx.lineWidth=2.2*k; ctx.beginPath(); ctx.arc(s.x,s.y,10*k,0,7); ctx.stroke(); }
+}
+
+const lupa=$("lupa"), lc=$("lc"), lctx=lc.getContext("2d"), lread=$("lread");
+function drawLupa(){
+  const show = stage==="trace"&&ptrVisible&&pb&&!(tool==="pencil"&&anchor)&&pb.x>-3&&pb.x<L+3&&pb.y>-3&&pb.y<HH+3&&!hv.dom;
+  lupa.style.display=show?"block":"none";
+  const reading = show&&tapeDraw&&tapeDraw.a!==null&&tapeDraw.t!==undefined;
+  lread.style.display=reading?"block":"none";
+  if(!show) return;
+  const lx=Math.min(W-214,Math.max(8,cur.x>W/2?cur.x-260:cur.x+60)), ly=Math.max(64,Math.min(Hh-440,cur.y-235));
+  lupa.style.left=lx+"px"; lupa.style.top=ly+"px";
+  if(reading){ lread.style.left=(lx+70)+"px"; lread.style.top=(ly+206)+"px"; lread.textContent=f1(Math.abs(tapeDraw.t))+" cm"; }
+  const c=pb, K=80;
+  lctx.save(); lctx.clearRect(0,0,200,200);
+  drawLayer(lctx,p=>({x:100+(p.x-c.x)*K,y:100-(p.y-c.y)*K}),1.5,true);
+  lctx.strokeStyle="#ff3b6b"; lctx.lineWidth=1.5; lctx.beginPath(); lctx.moveTo(100,84);lctx.lineTo(100,116);lctx.moveTo(84,100);lctx.lineTo(116,100); lctx.stroke();
+  lctx.restore();
+}
+
+/* ================= PANEL DE PASOS Y LATERAL ================= */
+const hasMark=p=>marks.some(m=>Math.hypot(m.x-p.x,m.y-p.y)<TOL);
+const hasLine=(p,a)=>lines.some(l=>angDiff(l.ang,a)<0.6&&distPtLine(p,l)<TOL);
+const ITEMS=[
+ ["Pie","Marca E: vértice del pie",()=>hasMark(EXP.E)],
+ ["Pie",`Desde E, línea a 90°−θ (${90-TH}° con la soga)`,()=>hasLine(EXP.E,EXP.a2)],
+ ["Pie",`Mide h = ${H} cm sobre ella: marca M`,()=>hasMark(EXP.M)],
+ ["Pie","Desde M, perpendicular a la soga hasta O",()=>hasLine(EXP.M,90)],
+ ["Pie","Corte 4: por O, paralela a E–M",()=>hasLine(EXP.O,EXP.a4)],
+ ["Pie","Corte 5 (suela): por P, perpendicular a O–P",()=>hasLine(EXP.P,EXP.a5)],
+ ["Cabeza","Marca E′: vértice de la cabeza",()=>hasMark(EXP.E2)],
+ ["Cabeza",`Desde E′, línea a θ = ${TH}° con la soga`,()=>hasLine(EXP.E2,TH)],
+ ["Cabeza",`Mide h = ${H} cm sobre ella: marca M′`,()=>hasMark(EXP.M2)],
+ ["Cabeza","Desde M′, perpendicular a la soga hasta O′",()=>hasLine(EXP.M2,90)],
+ ["Cabeza","Corte 6: por O′, paralela a E′–M′",()=>hasLine(EXP.O2,EXP.a6)],
+ ["Cabeza","Corte 7: por P′, perpendicular a O′–P′",()=>hasLine(EXP.P2,EXP.a7)],
+ ["Cortes","Serrucho: corte 4",()=>cutsDone.includes(4)],
+ ["Cortes","Serrucho: corte 5",()=>cutsDone.includes(5)],
+ ["Cortes","Serrucho: corte 6",()=>cutsDone.includes(6)],
+ ["Cortes","Serrucho: corte 7",()=>cutsDone.includes(7)],
+];
+const checkEl=$("check"); let lastCheck="";
+function renderCheck(){
+  const st=ITEMS.map(i=>i[2]()); const sig=st.join("");
+  if(sig===lastCheck) return; lastCheck=sig;
+  const nxt=st.indexOf(false); let html="";
+  for(const g of ["Pie","Cabeza","Cortes"]){
+    html+=`<div><h4>${g}</h4>`;
+    ITEMS.forEach((it,i)=>{ if(it[0]!==g) return; html+=`<div class="it ${st[i]?"done":i===nxt?"next":""}"><span class="bx">${st[i]?"✓":""}</span><span>${it[1]}</span></div>`; });
+    html+="</div>";
+  }
+  checkEl.innerHTML=html;
+}
+const sideEl=$("side");
+function renderSide(){
+  sideDirty=false;
+  document.querySelectorAll(".tbtn[data-key^='tool:']").forEach(b=>b.classList.toggle("sel",b.dataset.key==="tool:"+tool&&stage==="trace"));
+  let h="";
+  if(stage==="mounted"){
+    const s=suelaLen(), secs=Math.round((performance.now()-tStart)/1000);
+    h+=`<div class="rep"><b>¡Tornapunta montado a 30°!</b><br>Suela P–Q = <b>${isNaN(s)?"—":f1(s)} cm</b> (objetivo ${f1(EXP.P.x-EXP.Q.x>0?Math.hypot(EXP.P.x-EXP.Q.x,EXP.P.y-EXP.Q.y):0)} cm)<br>Errores: ${errors} · Tiempo: ${Math.floor(secs/60)} min ${secs%60} s</div>`;
+  } else if(stage==="trace" && cutsDone.length===4){
+    h+=`<div class="dw btn big" data-key="mount">MONTAR A 30°</div>`;
+  } else if(stage==="trace" && tool==="saw" && sawLock!=null){
+    h+=`<div>Inclinación de la hoja respecto a la cara:</div><div class="row">`;
+    for(const a of [90,60,45]) h+=`<div class="dw btn ${sawTilt===a?"sel":""}" data-key="tilt:${a}">${a}°${a===90?" vertical":""}</div>`;
+    h+=`</div><div class="row"><div class="dw btn big" style="min-width:150px;height:56px;font-size:17px" data-key="cut">CORTAR</div><div class="dw btn small" data-key="sawcancel">Cancelar</div></div>`;
+  } else {
+    h+=`<div style="opacity:.8;line-height:1.45">Mantén la punta del índice quieta sobre un punto, línea o botón para activarlo.<br>Tabla: ${L} × ${HH} cm · ejión h = ${H} cm · θ = ${TH}°</div>`;
+  }
+  $("resetBtn").style.display=(stage==="mounting")?"none":"flex";
+  sideEl.innerHTML=h;
+}
+function contextHint(){
+  if(stage==="mounting") return "";
+  if(stage==="mounted") return "Montaje terminado";
+  if(cutsDone.length===4) return "Todos los cortes hechos. Pulsa MONTAR A 30°.";
+  if(tool==="pencil") return anchor?"Elige la línea: mueve el dedo en su dirección (líneas discontinuas) y mantén":"✏️ LÁPIZ · Sitúa el índice sobre un punto (se pega al vértice o cruce) y mantén para marcarlo";
+  if(tool==="flex") return tapeStart?"📏 Alinea el flexómetro con una línea trazada, avanza y mantén para marcar el final":"📏 FLEXÓMETRO · Marca el inicio de la medida (por ejemplo, un vértice)";
+  if(tool==="saw") return sawLock!=null?"Elige la inclinación de la hoja y pulsa CORTAR":"🪚 SERRUCHO · Lleva la hoja sobre un trazado y mantén para alinearla";
+  return "";
+}
+
+/* ================= CÁMARA + MEDIAPIPE ================= */
+const dot=$("dot"), stxt=$("stxt"); function setStatus(t,c){stxt.textContent=t;dot.className=c||"";}
+let landmarker=null,lastVT=-1; const VER="0.10.14";
+const MODEL="https://storage.googleapis.com/mediapipe-models/hand_landmarker/hand_landmarker/float16/1/hand_landmarker.task";
+async function startCamera(){
+  $("start").style.display="none";
+  try{ const s=await navigator.mediaDevices.getUserMedia({video:{width:640,height:480,facingMode:"user"},audio:false}); video.srcObject=s; video.style.display="block"; await video.play(); }
+  catch(e){ setStatus("Cámara no disponible: usa el ratón","err"); return; }
+  setStatus("Cargando seguimiento de manos…");
+  try{
+    const {HandLandmarker,FilesetResolver}=await import(`https://cdn.jsdelivr.net/npm/@mediapipe/tasks-vision@${VER}/vision_bundle.mjs`);
+    const fs=await FilesetResolver.forVisionTasks(`https://cdn.jsdelivr.net/npm/@mediapipe/tasks-vision@${VER}/wasm`);
+    const o=d=>({baseOptions:{modelAssetPath:MODEL,delegate:d},runningMode:"VIDEO",numHands:1});
+    try{landmarker=await HandLandmarker.createFromOptions(fs,o("GPU"));}catch(e){landmarker=await HandLandmarker.createFromOptions(fs,o("CPU"));}
+    setStatus("Muestra tu mano a la cámara","ok");
+  }catch(e){ console.error(e); setStatus("No se pudo cargar el seguimiento de manos (¿sin internet?). Usa el ratón","err"); }
+}
+$("go").addEventListener("click",startCamera);
+$("mouse").addEventListener("click",()=>{ $("start").style.display="none"; setStatus("Modo ratón (prueba)"); });
+const clamp=v=>Math.max(0,Math.min(1,v));
+function detectHand(now){
+  if(!landmarker||video.readyState<2||video.currentTime===lastVT) return;
+  lastVT=video.currentTime;
+  const r=landmarker.detectForVideo(video,now);
+  if(r.landmarks&&r.landmarks.length){
+    const tip=r.landmarks[0][8];
+    target.x=clamp(((1-tip.x)-0.10)/0.80)*W; target.y=clamp((tip.y-0.08)/0.78)*Hh;
+    if(!ptrVisible){cur.x=target.x;cur.y=target.y;}
+    ptrVisible=true; lastHand=now; handSeen=true; setStatus("Mano detectada","ok");
+  } else if(now-lastHand>500) setStatus("Muestra tu mano a la cámara","ok");
+}
+
+/* ================= BUCLE ================= */
+resetAll();
+let prev=performance.now();
+function frame(now){
+  const dt=Math.min(100,now-prev); prev=now;
+  detectHand(now);
+  if(now-lastHand>500&&now-lastMouse>1000&&handSeen) ptrVisible=false;
+  cur.x+=(target.x-cur.x)*0.35; cur.y+=(target.y-cur.y)*0.35;
+
+  // animaciones de escena
+  const t=now/1000;
+  if(stage==="trace"){
+    holder.position.set(-L/2,0.7+Math.sin(t*1.2)*0.18,0);
+    holder.rotation.set(0.04,Math.sin(t*0.5)*0.03,0);
+    camera.position.set(0,0,camZ0);
+  } else if(stage==="mounting"||stage==="mounted"){
+    const p=stage==="mounted"?1:Math.min(1,(now-mountT0)/2600), e=ease(p);
+    holder.rotation.set(0.04*(1-e),Math.sin(t*0.5)*0.03*(1-e),rad(-TH)*e);
+    const hx=-L/2+(ASM_POS.x+L/2)*e, hy=0.7+((ASM_POS.y+footY)-0.7)*e;
+    holder.position.set(hx,hy,0);
+    stageG.position.y=7*e; stageG.rotation.y=-0.42*e;
+    camera.position.set(0,0,camZ0*(1+1.2*e));
+    const f=Math.max(0,Math.min(1,(p-0.35)/0.5)); mBeam.opacity=f; mEj.opacity=f;
+    if(stage==="mounting"&&p>=1){ stage="mounted"; sideDirty=true; say("Tornapunta montado: la suela queda horizontal y el corte 4 vertical","ok",9000); }
+  }
+  holder.updateMatrixWorld(true); camera.updateMatrixWorld(true);
+  for(let i=pieces.length-1;i>=0;i--){
+    const p=pieces[i]; p.t+=dt/1000; p.vy-=60*dt/1000; p.m.position.y+=p.vy*dt/1000; p.m.position.x+=p.vx*dt/1000; p.m.position.z+=p.vz*dt/1000;
+    p.m.rotation.z+=p.rz*dt/1000; p.m.rotation.x+=p.rx*dt/1000;
+    p.m.material.forEach(m=>m.opacity=Math.max(0,1-p.t/1.6));
+    if(p.t>1.6){ holder.remove(p.m); p.m.geometry.dispose(); pieces.splice(i,1); }
+  }
+
+  pb = (ptrVisible&&stage==="trace") ? screenToBoard(cur.x,cur.y) : null;
+  const h=computeHover(); hv.dom=h&&h.dom;
+  if(h&&h.dom){ document.querySelectorAll(".dw").forEach(e=>e.classList.toggle("hover",e===h.el)); }
+  else document.querySelectorAll(".dw.hover").forEach(e=>e.classList.remove("hover"));
+  dwellStep(h,dt);
+
+  ptrEl.style.display=ptrVisible?"block":"none";
+  ptrEl.style.transform=`translate(${cur.x}px,${cur.y}px)`;
+  pring.style.strokeDashoffset=String(119.4*(1-Math.min(1,dProg/dNeed)));
+
+  if(sideDirty) renderSide();
+  renderCheck();
+  const msgEl=$("msg");
+  if(now<msgUntil){ msgEl.textContent=msgText; msgEl.className=msgKind; }
+  else { msgEl.textContent=contextHint(); msgEl.className=""; }
+  msgEl.style.display=msgEl.textContent?"block":"none";
+
+  // overlay principal
+  const dpr=Math.min(devicePixelRatio,2);
+  octx.setTransform(dpr,0,0,dpr,0,0); octx.clearRect(0,0,W,Hh);
+  if(stage==="trace") drawLayer(octx,p=>boardToScreen(p.x,p.y),1,false);
+  drawLupa();
+
+  renderer.render(scene,camera);
+  requestAnimationFrame(frame);
+}
+requestAnimationFrame(frame);
+
+window.__t={
+  toScreen:(x,y)=>boardToScreen(x,y),
+  get s(){return {marks,lines,polyLen:poly.length,cutsDone,stage,errors,checks:ITEMS.map(i=>i[2]()),suela:suelaLen(),tool,anchor:!!anchor};},
+  dbg:()=>({sawLock,sawTilt,msgText,dk,dProg:Math.round(dProg),blockPos,tool,anchor,tapeStart,snap:snapShow,cur:{x:Math.round(cur.x),y:Math.round(cur.y)},pb}),
+  EXP, setPtr:(x,y)=>{lastMouse=performance.now();target.x=x;target.y=y;ptrVisible=true;}
+};
+</script>
+</body>
+</html>
