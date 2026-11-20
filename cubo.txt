@@ -31,6 +31,12 @@
   .sl .thumb{position:absolute;top:3px;width:34px;height:34px;margin-left:-17px;border-radius:50%;background:#35e0ff;box-shadow:0 0 12px #35e0ff88;transition:transform .05s}
   .sl.on .thumb{background:#ffd60a;box-shadow:0 0 18px #ffd60acc}
   .sl.hover{box-shadow:0 0 0 2px #35e0ff inset} .sl.hover .thumb{background:#ffd60a;box-shadow:0 0 16px #ffd60acc}
+  #inputs{position:fixed;right:16px;top:14px;width:250px;display:flex;flex-direction:column;gap:8px;z-index:4}
+  #inputs .tg{padding:10px 14px;border-radius:14px;background:#0b1226d9;border:1px solid #ffffff1a;font-weight:700;font-size:14px;display:flex;justify-content:space-between;cursor:pointer;user-select:none}
+  #inputs .tg b{color:#ff7a7a} #inputs .tg.on b{color:#3ddc84}
+  #inputs .tg.hover{box-shadow:0 0 0 2px #ffd60a inset}
+  #inputs .sm{font-size:12.5px;padding:7px 12px;font-weight:600;opacity:.85}
+  #heard{font-size:13px;line-height:1.35;padding:8px 12px;border-radius:12px;background:#0b1226cc;border:1px solid #ffffff14;min-height:56px}
   #start{position:fixed;inset:0;display:flex;align-items:center;justify-content:center;background:#060912d9;z-index:10}
   #start .card{max-width:560px;padding:30px 34px;border-radius:18px;background:#101a36;border:1px solid #ffffff1f;text-align:center}
   #start h1{margin:0 0 10px;font-size:26px}
@@ -42,6 +48,7 @@
   @media (max-aspect-ratio: 1/1){
     #video{left:auto;right:12px;top:12px;bottom:auto;width:96px;height:128px}
     #panel{top:56px;left:12px;width:min(240px,60vw);gap:22px}
+    #inputs{top:152px;right:12px;width:min(200px,46vw)}
     #status{left:12px;top:12px;font-size:13px;padding:6px 11px;max-width:calc(100vw - 140px)}
     #hint{bottom:calc(14px + env(safe-area-inset-bottom));font-size:13px;max-width:92vw}
     #start .card{margin:16px;padding:22px 20px}
@@ -60,13 +67,19 @@
   <div class="row"><label>ZOOM <b id="zv"></b></label><div class="sl" id="slZoom"><div class="fill"></div><div class="thumb"></div></div></div>
   <div class="row"><label>SENSIBILIDAD <b id="sv"></b></label><div class="sl" id="slSens"><div class="fill"></div><div class="thumb"></div></div></div>
 </div>
+<div id="inputs">
+  <div class="tg on" id="tgVoice">🎤 Voz <b>ON</b></div>
+  <div class="tg on" id="tgWink">😉 Guiño <b>ON</b></div>
+  <div class="tg sm" id="tgSwap">⇄ Invertir guiños <b>NO</b></div>
+  <div id="heard">Di: <b>derecha · izquierda · arriba · abajo</b><br>o guiña el ojo derecho / izquierdo</div>
+</div>
 <div id="hint">Pellizca una pieza y arrastra: la capa salta de 90° en 90°. Las barras de la izquierda se manejan igual: pellizca y espera un momento</div>
 <div id="ptr"></div>
 
 <div id="start">
   <div class="card">
     <h1>Cubo 2×2×2</h1>
-    <p><b>Pellizca</b> (junta pulgar e índice) una pieza del cubo y <b>arrastra</b> en la dirección que quieres girarla: puede ser una capa horizontal, o una columna como una noria. Al soltar, la capa completa sola el giro hasta 90° (o 180° si arrastras más). Pellizca en el <b>fondo</b> y arrastra para girar el cubo entero. Abre los dedos para soltar.<br>El vídeo no sale de tu equipo.</p>
+    <p><b>Pellizca</b> (junta pulgar e índice) una pieza del cubo y <b>arrastra</b> en la dirección que quieres girarla: puede ser una capa horizontal, o una columna como una noria. Al soltar, la capa completa sola el giro hasta 90° (o 180° si arrastras más). Pellizca en el <b>fondo</b> y arrastra para girar el cubo entero. Abre los dedos para soltar.<br>También puedes decir <b>derecha, izquierda, arriba, abajo</b> o <b>guiñar</b> el ojo derecho/izquierdo: gira la capa de la pieza iluminada.<br>El vídeo no sale de tu equipo.</p>
     <button id="go">Activar cámara</button>
     <button id="mouse">Probar con ratón</button>
   </div>
@@ -212,13 +225,15 @@ const LOG = [];
 const lg = (t, o) => { LOG.push(Object.assign({t:Math.round(performance.now()), e:t}, o||{})); if (LOG.length > 60) LOG.shift(); };
 function grabStart(){
   if (snap){ lg("grab-ignorado-snap"); return; }
+  const tk = tgAt(cur.x, cur.y);
+  if (tk){ grab = {mode:"tap", tk}; setGlow(null); return; }
   const sl = sliderAt(cur.x, cur.y);
   if (sl){
     const hand = performance.now() - lastHand < 1000;
     grab = {mode:"sliderArm", sl, t: hand ? 0 : ARM_MS, hand}; setGlow(null); lg("barra-armando"); return;   // con ratón no hace falta esperar
   }
   const h = pick(cur.x, cur.y);
-  if (h){ grab = {mode:"layer", h, x0:cur.x, y0:cur.y, axis:-1, x:cur.x}; setGlow([h.cubie]); lg("grab-capa", {x:Math.round(cur.x), y:Math.round(cur.y)}); }
+  if (h){ grab = {mode:"layer", h, x0:cur.x, y0:cur.y, axis:-1, x:cur.x}; selCubie = h.cubie; setGlow([h.cubie]); lg("grab-capa", {x:Math.round(cur.x), y:Math.round(cur.y)}); }
   else { grab = {mode:"orbit", x:cur.x, y:cur.y}; lg("grab-fondo", {x:Math.round(cur.x), y:Math.round(cur.y)}); }
 }
 // elige eje de giro según hacia dónde arrastras: el punto tocado debe "seguir" al dedo
@@ -246,6 +261,7 @@ function lockAxis(dx, dy){
 }
 function grabEnd(){
   if (!grab) return;
+  if (grab.mode === "tap"){ if (tgAt(cur.x, cur.y) === grab.tk) toggle(grab.tk); grab = null; return; }
   if (grab.sl){ grab.sl.el.classList.remove("on"); grab.sl.el.querySelector(".thumb").style.transform = ""; }
   lg("suelta", {modo:grab.mode, eje:grab.axis, saltos:grab.n||0});
   if (grab.mode === "layer" && grab.pivot){
@@ -263,9 +279,98 @@ function stepSnap(now){
       cubeGroup.attach(c);
       c.position.set(Math.round(c.position.x*2)/2, Math.round(c.position.y*2)/2, Math.round(c.position.z*2)/2);
     });
-    cubeGroup.remove(snap.pivot); snap = null; setGlow(null);
+    cubeGroup.remove(snap.pivot); snap = null;
   }
 }
+
+/* ---------- ÓRDENES POR VOZ Y POR GUIÑO ---------- */
+let selCubie = null, voiceOn = true, winkOn = true, swapWink = false, rec = null, faceLm = null, faceTick = 0, lastCmd = 0, blinkDbg = [0,0];
+const WINK_MS = 350;
+const heardEl = document.getElementById("heard");
+const DIRTXT = {right:"➡ derecha", left:"⬅ izquierda", up:"⬆ arriba", down:"⬇ abajo"};
+function heardMsg(t, html){ if (html) heardEl.innerHTML = t; else heardEl.textContent = t; }
+function ensureSel(){
+  if (selCubie) return;
+  cubeGroup.updateMatrixWorld(true); const p = new THREE.Vector3(); let best = null;
+  cubies.forEach(c => { c.getWorldPosition(p); const d = p.distanceTo(camera.position); if (!best || d < best.d) best = {c, d}; });
+  selCubie = best && best.c;
+}
+function command(dir, src){
+  if (grab || snap) return;
+  ensureSel(); const c = selCubie; if (!c) return;
+  cubeGroup.updateMatrixWorld(true);
+  const P = new THREE.Vector3(), C = new THREE.Vector3(); c.getWorldPosition(P); cubeGroup.getWorldPosition(C);
+  const D = dir==="right" ? [1,0] : dir==="left" ? [-1,0] : dir==="up" ? [0,-1] : [0,1];
+  const P0 = toScreen(P); let best = null;
+  for (let i = 0; i < 3; i++){
+    const wa = AX[i].clone().applyQuaternion(cubeGroup.quaternion);
+    const P1 = toScreen(P.clone().add(wa.clone().cross(P.clone().sub(C)).multiplyScalar(0.05)));
+    const sx = (P1.x-P0.x)/0.05, sy = (P1.y-P0.y)/0.05, len = Math.hypot(sx, sy) || 1e-6;
+    const dot = (D[0]*sx + D[1]*sy)/len, score = Math.abs(dot)*Math.min(1, len/40);
+    if (!best || score > best.score) best = {i, dot, score};
+  }
+  const side = Math.sign(coord(c, best.i)) || 1;
+  const {layer, pivot} = makePivot(best.i, side);
+  snap = {pivot, layer, axis:AX[best.i], from:0, to:(best.dot >= 0 ? 1 : -1)*HALF, t0:performance.now(), dur:380};
+  setGlow([c]); lastCmd = performance.now(); lg("orden", {dir, src, eje:best.i});
+  heardMsg(`${src === "voz" ? "🎤" : "😉"} ${DIRTXT[dir]}`);
+}
+/* voz (Chrome: reconocimiento en español) */
+const SR = window.SpeechRecognition || window.webkitSpeechRecognition;
+const norm = s => s.toLowerCase().normalize("NFD").replace(/[̀-ͯ]/g, "");
+const WORDS = [["right",/\bderecha\b/],["left",/\bizquierda\b/],["up",/\b(arriba|sube)\b/],["down",/\b(abajo|baja)\b/]];
+function startVoice(){
+  if (!voiceOn || rec) return;
+  if (!SR){ heardMsg("Voz no disponible en este navegador: usa Chrome"); return; }
+  const r = rec = new SR(); r.lang = "es-ES"; r.continuous = true; r.interimResults = true;
+  const fired = new Set();
+  r.onresult = e => {
+    for (let i = e.resultIndex; i < e.results.length; i++){
+      const txt = norm(e.results[i][0].transcript);
+      if (fired.has(i)){ if (e.results[i].isFinal) fired.delete(i); continue; }
+      heardMsg("🎤 oigo: " + txt);
+      for (const [d, re] of WORDS) if (re.test(txt)){ fired.add(i); command(d, "voz"); break; }
+    }
+  };
+  r.onerror = e => { if (e.error === "not-allowed" || e.error === "service-not-allowed"){ voiceOn = false; paintToggles(); heardMsg("Micrófono bloqueado: permítelo con el candado de la barra de direcciones"); rec = null; } };
+  r.onend = () => { if (rec === r) rec = null; if (voiceOn) setTimeout(startVoice, 300); };
+  try{ r.start(); heardMsg("🎤 Escuchando… di derecha, izquierda, arriba o abajo"); }catch(e){ rec = null; }
+}
+function stopVoice(){ const r = rec; rec = null; try{ if (r){ r.onend = null; r.stop(); } }catch(e){} }
+/* guiño (modelo de cara de MediaPipe) */
+let winkSide = 0, winkT = 0, winkArmed = true;
+function feedBlink(bl, br, now){        // bl / br = ojo izquierdo / derecho DE LA PERSONA (0 abierto … 1 cerrado)
+  blinkDbg = [bl, br];
+  let side = 0; if (br > 0.55 && bl < 0.35) side = 1; else if (bl > 0.55 && br < 0.35) side = -1;
+  if (side !== 0 && side === winkSide){
+    if (now - winkT >= WINK_MS && winkArmed && now - lastCmd > 700){ winkArmed = false; command(side > 0 ? "right" : "left", "guiño"); }
+  } else if (side !== winkSide){ winkSide = side; winkT = now; }
+  if (bl < 0.3 && br < 0.3) winkArmed = true;
+}
+function faceStep(now){
+  if (!faceLm || !winkOn || (faceTick++ % 3) !== 0) return;
+  let res; try{ res = faceLm.detectForVideo(video, now); }catch(e){ return; }
+  const bs = res.faceBlendshapes && res.faceBlendshapes[0];
+  if (!bs){ winkSide = 0; return; }
+  const get = n => { const c = bs.categories.find(c => c.categoryName === n); return c ? c.score : 0; };
+  let bl = get("eyeBlinkLeft"), br = get("eyeBlinkRight"); if (swapWink) [bl, br] = [br, bl];
+  feedBlink(bl, br, now);
+  if (now - lastCmd > 1500) heardMsg(`😉 ojo izq ${bl.toFixed(2)} · ojo dcho ${br.toFixed(2)}`);
+}
+/* interruptores (se tocan con ratón o pellizco) */
+const TG = {voice:document.getElementById("tgVoice"), wink:document.getElementById("tgWink"), swap:document.getElementById("tgSwap")};
+function paintToggles(){
+  const set = (el, on, yes="ON", no="OFF") => { el.classList.toggle("on", on); el.querySelector("b").textContent = on ? yes : no; };
+  set(TG.voice, voiceOn); set(TG.wink, winkOn); set(TG.swap, swapWink, "SÍ", "NO");
+}
+function tgAt(x, y){ for (const k in TG){ const r = TG[k].getBoundingClientRect(); if (x >= r.left && x <= r.right && y >= r.top && y <= r.bottom) return k; } return null; }
+function toggle(k){
+  if (k === "voice"){ voiceOn = !voiceOn; voiceOn ? startVoice() : (stopVoice(), heardMsg("Voz desactivada")); }
+  else if (k === "wink"){ winkOn = !winkOn; heardMsg(winkOn ? (faceLm ? "Guiño activado" : "Guiño: necesita la cámara activada") : "Guiño desactivado"); }
+  else { swapWink = !swapWink; heardMsg("Guiños " + (swapWink ? "invertidos" : "normales")); }
+  paintToggles();
+}
+paintToggles();
 
 addEventListener("mousemove", e => {
   lastMouse = performance.now();
@@ -322,8 +427,10 @@ function updatePointer(now, dt){
     }
   } else if (ptrVisible && !snap){
     const sl = sliderAt(cur.x, cur.y); SLIDERS.forEach(o => o.el.classList.toggle("hover", o === sl));
-    const h = sl ? null : pick(cur.x, cur.y); setGlow(h ? [h.cubie] : null);
-  } else if (!ptrVisible && !snap){ setGlow(null); SLIDERS.forEach(o => o.el.classList.remove("hover")); }
+    const h = sl ? null : pick(cur.x, cur.y); if (h) selCubie = h.cubie;
+    const tk = tgAt(cur.x, cur.y); Object.keys(TG).forEach(k => TG[k].classList.toggle("hover", k === tk));
+    setGlow(selCubie ? [selCubie] : null);
+  } else if (!ptrVisible && !snap){ ensureSel(); setGlow(selCubie ? [selCubie] : null); SLIDERS.forEach(o => o.el.classList.remove("hover")); Object.keys(TG).forEach(k => TG[k].classList.remove("hover")); }
 }
 
 /* ---------- CÁMARA + MEDIAPIPE ---------- */
@@ -334,7 +441,7 @@ const VER = "0.10.14";
 const MODEL = "https://storage.googleapis.com/mediapipe-models/hand_landmarker/hand_landmarker/float16/1/hand_landmarker.task";
 
 async function startCamera(){
-  $("start").style.display = "none";
+  $("start").style.display = "none"; startVoice();
   try{
     const stream = await navigator.mediaDevices.getUserMedia({video:{width:640,height:480,facingMode:"user"},audio:false});
     video.srcObject = stream; video.style.display = "block"; await video.play();
@@ -343,11 +450,15 @@ async function startCamera(){
   }
   setStatus("Cargando seguimiento de manos…");
   try{
-    const {HandLandmarker, FilesetResolver} = await import(`https://cdn.jsdelivr.net/npm/@mediapipe/tasks-vision@${VER}/vision_bundle.mjs`);
+    const {HandLandmarker, FilesetResolver, FaceLandmarker} = await import(`https://cdn.jsdelivr.net/npm/@mediapipe/tasks-vision@${VER}/vision_bundle.mjs`);
     const fs = await FilesetResolver.forVisionTasks(`https://cdn.jsdelivr.net/npm/@mediapipe/tasks-vision@${VER}/wasm`);
     const opts = d => ({baseOptions:{modelAssetPath:MODEL, delegate:d}, runningMode:"VIDEO", numHands:1});
     try{ landmarker = await HandLandmarker.createFromOptions(fs, opts("GPU")); }
     catch(e){ landmarker = await HandLandmarker.createFromOptions(fs, opts("CPU")); }
+    try{
+      const fo = d => ({baseOptions:{modelAssetPath:"https://storage.googleapis.com/mediapipe-models/face_landmarker/face_landmarker/float16/1/face_landmarker.task", delegate:d}, runningMode:"VIDEO", numFaces:1, outputFaceBlendshapes:true});
+      try{ faceLm = await FaceLandmarker.createFromOptions(fs, fo("GPU")); }catch(e){ faceLm = await FaceLandmarker.createFromOptions(fs, fo("CPU")); }
+    }catch(e){ console.error(e); heardMsg("Guiño no disponible (no cargó el modelo de cara)"); }
     setStatus("Muestra tu mano a la cámara", "ok");
   }catch(err){
     console.error(err);
@@ -355,12 +466,13 @@ async function startCamera(){
   }
 }
 $("go").addEventListener("click", startCamera);
-$("mouse").addEventListener("click", () => { $("start").style.display="none"; setStatus("Modo ratón (prueba)"); });
+$("mouse").addEventListener("click", () => { $("start").style.display="none"; startVoice(); setStatus("Modo ratón (prueba)"); });
 
 const clamp = v => Math.max(0, Math.min(1, v));
 function detectHand(now){
   if (!landmarker || video.readyState < 2 || video.currentTime === lastVideoTime) return;
   lastVideoTime = video.currentTime;
+  faceStep(now);
   const res = landmarker.detectForVideo(video, now);
   if (res.landmarks && res.landmarks.length){
     const L = res.landmarks[0], t4 = L[4], t8 = L[8];
@@ -407,7 +519,7 @@ function frame(now){
   requestAnimationFrame(frame);
 }
 requestAnimationFrame(frame);
-window.__cubo = {log: LOG, sim:(x,y,p)=>{lastHand=performance.now();handSeenOnce=true;target.x=x;target.y=y;ptrVisible=true;pinched=p;}, turnBase, pick, get busy(){return !!(grab||snap);}, get layerRot(){return cubies.map(c=>[c.position.x,c.position.y,c.position.z]);}}; // para pruebas
+window.__cubo = {log: LOG, selScreen:()=>{ensureSel(); const q=new THREE.Vector3(); selCubie.getWorldPosition(q); return toScreen(q);}, command, feedBlink, get sel(){return selCubie && selCubie.position.toArray();}, sim:(x,y,p)=>{lastHand=performance.now();handSeenOnce=true;target.x=x;target.y=y;ptrVisible=true;pinched=p;}, turnBase, pick, get busy(){return !!(grab||snap);}, get layerRot(){return cubies.map(c=>[c.position.x,c.position.y,c.position.z]);}}; // para pruebas
 </script>
 </body>
 </html>
