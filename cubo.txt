@@ -36,6 +36,8 @@
   #inputs .tg b{color:#ff7a7a} #inputs .tg.on b{color:#3ddc84}
   #inputs .tg.hover{box-shadow:0 0 0 2px #ffd60a inset}
   #inputs .sm{font-size:12.5px;padding:7px 12px;font-weight:600;opacity:.85}
+  #meters{font-size:11.5px;line-height:1.5;padding:8px 12px;border-radius:12px;background:#0b1226cc;border:1px solid #ffffff14}
+  #meters .m{display:flex;align-items:center;gap:6px} #meters .m span{width:112px;opacity:.85} #meters .m i{display:block;height:7px;border-radius:4px;background:#35e0ff;width:0}
   #heard{font-size:13px;line-height:1.35;padding:8px 12px;border-radius:12px;background:#0b1226cc;border:1px solid #ffffff14;min-height:56px}
   #start{position:fixed;inset:0;display:flex;align-items:center;justify-content:center;background:#060912d9;z-index:10}
   #start .card{max-width:560px;padding:30px 34px;border-radius:18px;background:#101a36;border:1px solid #ffffff1f;text-align:center}
@@ -71,6 +73,7 @@
   <div class="tg on" id="tgVoice">🎤 Voz <b>ON</b></div>
   <div class="tg on" id="tgWink">😉 Guiño <b>ON</b></div>
   <div class="tg sm" id="tgSwap">⇄ Invertir guiños <b>NO</b></div>
+  <div id="meters"></div>
   <div id="heard">Di: <b>derecha · izquierda · arriba · abajo</b><br>o guiña el ojo derecho / izquierdo</div>
 </div>
 <div id="hint">Pellizca una pieza y arrastra: la capa salta de 90° en 90°. Las barras de la izquierda se manejan igual: pellizca y espera un momento</div>
@@ -338,7 +341,11 @@ function startVoice(){
 }
 function stopVoice(){ const r = rec; rec = null; try{ if (r){ r.onend = null; r.stop(); } }catch(e){} }
 /* guiño (modelo de cara de MediaPipe) */
-let winkSide = 0, winkT = 0, winkArmed = true;
+let winkSide = 0, winkT = 0, winkArmed = true, meterT = 0;
+const GESTOS = ["cheekPuff","cheekSquintLeft","cheekSquintRight","tongueOut","jawOpen","mouthSmileLeft","mouthSmileRight","mouthPucker","mouthLeft","mouthRight","browInnerUp"];
+const MX = {}, VAL = {}, metersEl = document.getElementById("meters");
+metersEl.innerHTML = GESTOS.map(n => `<div class="m"><span>${n}</span><i data-n="${n}"></i></div>`).join("");
+function paintMeters(){ metersEl.querySelectorAll("i").forEach(i => { i.style.width = Math.round((VAL[i.dataset.n]||0)*100)+"px"; }); }
 function feedBlink(bl, br, now){        // bl / br = ojo izquierdo / derecho DE LA PERSONA (0 abierto … 1 cerrado)
   blinkDbg = [bl, br];
   let side = 0; if (br > 0.55 && bl < 0.35) side = 1; else if (bl > 0.55 && br < 0.35) side = -1;
@@ -355,6 +362,8 @@ function faceStep(now){
   const get = n => { const c = bs.categories.find(c => c.categoryName === n); return c ? c.score : 0; };
   let bl = get("eyeBlinkLeft"), br = get("eyeBlinkRight"); if (swapWink) [bl, br] = [br, bl];
   feedBlink(bl, br, now);
+  for (const n of GESTOS){ const v = get(n); MX[n] = Math.max(MX[n]||0, v); VAL[n] = v; }
+  if (now - meterT > 150){ meterT = now; paintMeters(); }
   if (now - lastCmd > 1500) heardMsg(`😉 ojo izq ${bl.toFixed(2)} · ojo dcho ${br.toFixed(2)}`);
 }
 /* interruptores (se tocan con ratón o pellizco) */
@@ -519,7 +528,7 @@ function frame(now){
   requestAnimationFrame(frame);
 }
 requestAnimationFrame(frame);
-window.__cubo = {log: LOG, selScreen:()=>{ensureSel(); const q=new THREE.Vector3(); selCubie.getWorldPosition(q); return toScreen(q);}, command, feedBlink, get sel(){return selCubie && selCubie.position.toArray();}, sim:(x,y,p)=>{lastHand=performance.now();handSeenOnce=true;target.x=x;target.y=y;ptrVisible=true;pinched=p;}, turnBase, pick, get busy(){return !!(grab||snap);}, get layerRot(){return cubies.map(c=>[c.position.x,c.position.y,c.position.z]);}}; // para pruebas
+window.__cubo = {log: LOG, MX, resetMx(){ for (const k in MX) delete MX[k]; }, selScreen:()=>{ensureSel(); const q=new THREE.Vector3(); selCubie.getWorldPosition(q); return toScreen(q);}, command, feedBlink, get sel(){return selCubie && selCubie.position.toArray();}, sim:(x,y,p)=>{lastHand=performance.now();handSeenOnce=true;target.x=x;target.y=y;ptrVisible=true;pinched=p;}, turnBase, pick, get busy(){return !!(grab||snap);}, get layerRot(){return cubies.map(c=>[c.position.x,c.position.y,c.position.z]);}}; // para pruebas
 </script>
 </body>
 </html>
