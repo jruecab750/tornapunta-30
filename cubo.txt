@@ -8,7 +8,7 @@
   *{box-sizing:border-box}
   html,body{margin:0;height:100%;overflow:hidden;color:#e8eefc;
     font-family:system-ui,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;
-    background:radial-gradient(ellipse at 50% 40%,#17234a 0%,#0b1124 60%,#060912 100%)}
+    background:radial-gradient(ellipse at 50% 40%,#f6f9ff 0%,#dce6f8 58%,#c5d4ee 100%)}
   canvas#c{position:fixed;inset:0;width:100%;height:100%;display:block}
   #video{position:fixed;left:16px;bottom:16px;width:220px;height:165px;object-fit:cover;
     transform:scaleX(-1);opacity:.32;border-radius:12px;border:1px solid #ffffff22;pointer-events:none;display:none}
@@ -17,11 +17,11 @@
   #dot{width:11px;height:11px;border-radius:50%;background:#ffb020;box-shadow:0 0 8px currentColor;color:#ffb020}
   #dot.ok{background:#3ddc84;color:#3ddc84}
   #dot.err{background:#ff5a5f;color:#ff5a5f}
-  #hint{position:fixed;left:50%;bottom:22px;transform:translateX(-50%);font-size:16px;opacity:.75;
+  #hint{position:fixed;left:50%;bottom:22px;transform:translateX(-50%);font-size:16px;opacity:.9;color:#1b2a4a;font-weight:600;
     text-align:center;max-width:70vw;pointer-events:none}
   #ptr{position:fixed;left:0;top:0;width:30px;height:30px;margin:-15px 0 0 -15px;border-radius:50%;pointer-events:none;
-    border:3px solid #35e0ff;background:transparent;box-shadow:0 0 14px #35e0ffaa;display:none;z-index:5;transition:width .1s,height .1s,margin .1s,background .1s}
-  #ptr.pinch{width:16px;height:16px;margin:-8px 0 0 -8px;background:#ffd60a;border-color:#ffd60a;box-shadow:0 0 18px #ffd60acc}
+    border:3px solid #0a6e8f;background:#ffffffaa;box-shadow:0 0 10px #0b2a4a66;display:none;z-index:5;transition:width .1s,height .1s,margin .1s,background .1s}
+  #ptr.pinch{width:16px;height:16px;margin:-8px 0 0 -8px;background:#ff9f0a;border-color:#6b3d00;box-shadow:0 0 12px #6b3d00aa}
   #panel{position:fixed;left:16px;top:68px;width:270px;z-index:4;display:flex;flex-direction:column;gap:30px}
   #panel .row{padding:12px 14px 14px;border-radius:16px;background:#0b1226d9;border:1px solid #ffffff1a}
   #panel label{display:flex;justify-content:space-between;font-size:13px;letter-spacing:.06em;font-weight:700;opacity:.85;margin-bottom:8px}
@@ -37,7 +37,7 @@
   #inputs .tg.hover{box-shadow:0 0 0 2px #ffd60a inset}
   #inputs .sm{font-size:12.5px;padding:7px 12px;font-weight:600;opacity:.85}
   #meters{font-size:11.5px;line-height:1.5;padding:8px 12px;border-radius:12px;background:#0b1226cc;border:1px solid #ffffff14}
-  #meters .m{display:flex;align-items:center;gap:6px} #meters .m span{width:112px;opacity:.85} #meters .m i{display:block;height:7px;border-radius:4px;background:#35e0ff;width:0}
+  #meters .m{display:flex;align-items:center;gap:6px} #meters .m span{width:128px;opacity:.9} #meters .m i{display:block;height:7px;border-radius:4px;background:#35e0ff;width:0}
   #heard{font-size:13px;line-height:1.35;padding:8px 12px;border-radius:12px;background:#0b1226cc;border:1px solid #ffffff14;min-height:56px}
   #start{position:fixed;inset:0;display:flex;align-items:center;justify-content:center;background:#060912d9;z-index:10}
   #start .card{max-width:560px;padding:30px 34px;border-radius:18px;background:#101a36;border:1px solid #ffffff1f;text-align:center}
@@ -344,8 +344,8 @@ function startVoice(){
 function stopVoice(){ const r = rec; rec = null; try{ if (r){ r.onend = null; r.stop(); } }catch(e){} }
 /* guiño (modelo de cara de MediaPipe) */
 /* cabeza: giro / inclinación → derecha·izquierda, cabeceo → arriba·abajo (respecto a tu postura neutra) */
-const HS = {yaw:1, pitch:1, roll:1};           // signos (ajustados con la prueba real)
-const HTH = {yaw:18, roll:14, pitch:12};        // grados desde la postura neutra
+const HS = {yaw:-1, pitch:1, roll:1};           // signos (ajustados con la prueba real)
+const HTH = {yaw:16, roll:14, pitch:9};        // grados desde la postura neutra
 const neu = {}; let headArmed = true, headT = 0;
 function feedHead(yaw, pitch, roll, now){
   const c = {yaw:yaw*HS.yaw, pitch:pitch*HS.pitch, roll:roll*HS.roll}, dev = {};
@@ -363,7 +363,8 @@ function feedHead(yaw, pitch, roll, now){
 let winkSide = 0, winkT = 0, winkArmed = true, meterT = 0;
 const GESTOS = ["cheekPuff","cheekSquintLeft","cheekSquintRight","tongueOut","jawOpen","mouthSmileLeft","mouthSmileRight","mouthPucker","mouthLeft","mouthRight","browInnerUp"];
 const MX = {}, VAL = {}, metersEl = document.getElementById("meters");
-metersEl.innerHTML = GESTOS.map(n => `<div class="m"><span>${n}</span><i data-n="${n}"></i></div>`).join("");
+const ES = {cheekPuff:"Mejillas infladas", cheekSquintLeft:"Mejilla izq. alzada", cheekSquintRight:"Mejilla dcha. alzada", tongueOut:"Lengua fuera", jawOpen:"Boca abierta", mouthSmileLeft:"Sonrisa izquierda", mouthSmileRight:"Sonrisa derecha", mouthPucker:"Labios en beso", mouthLeft:"Boca a la izquierda", mouthRight:"Boca a la derecha", browInnerUp:"Cejas arriba"};
+metersEl.innerHTML = '<div style="font-weight:700;margin-bottom:3px">Gestos de la cara (0 a 100)</div>' + GESTOS.map(n => `<div class="m"><span>${ES[n]}</span><i data-n="${n}"></i></div>`).join("");
 function paintMeters(){ metersEl.querySelectorAll("i").forEach(i => { i.style.width = Math.round((VAL[i.dataset.n]||0)*100)+"px"; }); }
 function feedBlink(bl, br, now){        // bl / br = ojo izquierdo / derecho DE LA PERSONA (0 abierto … 1 cerrado)
   blinkDbg = [bl, br];
