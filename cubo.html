@@ -1,0 +1,300 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Cubo 2×2×2 – control con la mano (pellizco)</title>
+<style>
+  *{box-sizing:border-box}
+  html,body{margin:0;height:100%;overflow:hidden;color:#e8eefc;
+    font-family:system-ui,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;
+    background:radial-gradient(ellipse at 50% 40%,#17234a 0%,#0b1124 60%,#060912 100%)}
+  canvas#c{position:fixed;inset:0;width:100%;height:100%;display:block}
+  #video{position:fixed;left:16px;bottom:16px;width:220px;height:165px;object-fit:cover;
+    transform:scaleX(-1);opacity:.32;border-radius:12px;border:1px solid #ffffff22;pointer-events:none;display:none}
+  #status{position:fixed;left:16px;top:14px;display:flex;align-items:center;gap:10px;
+    font-size:15px;padding:8px 14px;border-radius:999px;background:#0b1226cc;border:1px solid #ffffff1a}
+  #dot{width:11px;height:11px;border-radius:50%;background:#ffb020;box-shadow:0 0 8px currentColor;color:#ffb020}
+  #dot.ok{background:#3ddc84;color:#3ddc84}
+  #dot.err{background:#ff5a5f;color:#ff5a5f}
+  #hint{position:fixed;left:50%;bottom:22px;transform:translateX(-50%);font-size:16px;opacity:.75;
+    text-align:center;max-width:70vw;pointer-events:none}
+  #ptr{position:fixed;left:0;top:0;width:30px;height:30px;margin:-15px 0 0 -15px;border-radius:50%;pointer-events:none;
+    border:3px solid #35e0ff;background:transparent;box-shadow:0 0 14px #35e0ffaa;display:none;z-index:5;transition:width .1s,height .1s,margin .1s,background .1s}
+  #ptr.pinch{width:16px;height:16px;margin:-8px 0 0 -8px;background:#ffd60a;border-color:#ffd60a;box-shadow:0 0 18px #ffd60acc}
+  #start{position:fixed;inset:0;display:flex;align-items:center;justify-content:center;background:#060912d9;z-index:10}
+  #start .card{max-width:560px;padding:30px 34px;border-radius:18px;background:#101a36;border:1px solid #ffffff1f;text-align:center}
+  #start h1{margin:0 0 10px;font-size:26px}
+  #start p{margin:8px 0 20px;line-height:1.5;opacity:.85}
+  #start button{font:inherit;font-weight:600;padding:12px 22px;border-radius:12px;border:0;cursor:pointer;margin:4px}
+  #go{background:#35e0ff;color:#04202a}
+  #mouse{background:#233157;color:#e8eefc}
+  /* Pantalla vertical (iPhone): botón abajo, vídeo pequeño arriba a la derecha */
+  @media (max-aspect-ratio: 1/1){
+    #video{left:auto;right:12px;top:12px;bottom:auto;width:96px;height:128px}
+    #status{left:12px;top:12px;font-size:13px;padding:6px 11px;max-width:calc(100vw - 140px)}
+    #hint{bottom:calc(14px + env(safe-area-inset-bottom));font-size:13px;max-width:92vw}
+    #start .card{margin:16px;padding:22px 20px}
+    #start h1{font-size:22px}
+  }
+</style>
+</head>
+<body>
+<canvas id="c"></canvas>
+<video id="video" playsinline muted></video>
+
+<div id="status"><span id="dot"></span><span id="stxt">Sin cámara</span></div>
+
+
+<div id="hint">Pon el puntero sobre una mitad del cubo (se ilumina), pellizca y arrastra de lado</div>
+<div id="ptr"></div>
+
+<div id="start">
+  <div class="card">
+    <h1>Cubo 2×2×2</h1>
+    <p><b>Pellizca</b> (junta pulgar e índice) sobre una mitad del cubo y <b>arrastra de lado</b>: esa capa gira y encaja sola de 90° en 90°. Pellizca en el <b>fondo</b> y arrastra para girar el cubo entero. Abre los dedos para soltar.<br>El vídeo no sale de tu equipo.</p>
+    <button id="go">Activar cámara</button>
+    <button id="mouse">Probar con ratón</button>
+  </div>
+</div>
+
+<script type="importmap">
+{"imports":{"three":"https://cdn.jsdelivr.net/npm/three@0.160.0/build/three.module.js"}}
+</script>
+<script type="module">
+import * as THREE from "three";
+
+/* ---------- ESCENA ---------- */
+const canvas = document.getElementById("c");
+const renderer = new THREE.WebGLRenderer({canvas, antialias:true, alpha:true});
+renderer.setPixelRatio(Math.min(devicePixelRatio, 2));
+const scene = new THREE.Scene();
+const camera = new THREE.PerspectiveCamera(38, 1, 0.1, 100);
+camera.position.set(0, 0, 8);
+scene.add(new THREE.AmbientLight(0xffffff, 1.0));
+const key = new THREE.DirectionalLight(0xffffff, 2.4); key.position.set(3, 5, 5); scene.add(key);
+const fill = new THREE.DirectionalLight(0x88aaff, 0.9); fill.position.set(-5, -2, 3); scene.add(fill);
+
+const COLORS = {px:0xd62828, nx:0xff7a00, py:0xf4f4f4, ny:0xffd60a, pz:0x2ca02c, nz:0x1f6fe5};
+const bodyGeo = new THREE.BoxGeometry(0.96, 0.96, 0.96);
+const bodyMat = new THREE.MeshStandardMaterial({color:0x0b0b10, roughness:0.55});
+const stGeo = new THREE.PlaneGeometry(0.80, 0.80);
+const stMats = {};
+for (const k in COLORS) stMats[k] = new THREE.MeshStandardMaterial({color:COLORS[k], roughness:0.35, metalness:0.05});
+
+function makeCubie(x, y, z){
+  const g = new THREE.Group();
+  const bm = bodyMat.clone(); g.userData.mats = [bm];
+  g.add(new THREE.Mesh(bodyGeo, bm));
+  const sx = Math.sign(x), sy = Math.sign(y), sz = Math.sign(z), o = 0.481;
+  const faces = [
+    [sx>0?"px":"nx", [sx*o,0,0], [0, sx*Math.PI/2, 0]],
+    [sy>0?"py":"ny", [0,sy*o,0], [-sy*Math.PI/2, 0, 0]],
+    [sz>0?"pz":"nz", [0,0,sz*o], [0, sz>0?0:Math.PI, 0]],
+  ];
+  for (const [k, p, r] of faces){
+    const sm = stMats[k].clone(); g.userData.mats.push(sm);
+    const m = new THREE.Mesh(stGeo, sm);
+    m.position.set(...p); m.rotation.set(...r); g.add(m);
+  }
+  g.position.set(x, y, z);
+  return g;
+}
+
+const floater = new THREE.Group();   // sube y baja
+const cubeGroup = new THREE.Group(); // inclinación del cubo
+floater.add(cubeGroup); scene.add(floater);
+const cubies = [];
+for (const x of [-0.5,0.5]) for (const y of [-0.5,0.5]) for (const z of [-0.5,0.5]){
+  const c = makeCubie(x,y,z); cubies.push(c); cubeGroup.add(c);
+}
+
+// sombra suave en el "suelo" para dar sensación de flotar
+const sc = document.createElement("canvas"); sc.width = sc.height = 128;
+const sctx = sc.getContext("2d");
+const grad = sctx.createRadialGradient(64,64,0,64,64,64);
+grad.addColorStop(0,"rgba(0,0,0,.55)"); grad.addColorStop(1,"rgba(0,0,0,0)");
+sctx.fillStyle = grad; sctx.fillRect(0,0,128,128);
+const shadow = new THREE.Mesh(new THREE.PlaneGeometry(3.2,3.2),
+  new THREE.MeshBasicMaterial({map:new THREE.CanvasTexture(sc), transparent:true, depthWrite:false}));
+shadow.rotation.x = -Math.PI/2; shadow.position.set(0,-2.1,0); scene.add(shadow);
+
+/* ---------- AGARRE CON PELLIZCO: capas y órbita ---------- */
+const $ = id => document.getElementById(id);
+const ptrEl = $("ptr"), video = $("video");
+const target = {x:0,y:0}, cur = {x:0,y:0};
+let ptrVisible = false, lastHand = 0, lastMouse = 0, handSeenOnce = false;
+let pinched = false, wasPinched = false;
+let yaw = -0.6, pitch = 0.5;           // orientación del cubo (quieto salvo que lo muevas)
+let grab = null, snap = null, glowSide = 0;
+const HALF = Math.PI/2;
+const ease = t => t<.5 ? 4*t*t*t : 1-Math.pow(-2*t+2,3)/2;
+const ray = new THREE.Raycaster(), v2 = new THREE.Vector2();
+
+function pick(x, y){
+  v2.set(x/innerWidth*2-1, -(y/innerHeight)*2+1);
+  ray.setFromCamera(v2, camera);
+  const hits = ray.intersectObjects(cubies, true);
+  if (!hits.length) return null;
+  let o = hits[0].object; while (o && !cubies.includes(o)) o = o.parent;
+  return o ? {cubie:o, point:hits[0].point} : null;
+}
+const inLayer = (c, side) => side > 0 ? c.position.y > 0 : c.position.y < 0;
+function setGlow(side){
+  if (side === glowSide) return; glowSide = side;
+  cubies.forEach(c => { const on = side && inLayer(c, side);
+    c.userData.mats.forEach(m => m.emissive.setHex(on ? 0x1d6f8c : 0x000000)); });
+}
+function makePivot(side){
+  const layer = cubies.filter(c => inLayer(c, side));
+  const pivot = new THREE.Group(); cubeGroup.add(pivot);
+  layer.forEach(c => pivot.attach(c));
+  return {layer, pivot};
+}
+function turnBase(){            // tecla B: gira la capa inferior sola (prueba/ayuda)
+  if (grab || snap) return;
+  const {layer, pivot} = makePivot(-1);
+  snap = {pivot, layer, from:0, to:-HALF, t0:performance.now(), dur:650};
+}
+function grabStart(){
+  if (snap) return;
+  const h = pick(cur.x, cur.y);
+  if (h){
+    const side = h.cubie.position.y > 0 ? 1 : -1;
+    const {layer, pivot} = makePivot(side);
+    grab = {mode:"layer", layer, pivot, side, sign:(h.point.z >= 0 ? 1 : -1), angle:0, x:cur.x};
+    setGlow(side);
+  } else grab = {mode:"orbit", x:cur.x, y:cur.y};
+}
+function grabEnd(){
+  if (!grab) return;
+  if (grab.mode === "layer"){
+    snap = {pivot:grab.pivot, layer:grab.layer, from:grab.angle, to:Math.round(grab.angle/HALF)*HALF,
+            t0:performance.now(), dur:200};
+  }
+  grab = null;
+}
+function stepSnap(now){
+  if (!snap) return;
+  const p = Math.min(1, (now - snap.t0)/snap.dur);
+  snap.pivot.rotation.y = snap.from + (snap.to - snap.from)*ease(p);
+  if (p >= 1){
+    snap.layer.forEach(c => {
+      cubeGroup.attach(c);
+      c.position.set(Math.round(c.position.x*2)/2, Math.round(c.position.y*2)/2, Math.round(c.position.z*2)/2);
+    });
+    cubeGroup.remove(snap.pivot); snap = null;
+  }
+}
+
+addEventListener("mousemove", e => {
+  lastMouse = performance.now();
+  if (lastMouse - lastHand > 1000){ target.x = e.clientX; target.y = e.clientY; if(!ptrVisible){cur.x=target.x;cur.y=target.y;} ptrVisible = true; }
+});
+addEventListener("mousedown", e => { if (performance.now() - lastHand > 1000){ target.x = cur.x = e.clientX; target.y = cur.y = e.clientY; pinched = true; } });
+addEventListener("mouseup", () => { if (performance.now() - lastHand > 1000) pinched = false; });
+addEventListener("keydown", e => { if (e.key==="b"||e.key==="B") turnBase(); });
+
+function updatePointer(now){
+  if (now - lastHand > 500 && now - lastMouse > 1000 && handSeenOnce){ ptrVisible = false; pinched = false; }
+  cur.x += (target.x - cur.x) * (pinched ? 0.5 : 0.35); cur.y += (target.y - cur.y) * (pinched ? 0.5 : 0.35);
+  ptrEl.style.display = ptrVisible ? "block" : "none";
+  ptrEl.style.transform = `translate(${cur.x}px,${cur.y}px)`;
+  ptrEl.classList.toggle("pinch", pinched);
+
+  if (pinched && !wasPinched) grabStart();
+  if (!pinched && wasPinched) grabEnd();
+  wasPinched = pinched;
+
+  if (grab){
+    const dx = cur.x - grab.x; grab.x = cur.x;
+    if (grab.mode === "layer"){ grab.angle += grab.sign*dx*0.012; grab.pivot.rotation.y = grab.angle; }
+    else { const dy = cur.y - grab.y; grab.y = cur.y; yaw += dx*0.008; pitch = Math.max(-1.2, Math.min(1.2, pitch + dy*0.006)); }
+  } else if (ptrVisible && !snap){
+    const h = pick(cur.x, cur.y); setGlow(h ? (h.cubie.position.y > 0 ? 1 : -1) : 0);
+  } else if (!ptrVisible) setGlow(0);
+}
+
+/* ---------- CÁMARA + MEDIAPIPE ---------- */
+const dot = $("dot"), stxt = $("stxt");
+function setStatus(t, cls){ stxt.textContent = t; dot.className = cls||""; }
+let landmarker = null, lastVideoTime = -1, pinchFrames = 0;
+const VER = "0.10.14";
+const MODEL = "https://storage.googleapis.com/mediapipe-models/hand_landmarker/hand_landmarker/float16/1/hand_landmarker.task";
+
+async function startCamera(){
+  $("start").style.display = "none";
+  try{
+    const stream = await navigator.mediaDevices.getUserMedia({video:{width:640,height:480,facingMode:"user"},audio:false});
+    video.srcObject = stream; video.style.display = "block"; await video.play();
+  }catch(err){
+    setStatus("Cámara no disponible: usa el ratón (o permite la cámara y recarga)", "err"); return;
+  }
+  setStatus("Cargando seguimiento de manos…");
+  try{
+    const {HandLandmarker, FilesetResolver} = await import(`https://cdn.jsdelivr.net/npm/@mediapipe/tasks-vision@${VER}/vision_bundle.mjs`);
+    const fs = await FilesetResolver.forVisionTasks(`https://cdn.jsdelivr.net/npm/@mediapipe/tasks-vision@${VER}/wasm`);
+    const opts = d => ({baseOptions:{modelAssetPath:MODEL, delegate:d}, runningMode:"VIDEO", numHands:1});
+    try{ landmarker = await HandLandmarker.createFromOptions(fs, opts("GPU")); }
+    catch(e){ landmarker = await HandLandmarker.createFromOptions(fs, opts("CPU")); }
+    setStatus("Muestra tu mano a la cámara", "ok");
+  }catch(err){
+    console.error(err);
+    setStatus("No se pudo cargar el seguimiento de manos (¿sin internet?). Usa el ratón", "err");
+  }
+}
+$("go").addEventListener("click", startCamera);
+$("mouse").addEventListener("click", () => { $("start").style.display="none"; setStatus("Modo ratón (prueba)"); });
+
+const clamp = v => Math.max(0, Math.min(1, v));
+function detectHand(now){
+  if (!landmarker || video.readyState < 2 || video.currentTime === lastVideoTime) return;
+  lastVideoTime = video.currentTime;
+  const res = landmarker.detectForVideo(video, now);
+  if (res.landmarks && res.landmarks.length){
+    const L = res.landmarks[0], t4 = L[4], t8 = L[8];
+    const palm = Math.hypot(L[5].x-L[17].x, L[5].y-L[17].y) || 0.1;
+    const ratio = Math.hypot(t4.x-t8.x, t4.y-t8.y) / palm;   // pulgar–índice relativo al tamaño de la mano
+    pinchFrames = ratio < (pinched ? 0.65 : 0.40) ? Math.min(pinchFrames+1, 6) : Math.max(pinchFrames-1, -6);
+    if (!pinched && pinchFrames >= 2) pinched = true;
+    if (pinched && pinchFrames <= -2) pinched = false;
+    // puntero = punto medio entre pulgar e índice (más estable que la punta sola)
+    const mx = (t4.x + t8.x)/2, my = (t4.y + t8.y)/2;
+    target.x = clamp(((1 - mx) - 0.10) / 0.80) * innerWidth;
+    target.y = clamp((my - 0.08) / 0.78) * innerHeight;
+    if (!ptrVisible){ cur.x = target.x; cur.y = target.y; }
+    ptrVisible = true; lastHand = now; handSeenOnce = true;
+    setStatus(pinched ? "Agarrando" : "Mano detectada", "ok");
+  } else if (now - lastHand > 500){
+    setStatus("Muestra tu mano a la cámara", "ok");
+  }
+}
+
+/* ---------- BUCLE ---------- */
+function resize(){
+  const w = innerWidth, h = innerHeight;
+  renderer.setSize(w, h, false);
+  camera.aspect = w / h;
+  if (camera.aspect < 1){ // vertical: más lejos para que quepa el cubo, y subido para dejar sitio al botón
+    camera.position.z = Math.max(8, 6.8 / camera.aspect);
+    camera.position.y = -camera.position.z * 0.09;
+  } else { camera.position.z = 8; camera.position.y = 0; }
+  camera.updateProjectionMatrix();
+}
+addEventListener("resize", resize); resize();
+
+let prev = performance.now();
+function frame(now){
+  const dt = Math.min(100, now - prev); prev = now;
+  detectHand(now);
+  updatePointer(now);
+  stepSnap(now);
+  cubeGroup.rotation.set(pitch, yaw, 0);
+  renderer.render(scene, camera);
+  requestAnimationFrame(frame);
+}
+requestAnimationFrame(frame);
+window.__cubo = {turnBase, pick, get busy(){return !!(grab||snap);}, get layerRot(){return cubies.map(c=>[c.position.x,c.position.y,c.position.z]);}}; // para pruebas
+</script>
+</body>
+</html>
