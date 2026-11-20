@@ -657,6 +657,16 @@ function drawLayer(ctx,Tf,k,isLupa){
     ctx.strokeStyle="#fff"; ctx.lineWidth=1.2*k; ctx.stroke();
     if(nm){ ctx.fillStyle="#0b3d1d"; ctx.font=`800 ${14*k}px system-ui`; ctx.textAlign="center"; ctx.textBaseline="alphabetic"; ctx.fillText(nm,p.x+11*k,p.y-8*k); }
   }
+  // guía: el siguiente punto que hace falta, con su nombre
+  if(stage==="trace"){
+    const ni=nextStep(), g=ni>=0&&ni<ITEM_PT.length?ITEM_PT[ni]:null;
+    if(g&&!hasMark(g[1])){
+      const q=Tf(g[1]), pu=1+0.25*Math.sin(performance.now()/260);
+      ctx.setLineDash([4*k,4*k]); ctx.strokeStyle="#ffd60a"; ctx.lineWidth=2.4*k; ctx.beginPath(); ctx.arc(q.x,q.y,13*k*pu,0,7); ctx.stroke(); ctx.setLineDash([]);
+      ctx.fillStyle="#ffd60a"; ctx.beginPath(); ctx.arc(q.x,q.y,2.6*k,0,7); ctx.fill();
+      if(!isLupa) pill(ctx,"punto "+g[0],q.x+4,q.y-30,1.15,"#ffd60a");
+    }
+  }
   if(snapShow){ const s=Tf(snapShow); ctx.strokeStyle="#35e0ff"; ctx.lineWidth=2.2*k; ctx.beginPath(); ctx.arc(s.x,s.y,10*k,0,7); ctx.stroke(); }
 }
 
@@ -698,6 +708,26 @@ const ITEMS=[
  ["Cortes","Serrucho: corte 6",()=>cutsDone.includes(6)],
  ["Cortes","Serrucho: corte 7",()=>cutsDone.includes(7)],
 ];
+const ITEM_PT=[["E",EXP.E],["E",EXP.E],["M",EXP.M],["O",EXP.O],["O",EXP.O],["P",EXP.P],["E′",EXP.E2],["E′",EXP.E2],["M′",EXP.M2],["O′",EXP.O2],["O′",EXP.O2],["P′",EXP.P2]];
+const DET=[
+ "Lápiz: pellizca la esquina inferior derecha de la tabla (punto E).",
+ "Pellizca E y elige la línea discontinua ↖ 60°.",
+ "Flexómetro (tecla 2): pellizca E, avanza por esa línea y pellizca al llegar a 3 cm (punto M).",
+ "Lápiz: pellizca M y elige ⊥ 90° hacia arriba, hasta el borde superior: ahí está O.",
+ "Pellizca O (se pega solo) y elige la línea ↖ 60°, paralela a E–M. Es el corte 4.",
+ "Pellizca P, donde la línea del corte 4 llega al borde derecho, y elige ↗ 30°. Es el corte 5 (la suela).",
+ "CABEZA, igual que el pie pero en el extremo izquierdo: pellizca la esquina inferior izquierda de la tabla (E′).",
+ "Pellizca E′ y elige la línea discontinua ↗ 30°.",
+ "Flexómetro (tecla 2): pellizca E′, avanza por esa línea y pellizca a 3 cm (punto M′).",
+ "Lápiz: pellizca M′ y elige ⊥ 90° hacia arriba, hasta el borde superior: ahí está O′.",
+ "Pellizca O′ y elige la línea ↗ 30°, paralela a E′–M′. Es el corte 6.",
+ "Pellizca P′, donde la línea del corte 6 llega al borde izquierdo, y elige ↖ 60°. Es el corte 7.",
+ "Serrucho (tecla 3): pellizca la línea del corte 4, elige 90° vertical y pulsa CORTAR.",
+ "Serrucho: pellizca la línea del corte 5, elige 90° y pulsa CORTAR.",
+ "Serrucho: pellizca la línea del corte 6, elige 90° y pulsa CORTAR.",
+ "Serrucho: pellizca la línea del corte 7, elige 90° y pulsa CORTAR.",
+];
+const nextStep=()=>{ for(let i=0;i<ITEMS.length;i++) if(!ITEMS[i][2]()) return i; return -1; };
 const checkEl=$("check"); let lastCheck="";
 function renderCheck(){
   const st=ITEMS.map(i=>i[2]()); const sig=st.join("");
@@ -735,10 +765,11 @@ function contextHint(){
   if(stage==="mounted") return "Montaje terminado";
   if(!facing&&stage==="trace") return "La cara de trazado queda de espaldas: pulsa «Vista frontal»";
   if(cutsDone.length===4) return "Todos los cortes hechos. Pulsa MONTAR A 30°.";
-  if(tool==="pencil") return anchor?"Elige la línea: apunta en su dirección (líneas discontinuas) y pellizca":"✏️ LÁPIZ · Sitúa el cursor sobre un punto (se pega al vértice o cruce) y pellizca para marcarlo";
-  if(tool==="flex") return tapeStart?"📏 Alinea el flexómetro con una línea trazada, avanza y pellizca para marcar el final":"📏 FLEXÓMETRO · Pellizca para marcar el inicio de la medida (por ejemplo, un vértice)";
-  if(tool==="saw") return sawLock!=null?"Elige la inclinación de la hoja y pulsa CORTAR":"🪚 SERRUCHO · Lleva la hoja sobre un trazado y pellizca para alinearla";
-  return "";
+  if(tool==="saw"&&sawLock!=null) return "Elige la inclinación de la hoja (90° vertical) y pulsa CORTAR";
+  const ni=nextStep(); let t=ni>=0?`Paso ${ni+1} de ${ITEMS.length}: ${DET[ni]}`:"";
+  if(tool==="pencil"&&anchor) t="Punto marcado. Elige ahora una línea discontinua apuntando en su dirección y pellizca.";
+  if(tool==="flex"&&tapeStart) t="Avanza por una línea trazada hasta la medida y pellizca para marcar el final.";
+  return t;
 }
 
 /* ================= CÁMARA + MEDIAPIPE ================= */
