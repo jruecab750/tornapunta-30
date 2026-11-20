@@ -60,6 +60,14 @@
   .sl .thumb{position:absolute;top:3px;width:30px;height:30px;margin-left:-15px;border-radius:50%;background:#35e0ff;box-shadow:0 0 12px #35e0ff88;transition:transform .05s}
   .sl.on .thumb{background:#ffd60a;box-shadow:0 0 18px #ffd60acc}
   .sl.hover{box-shadow:0 0 0 2px #35e0ff inset} .sl.hover .thumb{background:#ffd60a}
+  #orbit{align-self:center;width:150px;height:150px;border-radius:50%;position:relative;touch-action:none;
+    background:radial-gradient(circle at 35% 30%,#2c5aa8 0%,#14274f 55%,#0a1330 100%);border:2px solid #ffffff33;
+    box-shadow:inset 0 0 0 28px #ffffff08, 0 0 0 1px #0008;display:flex;align-items:center;justify-content:center;
+    text-align:center;font-size:11.5px;font-weight:700;line-height:1.25;color:#cfe0ff;user-select:none}
+  #orbit::before{content:"";position:absolute;inset:28px;border-radius:50%;border:1.5px dashed #ffffff44}
+  #orbit span{position:relative;z-index:1;padding:0 36px}
+  #orbit.hover{border-color:#35e0ff;box-shadow:0 0 18px #35e0ff88,inset 0 0 0 28px #ffffff08}
+  #orbit.on{border-color:#ffd60a;box-shadow:0 0 22px #ffd60acc,inset 0 0 0 28px #ffffff10}
   #front{height:40px;font-size:14px;padding:6px 12px;border-radius:12px}
   #ptr .c1{fill:none;stroke:#fff;stroke-width:4;stroke-dasharray:119.4;stroke-dashoffset:119.4;stroke-linecap:round}
   #start{position:fixed;inset:0;display:flex;align-items:center;justify-content:center;background:#060912e6;z-index:20}
@@ -92,6 +100,7 @@
   <div class="row"><label>ZOOM <b id="zv"></b></label><div class="sl" id="slZoom"><div class="fill"></div><div class="thumb"></div></div></div>
   <div class="row"><label>SENSIBILIDAD <b id="sv"></b></label><div class="sl" id="slSens"><div class="fill"></div><div class="thumb"></div></div></div>
   <div id="front" class="dw btn small" data-key="front">⟲ Vista frontal (ejes a 0°)</div>
+  <div id="orbit"><span>ESFERA<br>pellizca dentro y arrastra</span></div>
 </div>
 <div id="resetBtn" class="dw btn small" data-key="reset" style="position:fixed;right:14px;bottom:10px;z-index:5;padding:6px 14px">↺ Reiniciar (pellizco 1,5 s)</div>
 <div id="lupa"><canvas id="lc" width="200" height="200" style="position:static;width:200px;height:200px"></canvas></div>
@@ -101,7 +110,7 @@
 <div id="start">
   <div class="card">
     <h1>Tornapunta a 30°</h1>
-    <p>Traza con el <b>lápiz</b>, mide con el <b>flexómetro</b> y corta con el <b>serrucho</b> con la mano: <b>pellizca</b> (pulgar + índice) sobre cada punto o botón para pulsarlo. Pellizca sobre la tabla y <b>arrastra</b> para girarla en los ejes X, Y, Z de 15° en 15°.<br>El vídeo no sale de tu equipo.</p>
+    <p>Traza con el <b>lápiz</b>, mide con el <b>flexómetro</b> y corta con el <b>serrucho</b> con la mano: <b>pellizca</b> (pulgar + índice) sobre cada punto o botón para pulsarlo. Para girar la tabla usa la <b>esfera</b> de la izquierda: pellizca dentro y arrastra (de 15° en 15°).<br>El vídeo no sale de tu equipo.</p>
     <button id="go">Activar cámara</button>
     <button id="mouse">Probar con ratón</button>
   </div>
@@ -488,6 +497,9 @@ function fire(h){
 /* ================= ENTRADA: PELLIZCO = CLIC / ARRASTRE ================= */
 const DRAG_PX=28, ARM_MS=400, GAIN_HAND=0.6, RESET_MS=1500;
 function refreshHover(){ pb=(ptrVisible&&stage==="trace")?screenToBoard(cur.x,cur.y):null; H0=computeHover(); hv.dom=H0&&H0.dom; }
+const padEl=document.getElementById("orbit");
+function padGeo(){ const r=padEl.getBoundingClientRect(); return {cx:r.left+r.width/2,cy:r.top+r.height/2,r:r.width/2}; }
+function padAt(x,y){ const g=padGeo(); return Math.hypot(x-g.cx,y-g.cy)<=g.r; }
 function pressStart(now){
   const hand=now-lastHand<1000;
   let pos={x:cur.x,y:cur.y};
@@ -497,11 +509,14 @@ function pressStart(now){
   press={t:now,raw,pos:{x:pos.x,y:pos.y},hand,mode:"pending",h:H0};
   const sl=sliderAt(cur.x,cur.y);
   if(sl){ press.mode="sliderArm"; press.sl=sl; press.at=hand?0:ARM_MS; }
-  else if(H0&&H0.dom) press.board=false;
-  else press.board=(stage==="trace");
+  else if(stage==="trace"&&padAt(cur.x,cur.y)){
+    const g=padGeo(); press.mode="orbit"; press.base={x:U.x,y:U.y,z:U.z}; press.n={x:0,y:0,z:0};
+    press.ring=Math.hypot(cur.x-g.cx,cur.y-g.cy)>g.r*0.68; padEl.classList.add("on");
+  }
 }
 function pressEnd(now){
   const P=press; press=null; if(!P) return;
+  padEl.classList.remove("on");
   if(P.sl){ P.sl.el.classList.remove("on"); P.sl.el.querySelector(".thumb").style.transform=""; }
   if(P.mode==="pending"){
     const h=P.h;
@@ -525,6 +540,7 @@ function inputStep(now,dt){
   if(!P){
     const sl=(ptrVisible&&!(H0&&H0.dom))?sliderAt(cur.x,cur.y):null;
     SLIDERS.forEach(o=>o.el.classList.toggle("hover",o===sl));
+    padEl.classList.toggle("hover",ptrVisible&&stage==="trace"&&padAt(cur.x,cur.y));
     return;
   }
   if(P.mode==="sliderArm"){
@@ -540,25 +556,21 @@ function inputStep(now,dt){
   } else if(P.mode==="pending"){
     P.h=H0;
     if(P.h&&P.h.key==="reset") ringP=Math.min(1,(now-P.t)/RESET_MS);
-    if(P.board && Math.hypot(target.x-P.raw.x,target.y-P.raw.y)>DRAG_PX) dragStart();
-  } else if(P.mode==="drag"){
-    const d={x:target.x-P.raw.x,y:target.y-P.raw.y}, dxm=d.x, dym=-d.y;
-    const rx=P.pos.x-P.cen.x, ry=-(P.pos.y-P.cen.y), rl=Math.hypot(rx,ry), w=Math.min(1,rl/P.R);
-    const cz=rl>1?(rx*dym-ry*dxm)/rl:0;                       // componente tangencial: + = antihorario
-    const val=[-dym, dxm, cz];                                 // X: arrastrar abajo = +X · Y: derecha = +Y · Z: antihorario = +Z
-    if(P.axis<0){
-      const m=Math.hypot(d.x,d.y);
-      if(m>=DRAG_PX){
-        const sc=[Math.abs(dym),Math.abs(dxm),Math.abs(cz)*1.6*w];
-        const ord=[0,1,2].sort((i,j)=>sc[j]-sc[i]);
-        if(sc[ord[0]]>=1.35*sc[ord[1]]||m>=2.2*DRAG_PX){ P.axis=ord[0]; say(`Girando en el eje ${"XYZ"[P.axis]}`,"",1200); }
+  } else if(P.mode==="orbit"){
+    const g=padGeo();
+    if(Math.hypot(cur.x-g.cx,cur.y-g.cy)>g.r+8){                 // al salir de la esfera, la tabla deja de moverse
+      P.mode="none"; padEl.classList.remove("on"); say("Fuera de la esfera: la tabla queda quieta","",1600);
+    } else if(stage==="trace"){
+      const stepPx=700/sensPct, dx=target.x-P.raw.x, dy=target.y-P.raw.y, out={};
+      if(P.ring){                                                  // anillo exterior: giro en Z (como un volante)
+        const rx=P.pos.x-g.cx, ry=-(P.pos.y-g.cy), rl=Math.hypot(rx,ry)||1;
+        out.z=(rx*(-dy)-ry*dx)/rl;
+      } else { out.x=dy; out.y=dx; }                               // disco: órbita (abajo = +X, derecha = +Y)
+      for(const a of AXN){ if(out[a]===undefined) continue;
+        const u=out[a]/stepPx; if(Math.abs(u-P.n[a])>0.62) P.n[a]=Math.round(u);
+        const nv=P.base[a]+P.n[a]*15;
+        if(nv!==U[a]){ U[a]=nv; say(`Eje ${a.toUpperCase()}: ${fmtA(wrapA(nv))}`,"",1400); }
       }
-    }
-    if(P.axis>=0){
-      const stepPx=1400/sensPct, u=val[P.axis]/stepPx;       // 15° cada stepPx píxeles
-      if(Math.abs(u-P.n)>0.62){ P.n=Math.round(u); }
-      const ax=AXN[P.axis], nv=P.base[ax]+P.n*15;
-      if(nv!==U[ax]){ U[ax]=nv; say(`Eje ${"XYZ"[P.axis]}: ${fmtA(wrapA(nv))}`,"",1600); }
     }
   }
 }
@@ -710,7 +722,7 @@ function renderSide(){
     for(const a of [90,60,45]) h+=`<div class="dw btn ${sawTilt===a?"sel":""}" data-key="tilt:${a}">${a}°${a===90?" vertical":""}</div>`;
     h+=`</div><div class="row"><div class="dw btn big" style="min-width:150px;height:56px;font-size:17px" data-key="cut">CORTAR</div><div class="dw btn small" data-key="sawcancel">Cancelar</div></div>`;
   } else {
-    h+=`<div style="opacity:.85;line-height:1.45"><b>Pellizca</b> (pulgar + índice) sobre un punto, línea o botón para pulsarlo.<br><b>Pellizca y arrastra</b> sobre la tabla para girarla en X, Y o Z de 15° en 15° (se elige el eje por la dirección del arrastre).<br>Tabla: ${L} × ${HH} cm · ejión h = ${H} cm · θ = ${TH}°</div>`;
+    h+=`<div style="opacity:.85;line-height:1.45"><b>Pellizca</b> (pulgar + índice) sobre un punto, línea o botón para pulsarlo.<br><b>Pellizca dentro de la esfera</b> (izquierda) y arrastra para girar la tabla de 15° en 15°: el disco gira en X/Y y el anillo exterior en Z. Fuera de la esfera la tabla no se mueve.<br>Tabla: ${L} × ${HH} cm · ejión h = ${H} cm · θ = ${TH}°</div>`;
   }
   $("resetBtn").style.display=(stage==="mounting")?"none":"flex";
   sideEl.innerHTML=h;
