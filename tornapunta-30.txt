@@ -62,13 +62,10 @@
   .sl.hover{box-shadow:0 0 0 2px #35e0ff inset} .sl.hover .thumb{background:#ffd60a}
   #nomen{position:fixed;right:14px;top:246px;width:170px;z-index:3;border-radius:10px;overflow:hidden;border:1px solid #ffffff33;background:#fff;pointer-events:none}
   #nomen img{display:block;width:100%}
-  #orbit{align-self:center;width:104px;height:104px;border-radius:50%;position:relative;touch-action:none;
-    background:repeating-conic-gradient(#ef4a4a 0 30deg,#f7f9fc 30deg 60deg);border:2px solid #ffffff55;
-    box-shadow:inset -12px -14px 24px #0000008a, inset 9px 9px 18px #ffffff66, 0 4px 14px #0008;user-select:none}
-  #orbit::before{content:"";position:absolute;inset:16%;border-radius:50%;border:1.5px dashed #0006}
-  #orbit::after{content:"";position:absolute;left:50%;top:50%;width:18px;height:18px;margin:-9px 0 0 -9px;border-radius:50%;background:radial-gradient(#fff,#d9dde6);box-shadow:0 0 0 2px #0003}
-  #orbit.hover{border-color:#35e0ff;box-shadow:inset -12px -14px 24px #0000008a, inset 9px 9px 18px #ffffff66, 0 0 18px #35e0ffcc}
-  #orbit.on{border-color:#ffd60a;box-shadow:inset -12px -14px 24px #0000008a, inset 9px 9px 18px #ffffff66, 0 0 22px #ffd60add}
+  #orbit{align-self:center;width:104px;height:104px;border-radius:50%;position:relative;touch-action:none;border:2px solid #ffffff44;user-select:none}
+  #orbit::before{content:"";position:absolute;inset:16%;border-radius:50%;border:1.5px dashed #0008;box-shadow:0 0 0 1px #fff5}
+  #orbit.hover{border-color:#35e0ff;box-shadow:0 0 18px #35e0ffcc}
+  #orbit.on{border-color:#ffd60a;box-shadow:0 0 22px #ffd60add}
   #orbitlab{font-size:11px;text-align:center;opacity:.75;margin-top:-4px}
   #mini{position:fixed;right:14px;top:354px;width:170px;height:100px;z-index:3;border-radius:10px;border:1px solid #ffffff44;pointer-events:none}
   #mini span{position:absolute;left:6px;top:3px;font-size:10px;font-weight:700;letter-spacing:.05em;color:#cfe0ff}
@@ -294,6 +291,17 @@ mbox(headX, headX+H, headY, headY+EJ_LEN, BEAM_W, SOFT.e);
 { const tw=new THREE.Group(); tw.position.set(0,footY,0); tw.rotation.z=rad(-TH); miniAsm.add(tw);
   const m=new THREE.Mesh(geoFromPoly(idealPoly()),[matTop,matSide]); m.position.z=-T/2; tw.add(m); }
 const miniEl=document.getElementById("mini");
+
+/* ---- balón de playa de 4 gajos (2 rojos, 2 blancos): gira igual que la tabla y sus ejes ---- */
+const scene3=new THREE.Scene(); scene3.add(new THREE.AmbientLight(0xffffff,1.15)); const k3=new THREE.DirectionalLight(0xffffff,1.8); k3.position.set(-2,3,5); scene3.add(k3);
+const camera3=new THREE.PerspectiveCamera(30,1,0.1,50); camera3.position.set(0,0,4.15);
+const ballTex=(()=>{ const c=document.createElement("canvas"); c.width=512; c.height=256; const g=c.getContext("2d");
+  for(let i=0;i<4;i++){ g.fillStyle=i%2?"#f7f9fc":"#e8403f"; g.fillRect(i*128,0,128,256); }
+  g.strokeStyle="#00000030"; g.lineWidth=3; for(let i=0;i<4;i++){ g.beginPath(); g.moveTo(i*128,0); g.lineTo(i*128,256); g.stroke(); }
+  const t=new THREE.CanvasTexture(c); t.colorSpace=THREE.SRGBColorSpace; t.wrapS=THREE.RepeatWrapping; return t; })();
+const ball=new THREE.Mesh(new THREE.SphereGeometry(1,48,32),new THREE.MeshStandardMaterial({map:ballTex,roughness:.45}));
+scene3.add(ball);
+const padEl3=document.getElementById("orbit");
 
 /* ---- nombres de las piezas del montaje final ---- */
 const L3=[
@@ -954,6 +962,10 @@ function frame(now){
     renderer.setClearColor(0x10193a,1); renderer.clear(); renderer.render(scene2,camera2);
     renderer.setClearColor(0x000000,0); renderer.setScissorTest(false); renderer.setViewport(0,0,W,Hh);
   }
+  { const r=padEl3.getBoundingClientRect(); ball.rotation.copy(piv.rotation);
+    renderer.setScissorTest(true); renderer.setViewport(r.left,Hh-r.bottom,r.width,r.height); renderer.setScissor(r.left,Hh-r.bottom,r.width,r.height);
+    renderer.setClearColor(0x000000,0); renderer.clear(); renderer.render(scene3,camera3);
+    renderer.setScissorTest(false); renderer.setViewport(0,0,W,Hh); }
   updateLabels();
   requestAnimationFrame(frame);
 }
