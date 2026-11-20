@@ -46,13 +46,13 @@
 <div id="status"><span id="dot"></span><span id="stxt">Sin cámara</span></div>
 
 
-<div id="hint">Pon el puntero sobre una mitad del cubo (se ilumina), pellizca y arrastra de lado</div>
+<div id="hint">Pon el puntero sobre una pieza (se ilumina), pellizca y arrastra: la capa gira como si la agarraras</div>
 <div id="ptr"></div>
 
 <div id="start">
   <div class="card">
     <h1>Cubo 2×2×2</h1>
-    <p><b>Pellizca</b> (junta pulgar e índice) sobre una mitad del cubo y <b>arrastra de lado</b>: esa capa gira y encaja sola de 90° en 90°. Pellizca en el <b>fondo</b> y arrastra para girar el cubo entero. Abre los dedos para soltar.<br>El vídeo no sale de tu equipo.</p>
+    <p><b>Pellizca</b> (junta pulgar e índice) una pieza del cubo y <b>arrastra</b> en la dirección que quieres girarla: puede ser una capa horizontal, o una columna como una noria. Al soltar, la capa completa sola el giro hasta 90° (o 180° si arrastras más). Pellizca en el <b>fondo</b> y arrastra para girar el cubo entero. Abre los dedos para soltar.<br>El vídeo no sale de tu equipo.</p>
     <button id="go">Activar cámara</button>
     <button id="mouse">Probar con ratón</button>
   </div>
@@ -126,64 +126,89 @@ const target = {x:0,y:0}, cur = {x:0,y:0};
 let ptrVisible = false, lastHand = 0, lastMouse = 0, handSeenOnce = false;
 let pinched = false, wasPinched = false;
 let yaw = -0.6, pitch = 0.5;           // orientación del cubo (quieto salvo que lo muevas)
-let grab = null, snap = null, glowSide = 0;
+let grab = null, snap = null, glowKey = "";
 const HALF = Math.PI/2;
 const ease = t => t<.5 ? 4*t*t*t : 1-Math.pow(-2*t+2,3)/2;
 const ray = new THREE.Raycaster(), v2 = new THREE.Vector2();
 
+const AX = [new THREE.Vector3(1,0,0), new THREE.Vector3(0,1,0), new THREE.Vector3(0,0,1)];
 function pick(x, y){
   v2.set(x/innerWidth*2-1, -(y/innerHeight)*2+1);
   ray.setFromCamera(v2, camera);
   const hits = ray.intersectObjects(cubies, true);
   if (!hits.length) return null;
-  let o = hits[0].object; while (o && !cubies.includes(o)) o = o.parent;
-  return o ? {cubie:o, point:hits[0].point} : null;
+  const hit = hits[0];
+  let o = hit.object; while (o && !cubies.includes(o)) o = o.parent;
+  if (!o) return null;
+  // eje local del cubo al que es perpendicular la cara tocada
+  const nl = hit.face.normal.clone().transformDirection(hit.object.matrixWorld)
+               .applyQuaternion(cubeGroup.quaternion.clone().invert());
+  const n = [Math.abs(nl.x), Math.abs(nl.y), Math.abs(nl.z)];
+  return {cubie:o, point:hit.point, normalAxis:n.indexOf(Math.max(...n))};
 }
-const inLayer = (c, side) => side > 0 ? c.position.y > 0 : c.position.y < 0;
-function setGlow(side){
-  if (side === glowSide) return; glowSide = side;
-  cubies.forEach(c => { const on = side && inLayer(c, side);
+const coord = (c, i) => i===0 ? c.position.x : i===1 ? c.position.y : c.position.z;
+function setGlow(list){
+  const key = list ? list.map(c=>cubies.indexOf(c)).join() : "";
+  if (key === glowKey) return; glowKey = key;
+  cubies.forEach(c => { const on = !!list && list.includes(c);
     c.userData.mats.forEach(m => m.emissive.setHex(on ? 0x1d6f8c : 0x000000)); });
 }
-function makePivot(side){
-  const layer = cubies.filter(c => inLayer(c, side));
+function makePivot(axisIdx, sideSign){
+  const layer = cubies.filter(c => coord(c, axisIdx)*sideSign > 0);
   const pivot = new THREE.Group(); cubeGroup.add(pivot);
   layer.forEach(c => pivot.attach(c));
   return {layer, pivot};
 }
+function toScreen(v){ const p = v.clone().project(camera); return {x:(p.x+1)/2*innerWidth, y:(1-p.y)/2*innerHeight}; }
 function turnBase(){            // tecla B: gira la capa inferior sola (prueba/ayuda)
   if (grab || snap) return;
-  const {layer, pivot} = makePivot(-1);
-  snap = {pivot, layer, from:0, to:-HALF, t0:performance.now(), dur:650};
+  const {layer, pivot} = makePivot(1, -1);
+  snap = {pivot, layer, axis:AX[1], from:0, to:-HALF, t0:performance.now(), dur:650};
 }
 function grabStart(){
   if (snap) return;
   const h = pick(cur.x, cur.y);
-  if (h){
-    const side = h.cubie.position.y > 0 ? 1 : -1;
-    const {layer, pivot} = makePivot(side);
-    grab = {mode:"layer", layer, pivot, side, sign:(h.point.z >= 0 ? 1 : -1), angle:0, x:cur.x};
-    setGlow(side);
-  } else grab = {mode:"orbit", x:cur.x, y:cur.y};
+  if (h){ grab = {mode:"layer", h, x0:cur.x, y0:cur.y, axis:-1, x:cur.x}; setGlow([h.cubie]); }
+  else grab = {mode:"orbit", x:cur.x, y:cur.y};
+}
+// elige eje de giro según hacia dónde arrastras: el punto tocado debe "seguir" al dedo
+function lockAxis(dx, dy){
+  const P = grab.h.point, P0 = toScreen(P);
+  let best = null;
+  for (let i = 0; i < 3; i++){
+    if (i === grab.h.normalAxis) continue;
+    const wa = AX[i].clone().applyQuaternion(cubeGroup.quaternion);
+    const P1 = toScreen(P.clone().add(wa.clone().cross(P).multiplyScalar(0.05)));
+    const sx = (P1.x-P0.x)/0.05, sy = (P1.y-P0.y)/0.05;       // píxeles por radian
+    const len = Math.hypot(sx, sy) || 1e-6;
+    const score = Math.abs(dx*sx + dy*sy)/len;
+    if (!best || score > best.score) best = {i, sx, sy, len, score};
+  }
+  grab.axis = best.i; grab.sx = best.sx; grab.sy = best.sy; grab.len2 = best.len*best.len;
+  const side = Math.sign(coord(grab.h.cubie, best.i)) || 1;
+  const {layer, pivot} = makePivot(best.i, side);
+  grab.layer = layer; grab.pivot = pivot; grab.angle = 0;
+  setGlow(layer);
 }
 function grabEnd(){
   if (!grab) return;
-  if (grab.mode === "layer"){
-    snap = {pivot:grab.pivot, layer:grab.layer, from:grab.angle, to:Math.round(grab.angle/HALF)*HALF,
-            t0:performance.now(), dur:200};
+  if (grab.mode === "layer" && grab.pivot){
+    const a = grab.angle, n = Math.max(0, Math.ceil(Math.abs(a)/HALF - 0.06));  // en cuanto empiezas a girar, completa hasta 90°; arrastrando más, 180°…
+    snap = {pivot:grab.pivot, layer:grab.layer, axis:AX[grab.axis], from:a, to:Math.sign(a)*n*HALF,
+            t0:performance.now(), dur:260};
   }
   grab = null;
 }
 function stepSnap(now){
   if (!snap) return;
   const p = Math.min(1, (now - snap.t0)/snap.dur);
-  snap.pivot.rotation.y = snap.from + (snap.to - snap.from)*ease(p);
+  snap.pivot.quaternion.setFromAxisAngle(snap.axis, snap.from + (snap.to - snap.from)*ease(p));
   if (p >= 1){
     snap.layer.forEach(c => {
       cubeGroup.attach(c);
       c.position.set(Math.round(c.position.x*2)/2, Math.round(c.position.y*2)/2, Math.round(c.position.z*2)/2);
     });
-    cubeGroup.remove(snap.pivot); snap = null;
+    cubeGroup.remove(snap.pivot); snap = null; setGlow(null);
   }
 }
 
@@ -207,12 +232,20 @@ function updatePointer(now){
   wasPinched = pinched;
 
   if (grab){
-    const dx = cur.x - grab.x; grab.x = cur.x;
-    if (grab.mode === "layer"){ grab.angle += grab.sign*dx*0.012; grab.pivot.rotation.y = grab.angle; }
-    else { const dy = cur.y - grab.y; grab.y = cur.y; yaw += dx*0.008; pitch = Math.max(-1.2, Math.min(1.2, pitch + dy*0.006)); }
+    if (grab.mode === "layer"){
+      const tx = cur.x - grab.x0, ty = cur.y - grab.y0;
+      if (grab.axis < 0 && Math.hypot(tx, ty) > 14) lockAxis(tx, ty);
+      if (grab.axis >= 0){
+        grab.angle = (tx*grab.sx + ty*grab.sy)/grab.len2;
+        grab.pivot.quaternion.setFromAxisAngle(AX[grab.axis], grab.angle);
+      }
+    } else {
+      const dx = cur.x - grab.x, dy = cur.y - grab.y; grab.x = cur.x; grab.y = cur.y;
+      yaw += dx*0.008; pitch = Math.max(-1.2, Math.min(1.2, pitch + dy*0.006));
+    }
   } else if (ptrVisible && !snap){
-    const h = pick(cur.x, cur.y); setGlow(h ? (h.cubie.position.y > 0 ? 1 : -1) : 0);
-  } else if (!ptrVisible) setGlow(0);
+    const h = pick(cur.x, cur.y); setGlow(h ? [h.cubie] : null);
+  } else if (!ptrVisible && !snap) setGlow(null);
 }
 
 /* ---------- CÁMARA + MEDIAPIPE ---------- */
