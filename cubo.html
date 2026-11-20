@@ -74,6 +74,7 @@
   <div class="tg on" id="tgHead">🙂 Cabeza <b>ON</b></div>
   <div class="tg on" id="tgWink">😉 Guiño <b>ON</b></div>
   <div class="tg sm" id="tgSwap">⇄ Invertir guiños <b>NO</b></div>
+  <div id="giro" class="tg sm" style="cursor:default;display:block;line-height:1.4">Pulgares: <b style="color:#ff6b6b">X</b> · <b style="color:#35d07f">Y</b> · <b style="color:#4da3ff">Z</b> hacia fuera de la capa.<br>Giro +: a izquierdas (antihorario visto desde fuera).</div>
   <div id="headdbg" class="tg sm" style="cursor:default;display:block">cabeza: —</div>
   <div id="meters"></div>
   <div id="heard">Di: <b>derecha · izquierda · arriba · abajo</b><br>o guiña el ojo derecho / izquierdo</div>
@@ -224,7 +225,7 @@ function toScreen(v){ const p = v.clone().project(camera); return {x:(p.x+1)/2*i
 function turnBase(){            // tecla B: gira la capa inferior sola (prueba/ayuda)
   if (grab || snap) return;
   const {layer, pivot} = makePivot(1, -1);
-  snap = {pivot, layer, axis:AX[1], from:0, to:-HALF, t0:performance.now(), dur:650};
+  snap = {pivot, layer, axis:AX[1], from:0, to:-HALF, t0:performance.now(), dur:650}; showTurn(1, -1, -90);
 }
 const LOG = [];
 const lg = (t, o) => { LOG.push(Object.assign({t:Math.round(performance.now()), e:t}, o||{})); if (LOG.length > 60) LOG.shift(); };
@@ -261,7 +262,7 @@ function lockAxis(dx, dy){
   grab.axis = best.i; grab.sx = best.sx; grab.sy = best.sy; grab.len2 = best.len*best.len;
   const side = Math.sign(coord(grab.h.cubie, best.i)) || 1;
   const {layer, pivot} = makePivot(best.i, side);
-  grab.layer = layer; grab.pivot = pivot; grab.angle = 0; grab.n = 0; grab.disp = 0; lg("eje", {eje:best.i});
+  grab.layer = layer; grab.pivot = pivot; grab.angle = 0; grab.n = 0; grab.disp = 0; grab.side = side; lg("eje", {eje:best.i});
   setGlow(layer);
 }
 function grabEnd(){
@@ -286,6 +287,37 @@ function stepSnap(now){
     });
     cubeGroup.remove(snap.pivot); snap = null;
   }
+}
+
+/* ---------- PULGARES: cada capa con su eje hacia fuera (regla de la mano derecha) ---------- */
+const THCOL = [0xff4d4d, 0x35d07f, 0x4da3ff];
+const thumbs = new THREE.Group(); cubeGroup.add(thumbs);
+const thumbG = [0,1,2].map(i => {
+  const g = new THREE.Group(), m = new THREE.MeshBasicMaterial({color:THCOL[i], depthTest:false, transparent:true, opacity:.95});
+  const shaft = new THREE.Mesh(new THREE.CylinderGeometry(0.035,0.035,0.8,8), m); shaft.rotation.x = Math.PI/2; shaft.position.z = 0.4;
+  const head = new THREE.Mesh(new THREE.ConeGeometry(0.1,0.22,12), m); head.rotation.x = Math.PI/2; head.position.z = 0.9;
+  const ARC = 4.3, R = 0.42, arc = new THREE.Mesh(new THREE.TorusGeometry(R, 0.03, 8, 40, ARC), m); arc.position.z = 0.55;
+  const tip = new THREE.Mesh(new THREE.ConeGeometry(0.09,0.2,12), m);       // punta del arco = sentido antihorario visto desde la punta del pulgar
+  tip.position.set(R*Math.cos(ARC), R*Math.sin(ARC), 0.55);
+  tip.quaternion.setFromUnitVectors(new THREE.Vector3(0,1,0), new THREE.Vector3(-Math.sin(ARC), Math.cos(ARC), 0));
+  [shaft, head, arc, tip].forEach(o => o.renderOrder = 20);
+  g.add(shaft, head, arc, tip); thumbs.add(g); return g;
+});
+function updateThumbs(){
+  thumbs.visible = !!selCubie;
+  if (!selCubie) return;
+  for (let i = 0; i < 3; i++){
+    const sg = Math.sign(coord(selCubie, i)) || 1, dir = AX[i].clone().multiplyScalar(sg);
+    thumbG[i].position.copy(selCubie.position).addScaledVector(dir, 0.5);      // sale de la cara exterior de la pieza
+    thumbG[i].quaternion.setFromUnitVectors(new THREE.Vector3(0,0,1), dir);
+  }
+}
+const CAPA = [["izquierda","derecha"],["inferior","superior"],["trasera","frontal"]];
+const EJE = ["X","Y","Z"];
+function showTurn(i, side, degAboutAxis){            // degAboutAxis: sobre el eje +; el pulgar de la capa apunta a side*eje
+  const out = side*degAboutAxis;
+  document.getElementById("giro").innerHTML = out === 0 ? "Capa " + CAPA[i][side>0?1:0] + ": sin giro"
+    : `Capa <b>${CAPA[i][side>0?1:0]}</b> · pulgar hacia fuera (${side>0?"+":"−"}${EJE[i]})<br>Giro <b>${out>0?"+":""}${out}°</b> = ${out>0 ? "a izquierdas (antihorario)" : "a derechas (horario)"}`;
 }
 
 /* ---------- ÓRDENES POR VOZ Y POR GUIÑO ---------- */
@@ -317,7 +349,7 @@ function command(dir, src){
   const side = Math.sign(coord(c, best.i)) || 1;
   const {layer, pivot} = makePivot(best.i, side);
   snap = {pivot, layer, axis:AX[best.i], from:0, to:(best.dot >= 0 ? 1 : -1)*HALF, t0:performance.now(), dur:380};
-  setGlow([c]); lastCmd = performance.now(); lg("orden", {dir, src, eje:best.i});
+  setGlow([c]); lastCmd = performance.now(); lg("orden", {dir, src, eje:best.i}); showTurn(best.i, side, (best.dot >= 0 ? 1 : -1)*90);
   heardMsg(`${src === "voz" ? "🎤" : src === "cabeza" ? "🙂" : "😉"} ${DIRTXT[dir]}`);
 }
 /* voz (Chrome: reconocimiento en español) */
@@ -448,7 +480,7 @@ function updatePointer(now, dt){
         if (m > 0 && sg !== Math.sign(grab.n)) m = 0;
         while (ar >= m + 0.11) m++;
         while (m > 0 && ar < m - 1 + 0.03) m--;
-        if (sg*m !== grab.n) lg("salto", {n:sg*m});
+        if (sg*m !== grab.n){ lg("salto", {n:sg*m}); showTurn(grab.axis, grab.side, sg*m*90); }
         grab.n = sg*m;
         grab.disp += (grab.n*HALF - grab.disp) * (1 - Math.exp(-dt/55));   // llega al salto con suavidad
         grab.pivot.quaternion.setFromAxisAngle(AX[grab.axis], grab.disp);
@@ -546,12 +578,12 @@ function frame(now){
   detectHand(now);
   updatePointer(now, dt);
   stepSnap(now);
-  cubeGroup.rotation.set(pitch, yaw, 0);
+  cubeGroup.rotation.set(pitch, yaw, 0); updateThumbs();
   renderer.render(scene, camera);
   requestAnimationFrame(frame);
 }
 requestAnimationFrame(frame);
-window.__cubo = {log: LOG, feedHead, HS, MX, resetMx(){ for (const k in MX) delete MX[k]; }, selScreen:()=>{ensureSel(); const q=new THREE.Vector3(); selCubie.getWorldPosition(q); return toScreen(q);}, command, feedBlink, get sel(){return selCubie && selCubie.position.toArray();}, sim:(x,y,p)=>{lastHand=performance.now();handSeenOnce=true;target.x=x;target.y=y;ptrVisible=true;pinched=p;}, turnBase, pick, get busy(){return !!(grab||snap);}, get layerRot(){return cubies.map(c=>[c.position.x,c.position.y,c.position.z]);}}; // para pruebas
+window.__cubo = {log: LOG, showTurn, feedHead, HS, MX, resetMx(){ for (const k in MX) delete MX[k]; }, selScreen:()=>{ensureSel(); const q=new THREE.Vector3(); selCubie.getWorldPosition(q); return toScreen(q);}, command, feedBlink, get sel(){return selCubie && selCubie.position.toArray();}, sim:(x,y,p)=>{lastHand=performance.now();handSeenOnce=true;target.x=x;target.y=y;ptrVisible=true;pinched=p;}, turnBase, pick, get busy(){return !!(grab||snap);}, get layerRot(){return cubies.map(c=>[c.position.x,c.position.y,c.position.z]);}}; // para pruebas
 </script>
 </body>
 </html>
