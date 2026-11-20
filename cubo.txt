@@ -22,6 +22,14 @@
   #ptr{position:fixed;left:0;top:0;width:30px;height:30px;margin:-15px 0 0 -15px;border-radius:50%;pointer-events:none;
     border:3px solid #35e0ff;background:transparent;box-shadow:0 0 14px #35e0ffaa;display:none;z-index:5;transition:width .1s,height .1s,margin .1s,background .1s}
   #ptr.pinch{width:16px;height:16px;margin:-8px 0 0 -8px;background:#ffd60a;border-color:#ffd60a;box-shadow:0 0 18px #ffd60acc}
+  #panel{position:fixed;right:18px;bottom:18px;width:300px;padding:14px 16px 12px;border-radius:16px;background:#0b1226d9;border:1px solid #ffffff1a;z-index:4}
+  #panel .row{margin-bottom:12px} #panel .row:last-child{margin-bottom:0}
+  #panel label{display:flex;justify-content:space-between;font-size:13px;letter-spacing:.06em;font-weight:700;opacity:.85;margin-bottom:6px}
+  #panel label b{color:#35e0ff}
+  .sl{position:relative;height:40px;border-radius:20px;background:#ffffff14;cursor:pointer;touch-action:none}
+  .sl .fill{position:absolute;left:0;top:0;bottom:0;border-radius:20px;background:#35e0ff40}
+  .sl .thumb{position:absolute;top:3px;width:34px;height:34px;margin-left:-17px;border-radius:50%;background:#35e0ff;box-shadow:0 0 12px #35e0ff88}
+  .sl.hover{box-shadow:0 0 0 2px #35e0ff inset} .sl.hover .thumb{background:#ffd60a;box-shadow:0 0 16px #ffd60acc}
   #start{position:fixed;inset:0;display:flex;align-items:center;justify-content:center;background:#060912d9;z-index:10}
   #start .card{max-width:560px;padding:30px 34px;border-radius:18px;background:#101a36;border:1px solid #ffffff1f;text-align:center}
   #start h1{margin:0 0 10px;font-size:26px}
@@ -32,6 +40,7 @@
   /* Pantalla vertical (iPhone): botón abajo, vídeo pequeño arriba a la derecha */
   @media (max-aspect-ratio: 1/1){
     #video{left:auto;right:12px;top:12px;bottom:auto;width:96px;height:128px}
+    #panel{left:50%;right:auto;transform:translateX(-50%);bottom:calc(54px + env(safe-area-inset-bottom));width:min(320px,90vw)}
     #status{left:12px;top:12px;font-size:13px;padding:6px 11px;max-width:calc(100vw - 140px)}
     #hint{bottom:calc(14px + env(safe-area-inset-bottom));font-size:13px;max-width:92vw}
     #start .card{margin:16px;padding:22px 20px}
@@ -46,7 +55,11 @@
 <div id="status"><span id="dot"></span><span id="stxt">Sin cámara</span></div>
 
 
-<div id="hint">Pon el puntero sobre una pieza (se ilumina), pellizca y arrastra: la capa gira como si la agarraras</div>
+<div id="panel">
+  <div class="row"><label>ZOOM <b id="zv"></b></label><div class="sl" id="slZoom"><div class="fill"></div><div class="thumb"></div></div></div>
+  <div class="row"><label>SENSIBILIDAD <b id="sv"></b></label><div class="sl" id="slSens"><div class="fill"></div><div class="thumb"></div></div></div>
+</div>
+<div id="hint">Pellizca una pieza y arrastra: la capa salta de 90° en 90°. Las barras de abajo se mueven también pellizcando</div>
 <div id="ptr"></div>
 
 <div id="start">
@@ -127,6 +140,19 @@ const shadow = new THREE.Mesh(new THREE.PlaneGeometry(3.2,3.2),
   new THREE.MeshBasicMaterial({map:new THREE.CanvasTexture(sc), transparent:true, depthWrite:false}));
 shadow.rotation.x = -Math.PI/2; shadow.position.set(0,-2.1,0); scene.add(shadow);
 
+/* ---------- BARRAS: ZOOM Y SENSIBILIDAD (se manejan con ratón o pellizco) ---------- */
+let zoom = 1.0, SENS = 0.55, baseZ = 8, baseY = 0;
+try{ zoom = +localStorage.getItem("cubo_zoom") || zoom; SENS = +localStorage.getItem("cubo_sens") || SENS; }catch(e){}
+function applyZoom(){ camera.position.z = baseZ/zoom; camera.position.y = baseY/zoom; camera.updateProjectionMatrix(); }
+const SLIDERS = [
+  {el:document.getElementById("slZoom"), min:0.6, max:2.0, get:()=>zoom, set:v=>{zoom=v; applyZoom(); document.getElementById("zv").textContent = Math.round(v*100)+"%"; try{localStorage.setItem("cubo_zoom",v)}catch(e){}}},
+  {el:document.getElementById("slSens"), min:0.2, max:1.2, get:()=>SENS, set:v=>{SENS=v; document.getElementById("sv").textContent = Math.round((v-0.2)/1.0*100)+"%"; try{localStorage.setItem("cubo_sens",v)}catch(e){}}},
+];
+function paintSlider(sl){ const t = (sl.get()-sl.min)/(sl.max-sl.min)*100; sl.el.querySelector(".fill").style.width = t+"%"; sl.el.querySelector(".thumb").style.left = t+"%"; }
+function setSliderFromX(sl, x){ const r = sl.el.getBoundingClientRect(); const t = Math.max(0, Math.min(1, (x - r.left)/r.width)); sl.set(sl.min + t*(sl.max-sl.min)); paintSlider(sl); }
+function sliderAt(x, y){ for (const sl of SLIDERS){ const r = sl.el.getBoundingClientRect(); if (x >= r.left-10 && x <= r.right+10 && y >= r.top-12 && y <= r.bottom+12) return sl; } return null; }
+SLIDERS.forEach(sl => { sl.set(sl.get()); paintSlider(sl); });
+
 /* ---------- AGARRE CON PELLIZCO: capas y órbita ---------- */
 const $ = id => document.getElementById(id);
 const ptrEl = $("ptr"), video = $("video");
@@ -177,14 +203,17 @@ const LOG = [];
 const lg = (t, o) => { LOG.push(Object.assign({t:Math.round(performance.now()), e:t}, o||{})); if (LOG.length > 60) LOG.shift(); };
 function grabStart(){
   if (snap){ lg("grab-ignorado-snap"); return; }
+  const sl = sliderAt(cur.x, cur.y);
+  if (sl){ grab = {mode:"slider", sl}; setGlow(null); setSliderFromX(sl, cur.x); lg("barra"); return; }
   const h = pick(cur.x, cur.y);
   if (h){ grab = {mode:"layer", h, x0:cur.x, y0:cur.y, axis:-1, x:cur.x}; setGlow([h.cubie]); lg("grab-capa", {x:Math.round(cur.x), y:Math.round(cur.y)}); }
   else { grab = {mode:"orbit", x:cur.x, y:cur.y}; lg("grab-fondo", {x:Math.round(cur.x), y:Math.round(cur.y)}); }
 }
 // elige eje de giro según hacia dónde arrastras: el punto tocado debe "seguir" al dedo
+const lockPx = () => Math.min(70, 16/SENS);          // zona muerta: menos sensible = hay que mover más antes de que empiece a girar
 function lockAxis(dx, dy){
   const P = grab.h.point, P0 = toScreen(P);
-  let best = null;
+  let best = null, second = 0;
   for (let i = 0; i < 3; i++){
     if (i === grab.h.normalAxis) continue;
     const wa = AX[i].clone().applyQuaternion(cubeGroup.quaternion);
@@ -192,8 +221,11 @@ function lockAxis(dx, dy){
     const sx = (P1.x-P0.x)/0.05, sy = (P1.y-P0.y)/0.05;       // píxeles por radian
     const len = Math.hypot(sx, sy) || 1e-6;
     const score = Math.abs(dx*sx + dy*sy)/len;
-    if (!best || score > best.score) best = {i, sx, sy, len, score};
+    if (!best || score > best.score){ if (best) second = best.score; best = {i, sx, sy, len, score}; }
+    else second = Math.max(second, score);
   }
+  // diagonal ambigua: espera a que el movimiento deje clara la dirección
+  if (best.score < second*1.35 && Math.hypot(dx, dy) < lockPx()*2.2) return;
   grab.axis = best.i; grab.sx = best.sx; grab.sy = best.sy; grab.len2 = best.len*best.len;
   const side = Math.sign(coord(grab.h.cubie, best.i)) || 1;
   const {layer, pivot} = makePivot(best.i, side);
@@ -242,11 +274,12 @@ function updatePointer(now, dt){
   wasPinched = pinched;
 
   if (grab){
-    if (grab.mode === "layer"){
+    if (grab.mode === "slider"){ setSliderFromX(grab.sl, cur.x); }
+    else if (grab.mode === "layer"){
       const tx = cur.x - grab.x0, ty = cur.y - grab.y0;
-      if (grab.axis < 0 && Math.hypot(tx, ty) > 14) lockAxis(tx, ty);
+      if (grab.axis < 0 && Math.hypot(tx, ty) > lockPx()) lockAxis(tx, ty);
       if (grab.axis >= 0){
-        const raw = (tx*grab.sx + ty*grab.sy)/grab.len2, ar = Math.abs(raw)/HALF, sg = Math.sign(raw);
+        const raw = (tx*grab.sx + ty*grab.sy)/grab.len2*SENS, ar = Math.abs(raw)/HALF, sg = Math.sign(raw);
         grab.angle = raw;
         // saltos de 90°: el primero casi en cuanto empiezas, los siguientes cada ~90° de dedo (con histéresis)
         let m = Math.abs(grab.n);
@@ -263,8 +296,9 @@ function updatePointer(now, dt){
       yaw += dx*0.008; pitch = Math.max(-1.2, Math.min(1.2, pitch + dy*0.006));
     }
   } else if (ptrVisible && !snap){
-    const h = pick(cur.x, cur.y); setGlow(h ? [h.cubie] : null);
-  } else if (!ptrVisible && !snap) setGlow(null);
+    const sl = sliderAt(cur.x, cur.y); SLIDERS.forEach(o => o.el.classList.toggle("hover", o === sl));
+    const h = sl ? null : pick(cur.x, cur.y); setGlow(h ? [h.cubie] : null);
+  } else if (!ptrVisible && !snap){ setGlow(null); SLIDERS.forEach(o => o.el.classList.remove("hover")); }
 }
 
 /* ---------- CÁMARA + MEDIAPIPE ---------- */
@@ -331,10 +365,9 @@ function resize(){
   renderer.setSize(w, h, false);
   camera.aspect = w / h;
   if (camera.aspect < 1){ // vertical: más lejos para que quepa el cubo, y subido para dejar sitio al botón
-    camera.position.z = Math.max(8, 6.8 / camera.aspect);
-    camera.position.y = -camera.position.z * 0.09;
-  } else { camera.position.z = 8; camera.position.y = 0; }
-  camera.updateProjectionMatrix();
+    baseZ = Math.max(8, 6.8 / camera.aspect); baseY = -baseZ * 0.09;
+  } else { baseZ = 8; baseY = 0; }
+  applyZoom();
 }
 addEventListener("resize", resize); resize();
 
