@@ -25,6 +25,9 @@
   #bottom{position:fixed;left:244px;right:auto;width:544px;bottom:0;height:270px;display:grid;grid-template-columns:1fr;
     gap:18px;padding:6px 12px 10px;background:linear-gradient(to top,#050810ee 70%,#05081000)}
   #check{display:grid;grid-template-columns:repeat(3,1fr);gap:4px 12px;align-content:start;font-size:12px;line-height:1.2;overflow:hidden}
+  #diagBtn{height:34px !important;font-size:12px !important}
+  #diagBtn.rec{border-color:#ff3b40;background:#3a0f16;color:#ffd0d3}
+  body.rec::after{content:"";position:fixed;inset:0;border:4px solid #ff3b40;pointer-events:none;z-index:60}
   #check .ttl{grid-column:1/-1;font-size:13.5px;font-weight:800;letter-spacing:.12em;color:#ffd60a;padding:2px 0 3px;border-bottom:1px solid #ffd60a44;margin-bottom:3px}
   #check h4{margin:0 0 5px;font-size:12px;letter-spacing:.08em;text-transform:uppercase;color:#8fb4ff}
   #check div.it{display:flex;gap:6px;margin-bottom:3px;opacity:.55}
@@ -107,6 +110,7 @@
 
 <div id="panel">
   <div class="trow"><div id="front" class="dw btn small" data-key="front">⟲ Frontal</div><div id="voiceBtn" class="dw btn small" data-key="voice"></div><div id="resetBtn" class="dw btn small" data-key="reset">↺ Reiniciar</div></div>
+  <div class="trow"><div id="diagBtn" class="dw btn small" data-key="diag">🩺 Grabar diagnóstico</div></div>
 </div>
 <div id="sliders">
   <div class="row"><label>ZOOM <b id="zv"></b></label><div class="sl" id="slZoom"><div class="fill"></div><div class="thumb"></div></div></div>
@@ -434,6 +438,7 @@ addEventListener("mouseup",()=>{ if(performance.now()-lastHand>1000) pinched=fal
 addEventListener("keydown",e=>{
   if(e.key==="1") setTool("pencil"); if(e.key==="2") setTool("flex"); if(e.key==="3") setTool("saw");
   if(e.key==="z"||e.key==="Z") undo();
+  if(e.key==="d"||e.key==="D"){ REC?recStop():recStart(); }
 });
 
 /* ---- giro de la tabla: ejes X, Y, Z de 15 en 15 grados (regla de la mano derecha: + = antihorario) ---- */
@@ -626,8 +631,9 @@ function computeHover(){
 }
 
 function fire(h){
-  const k=h.key;
+  const k=h.key; recEvent("fire",k);
   if(k.startsWith("tool:")) setTool(k.slice(5));
+  else if(k==="diag"){ REC?recStop():recStart(); }
   else if(k==="undo") undo();
   else if(k==="redo") redo();
   else if(k==="begin") beginTrace();
@@ -673,6 +679,7 @@ function pressStart(now){
   cur.x=pos.x; cur.y=pos.y; refreshHover();
   press={t:now,raw,pos:{x:pos.x,y:pos.y},hand,mode:"pending",h:H0};
   const sl=sliderAt(cur.x,cur.y);
+  recEvent("ps",[H0&&H0.key||"",sl?"slider":padAt(cur.x,cur.y)?"pelota":"normal"]);
   if(sl){ press.mode="sliderArm"; press.sl=sl; press.at=hand?0:ARM_MS; }
   else if(stage!=="mounting"&&padAt(cur.x,cur.y)){
     const g=padGeo(); press.mode="orbit"; press.base={x:U.x,y:U.y,z:U.z}; press.n={x:0,y:0,z:0};
@@ -684,6 +691,7 @@ function pressStart(now){
 }
 function pressEnd(now){
   const P=press; press=null; if(!P) return;
+  recEvent("pe",[P.mode+(P.bg?":fondo":""),P.h&&P.h.key||""]);
   padEl.classList.remove("on");
   if(P.mode==="orbit"){ rewindU(P,now); if(P.moved||P.bg) say("Giro soltado ✋","ok",1100); }
   if(P.sl){ P.sl.el.classList.remove("on"); P.sl.el.querySelector(".thumb").style.transform=""; }
@@ -1061,10 +1069,75 @@ function stepCal(now,m){
       } else say("No he visto bien tu mano: repite (botón Calibrar)","err",5000);
       cal=null; } }
 }
+/* ================= DIAGNÓSTICO: graba lo que detecta la cámara (solo números, sin imagen) ================= */
+const APP_VER="v16";
+let REC=null, recPend=[], recLm, recHd, recPaintT=0, REPLAY=null;
+const r4=v=>Math.round(v*1e4)/1e4, fmtT=ms=>{ const q=Math.floor(ms/1000); return `${Math.floor(q/60)}:${String(q%60).padStart(2,"0")}`; };
+function recEvent(type,data){ if(REC) recPend.push(data===undefined?[type]:[type,data]); }
+function rectOf(e){ const r=e.getBoundingClientRect(); return [Math.round(r.left),Math.round(r.top),Math.round(r.width),Math.round(r.height)]; }
+function layoutSnap(){ const o={dw:[]};
+  document.querySelectorAll(".dw").forEach(e=>{ const r=e.getBoundingClientRect(); if(r.width>0) o.dw.push({k:e.dataset.key||e.id||"",r:rectOf(e)}); });
+  for(const id of ["orbit","slZoom","slSens","side","tools","panel","cubebox","sliders"]){ const e=document.getElementById(id); if(e) o[id]=rectOf(e); }
+  return o; }
+function stateSnap(){ return JSON.parse(JSON.stringify({stage,marks,lines,cutsDone,poly,errors,tool,sawTilt,sawLock,U})); }
+function restoreSnap(S){ stage=S.stage; marks=S.marks; lines=S.lines; cutsDone=S.cutsDone; poly=S.poly; errors=S.errors||0; sawTilt=S.sawTilt; sawLock=S.sawLock;
+  history=[]; redoSt=[]; anchor=null; tapeStart=null; for(const a of AXN){ U[a]=S.U[a]; view[a]=S.U[a]; }
+  rebuildBoard(); geoVer++; sideDirty=true; lastCheck=""; phaseKey=null;
+  if(stage==="trace"){ asm.visible=false; setAsmOpacity(0); stageG.rotation.set(0,0,0); } else { asm.visible=true; setAsmOpacity(1); }
+  setTool(S.tool||"pencil"); }
+function paintDiag(){ const b=document.getElementById("diagBtn"); if(!b) return; b.classList.toggle("rec",!!REC);
+  b.textContent=REC?`⏹ Terminar diagnóstico ${fmtT(performance.now()-REC.t0)}`:"🩺 Grabar diagnóstico"; }
+function recStart(){
+  REC={t0:performance.now(),frames:[],last:{},meta:{app:"tornapunta-30",ver:APP_VER,fecha:new Date().toISOString(),ua:navigator.userAgent,
+    W,H:Hh,dpr:devicePixelRatio,video:{w:video.videoWidth||0,h:video.videoHeight||0},camara:!!landmarker,sens:sensPct,zoom:zoomPct,
+    layout:layoutSnap(),estado:stateSnap()}};
+  recPend=[]; document.body.classList.add("rec"); paintDiag();
+  say("Grabando diagnóstico: haz lo que te falla y vuelve a pulsar «Terminar diagnóstico» (o la tecla D)","err",6000);
+}
+function recStop(){
+  if(!REC) return; const R=REC; REC=null; document.body.classList.remove("rec"); paintDiag();
+  R.meta.dur=Math.round(performance.now()-R.t0); R.meta.layoutFin=layoutSnap();
+  const d=new Date(), p=n=>String(n).padStart(2,"0");
+  const name=`diagnostico-tornapunta-${d.getFullYear()}${p(d.getMonth()+1)}${p(d.getDate())}-${p(d.getHours())}${p(d.getMinutes())}${p(d.getSeconds())}.json`;
+  const a=document.createElement("a"); a.href=URL.createObjectURL(new Blob([JSON.stringify({meta:R.meta,frames:R.frames})],{type:"application/json"}));
+  a.download=name; document.body.appendChild(a); a.click(); setTimeout(()=>{ URL.revokeObjectURL(a.href); a.remove(); },5000);
+  window.__lastDiag={name,meta:R.meta,n:R.frames.length};
+  say(`Diagnóstico guardado en Descargas: ${name} · envíamelo`,"ok",10000);
+}
+function recFrame(now){
+  if(!REC) return;
+  const e={t:Math.round(now-REC.t0)}, L=REC.last;
+  if(recLm!==undefined){ e.lm=recLm; if(recHd) e.hd=recHd; recLm=undefined; recHd=undefined; }   // fotograma nuevo de la cámara (null = sin mano)
+  else if(landmarker&&!REPLAY) return;                                                             // con cámara solo se guarda cuando llega fotograma
+  e.r=ratioS<0?null:Math.round(ratioS*1000)/1000; e.pn=pinched?1:0; e.vis=ptrVisible?1:0;
+  e.tg=[Math.round(target.x),Math.round(target.y)]; e.cu=[Math.round(cur.x),Math.round(cur.y)];
+  if(press) e.pm=press.mode+(press.bg?":fondo":"")+(press.ring?":anillo":"");
+  if(H0) e.hk=H0.key||"?";
+  e.u=[U.x,U.y,U.z];
+  const ch=(k,v)=>{ if(L[k]!==v){ e[k]=v; L[k]=v; } };
+  ch("st",stage); ch("tool",tool); ch("ns",nextStep()); ch("zoom",zoomPct); ch("sens",sensPct); ch("msg",$("msg").textContent);
+  if(recPend.length){ e.ev=recPend; recPend=[]; }
+  REC.frames.push(e);
+  if(now-recPaintT>400){ recPaintT=now; paintDiag(); }
+  if(now-REC.t0>120000) recStop();
+}
+function replayLm(f){ const o=[]; for(let i=0;i<21;i++) o.push({x:f[2*i],y:f[2*i+1],z:0}); return o; }
 function detectHand(now){
-  if(!landmarker||video.readyState<2||video.currentTime===lastVT) return;
-  lastVT=video.currentTime;
-  const r=landmarker.detectForVideo(video,now);
+  let r;
+  if(REPLAY){                                              // reproducción de un diagnóstico (solo para análisis)
+    const el=now-REPLAY.t0; let j=REPLAY.i;
+    while(j+1<REPLAY.f.length&&REPLAY.f[j+1].t<=el) j++;
+    if(REPLAY.started&&j===REPLAY.i) return;
+    REPLAY.started=true; REPLAY.i=j; if(j>=REPLAY.f.length-1) REPLAY.done=true;
+    const f=REPLAY.f[j]; r={landmarks:f.lm?[replayLm(f.lm)]:[]};
+  } else {
+    if(!landmarker||video.readyState<2||video.currentTime===lastVT) return;
+    lastVT=video.currentTime;
+    r=landmarker.detectForVideo(video,now);
+  }
+  if(REC){ const Lm=r.landmarks&&r.landmarks[0];
+    recLm=Lm?Lm.flatMap(p=>[r4(p.x),r4(p.y)]):null;
+    const hh=(r.handednesses||r.handedness||[])[0]; recHd=hh&&hh[0]?[hh[0].categoryName,Math.round(hh[0].score*100)/100]:undefined; }
   if(r.landmarks&&r.landmarks.length){
     const Lm=r.landmarks[0], t4=Lm[4], t8=Lm[8];
     const palm=Math.hypot(Lm[5].x-Lm[17].x,Lm[5].y-Lm[17].y)||0.1;
@@ -1173,6 +1246,7 @@ function frame(now){
     renderer.autoClear=false; renderer.clearDepth(); renderer.render(scene3,camera3); renderer.autoClear=true;
     renderer.setScissorTest(false); renderer.setViewport(0,0,W,Hh); }
   updateLabels();
+  recFrame(now);
   requestAnimationFrame(frame);
 }
 /* indicador de ejes X (rojo), Y (verde), Z (azul): flecha en el extremo positivo; giro + = antihorario visto desde la punta */
@@ -1207,6 +1281,10 @@ window.__t={
   get s(){return {marks,lines,polyLen:poly.length,cutsDone,stage,errors,checks:ITEMS.map(i=>i[2]()),suela:suelaLen(),tool,anchor:!!anchor};},
   dbg:()=>({sawLock,sawTilt,msgText,dk,dProg:Math.round(dProg),blockPos,tool,anchor,tapeStart,snap:snapShow,cur:{x:Math.round(cur.x),y:Math.round(cur.y)},pb}),
   thumb:(Lm,palm)=>thumbScore(thumbMetrics(Lm,palm)), hover:()=>H0&&{key:H0.key,dom:H0.dom}, pbv:()=>pb, EXP, U, view, get press(){return press&&press.mode;}, get facing(){return facing;}, setPtr:(x,y)=>{lastMouse=performance.now();target.x=x;target.y=y;ptrVisible=true;},
+  replay:(data)=>{ if(data.meta&&data.meta.estado) restoreSnap(data.meta.estado); if(data.meta&&data.meta.sens) setSlider(SLIDERS[1],data.meta.sens);
+    REPLAY={f:data.frames.filter(f=>"lm" in f),i:0,t0:performance.now(),started:false,done:false}; return REPLAY.f.length; },
+  replayInfo:()=>REPLAY&&{i:REPLAY.i,n:REPLAY.f.length,done:REPLAY.done,t:REPLAY.f[REPLAY.i]&&REPLAY.f[REPLAY.i].t},
+  rec:()=>REC&&REC.frames.length, recStart:()=>recStart(), recStop:()=>recStop(), lastDiag:()=>window.__lastDiag,
   sim:(x,y,p)=>{lastHand=performance.now();handSeen=true;target.x=x;target.y=y;ptrVisible=true;pinched=p;}
 };
 </script>
