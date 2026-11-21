@@ -661,7 +661,7 @@ const padEl=document.getElementById("orbit");
 const rc3=new THREE.Raycaster();
 /* zonas con botones: si un giro desde el fondo entra en ellas, el giro se suelta */
 const UI_IDS=["tools","panel","cubebox","sliders","side"];
-function uiAt(x,y){ for(const id of UI_IDS){ const e=document.getElementById(id); if(!e) continue; const r=e.getBoundingClientRect();
+function uiAt(x,y,ids){ for(const id of (ids||UI_IDS)){ const e=document.getElementById(id); if(!e) continue; const r=e.getBoundingClientRect();
   if(r.width>0&&r.height>0&&x>=r.left-12&&x<=r.right+12&&y>=r.top-12&&y<=r.bottom+12) return true; } return false; }
 /* al soltar, se deshace lo girado en los últimos 220 ms (el gesto de abrir los dedos mueve el puntero) */
 const REWIND_MS=220;
@@ -729,7 +729,8 @@ function inputStep(now,dt){
     }
   } else if(P.mode==="slider"){
     const r=P.sl.el.getBoundingClientRect(), gain=P.hand?GAIN_HAND:1;
-    setSlider(P.sl,P.v0+(cur.x-P.x0)/r.width*(P.sl.max-P.sl.min)*gain);
+    const vr=P.v0+(cur.x-P.x0)/r.width*(P.sl.max-P.sl.min)*gain;
+    if(Math.abs(vr-P.sl.get())>=P.sl.step*0.75) setSlider(P.sl,vr);
   } else if(P.mode==="pending"){
     if(P.bgCand&&Math.hypot(target.x-P.raw.x,target.y-P.raw.y)>DRAG_PX){ P.mode="orbit"; P.bg=true; P.base={x:U.x,y:U.y,z:U.z}; P.n={x:0,y:0,z:0}; P.ring=false; P.raw={x:target.x,y:target.y}; P.pos={x:cur.x,y:cur.y}; padEl.classList.add("on"); say("Girando la vista… (abre los dedos para soltar)","",1500); return; }
     P.h=H0;
@@ -740,8 +741,8 @@ function inputStep(now,dt){
     if(P.bg&&((H0&&H0.dom)||uiAt(cur.x,cur.y))){                       // el giro desde el fondo se suelta al llegar a los botones
       rewindU(P,now,450); P.mode="none"; padEl.classList.remove("on"); say("Giro soltado: ya puedes pulsar los botones","ok",1500); return;
     }
-    if(!P.bg&&Math.hypot(cur.x-g.cx,cur.y-g.cy)>g.r+8){                 // al salir de la esfera, la tabla deja de moverse
-      P.mode="none"; padEl.classList.remove("on"); say("Fuera de la pelota: giro soltado","ok",1600);
+    if(!P.bg&&uiAt(cur.x,cur.y,["side","sliders"])){        // desde la pelota se puede arrastrar por toda la pantalla; solo se suelta al llegar a los paneles de botones
+      rewindU(P,now,450); P.mode="none"; padEl.classList.remove("on"); say("Giro soltado: ya puedes pulsar los botones","ok",1500);
     } else if(!P.bg&&!P.moved&&Math.hypot(target.x-P.raw.x,target.y-P.raw.y)<18){
       /* zona muerta pequeña: el temblor al pellizcar no gira */
     } else if(stage!=="mounting"){
@@ -1070,10 +1071,23 @@ function stepCal(now,m){
       cal=null; } }
 }
 /* ================= DIAGNÓSTICO: graba lo que detecta la cámara (solo números, sin imagen) ================= */
-const APP_VER="v16";
+const APP_VER="v17";
+/* Umbrales de pellizco adaptados a cada mano (se aprenden de los últimos 3 s).
+   El diagnóstico mostró manos cuya postura "abierta" ronda 0,60-0,70: con un umbral fijo de 0,72 el pellizco no se soltaba nunca. */
+const PH=[]; let openRef=0.75, closedRef=0.22, pCloseT=0.38, pOpenT=0.51, pCondT=null;
+function adaptPinch(now,raw){
+  PH.push({t:now,r:raw,p:pinchG}); while(PH.length&&now-PH[0].t>3000) PH.shift();
+  const op=[], cl=[]; for(const h of PH){ if(!h.p&&h.r>0.40) op.push(h.r); else if(h.p&&h.r<0.40) cl.push(h.r); }
+  if(op.length>=10){ op.sort((a,b)=>a-b); openRef=op[Math.floor(op.length*0.75)]; }
+  if(cl.length>=10){ cl.sort((a,b)=>a-b); closedRef=cl[cl.length>>1]; }
+  const span=Math.max(0.2,Math.min(1,openRef)-closedRef);
+  pCloseT=Math.min(0.45,Math.max(0.25,closedRef+0.30*span));
+  pOpenT=Math.min(0.72,Math.max(pCloseT+0.08,closedRef+0.55*span));
+}
 let REC=null, recPend=[], recLm, recHd, recPaintT=0, REPLAY=null;
 const r4=v=>Math.round(v*1e4)/1e4, fmtT=ms=>{ const q=Math.floor(ms/1000); return `${Math.floor(q/60)}:${String(q%60).padStart(2,"0")}`; };
-function recEvent(type,data){ if(REC) recPend.push(data===undefined?[type]:[type,data]); }
+const EVLOG=[];
+function recEvent(type,data){ if(REC) recPend.push(data===undefined?[type]:[type,data]); if(REPLAY) EVLOG.push([REPLAY.vt!==undefined?REPLAY.vt:REPLAY.f[REPLAY.i].t,type,data]); }
 function rectOf(e){ const r=e.getBoundingClientRect(); return [Math.round(r.left),Math.round(r.top),Math.round(r.width),Math.round(r.height)]; }
 function layoutSnap(){ const o={dw:[]};
   document.querySelectorAll(".dw").forEach(e=>{ const r=e.getBoundingClientRect(); if(r.width>0) o.dw.push({k:e.dataset.key||e.id||"",r:rectOf(e)}); });
@@ -1088,7 +1102,7 @@ function restoreSnap(S){ stage=S.stage; marks=S.marks; lines=S.lines; cutsDone=S
 function paintDiag(){ const b=document.getElementById("diagBtn"); if(!b) return; b.classList.toggle("rec",!!REC);
   b.textContent=REC?`⏹ Terminar diagnóstico ${fmtT(performance.now()-REC.t0)}`:"🩺 Grabar diagnóstico"; }
 function recStart(){
-  REC={t0:performance.now(),frames:[],last:{},meta:{app:"tornapunta-30",ver:APP_VER,fecha:new Date().toISOString(),ua:navigator.userAgent,
+  REC={t0:performance.now(),frames:[],last:{},meta:{app:"tornapunta-30",ver:APP_VER,lmFmt:"xyz",fecha:new Date().toISOString(),ua:navigator.userAgent,
     W,H:Hh,dpr:devicePixelRatio,video:{w:video.videoWidth||0,h:video.videoHeight||0},camara:!!landmarker,sens:sensPct,zoom:zoomPct,
     layout:layoutSnap(),estado:stateSnap()}};
   recPend=[]; document.body.classList.add("rec"); paintDiag();
@@ -1115,19 +1129,19 @@ function recFrame(now){
   if(H0) e.hk=H0.key||"?";
   e.u=[U.x,U.y,U.z];
   const ch=(k,v)=>{ if(L[k]!==v){ e[k]=v; L[k]=v; } };
-  ch("st",stage); ch("tool",tool); ch("ns",nextStep()); ch("zoom",zoomPct); ch("sens",sensPct); ch("msg",$("msg").textContent);
+  ch("th",pCloseT.toFixed(2)+"/"+pOpenT.toFixed(2)); ch("st",stage); ch("tool",tool); ch("ns",nextStep()); ch("zoom",zoomPct); ch("sens",sensPct); ch("msg",$("msg").textContent);
   if(recPend.length){ e.ev=recPend; recPend=[]; }
   REC.frames.push(e);
   if(now-recPaintT>400){ recPaintT=now; paintDiag(); }
   if(now-REC.t0>120000) recStop();
 }
-function replayLm(f){ const o=[]; for(let i=0;i<21;i++) o.push({x:f[2*i],y:f[2*i+1],z:0}); return o; }
+function replayLm(f){ const k=f.length>=63?3:2, o=[]; for(let i=0;i<21;i++) o.push({x:f[k*i],y:f[k*i+1],z:k===3?f[k*i+2]:0}); return o; }
 function detectHand(now){
   let r;
   if(REPLAY){                                              // reproducción de un diagnóstico (solo para análisis)
-    const el=now-REPLAY.t0; let j=REPLAY.i;
-    while(j+1<REPLAY.f.length&&REPLAY.f[j+1].t<=el) j++;
-    if(REPLAY.started&&j===REPLAY.i) return;
+    let j=REPLAY.i;
+    if(REPLAY.det){ if(REPLAY.started){ if(j>=REPLAY.f.length-1){ REPLAY.done=true; return; } j++; } }
+    else { const el=now-REPLAY.t0; while(j+1<REPLAY.f.length&&REPLAY.f[j+1].t<=el) j++; if(REPLAY.started&&j===REPLAY.i) return; }
     REPLAY.started=true; REPLAY.i=j; if(j>=REPLAY.f.length-1) REPLAY.done=true;
     const f=REPLAY.f[j]; r={landmarks:f.lm?[replayLm(f.lm)]:[]};
   } else {
@@ -1136,16 +1150,17 @@ function detectHand(now){
     r=landmarker.detectForVideo(video,now);
   }
   if(REC){ const Lm=r.landmarks&&r.landmarks[0];
-    recLm=Lm?Lm.flatMap(p=>[r4(p.x),r4(p.y)]):null;
+    recLm=Lm?Lm.flatMap(p=>[r4(p.x),r4(p.y),Math.round((p.z||0)*1e3)/1e3]):null;
     const hh=(r.handednesses||r.handedness||[])[0]; recHd=hh&&hh[0]?[hh[0].categoryName,Math.round(hh[0].score*100)/100]:undefined; }
   if(r.landmarks&&r.landmarks.length){
     const Lm=r.landmarks[0], t4=Lm[4], t8=Lm[8];
     const palm=Math.hypot(Lm[5].x-Lm[17].x,Lm[5].y-Lm[17].y)||0.1;
     const raw=Math.hypot(t4.x-t8.x,t4.y-t8.y)/palm;            // pulgar–índice relativo al tamaño de la mano
     ratioS=ratioS<0?raw:ratioS*0.5+raw*0.5; const ratio=ratioS;
-    if(!pinchG&&ratio<0.45){ if(++pinchFrames>=2){pinchG=true;pinchFrames=0;} }
-    else if(pinchG&&ratio>(press&&press.mode==="orbit"?0.58:0.72)){ if(++pinchFrames>=(press&&press.mode==="orbit"?2:3)){pinchG=false;pinchFrames=0;} }
-    else pinchFrames=0;
+    adaptPinch(now,raw);
+    if(!pinchG&&ratio<pCloseT){ if(pCondT===null) pCondT=now; if(now-pCondT>=35){ pinchG=true; pCondT=null; } }        // cerrar: 35 ms por debajo
+    else if(pinchG&&ratio>pOpenT){ if(pCondT===null) pCondT=now; if(now-pCondT>=50){ pinchG=false; pCondT=null; } }   // abrir: 50 ms por encima
+    else pCondT=null;
     const m=thumbMetrics(Lm,palm);
     thumbS=thumbS*0.5+thumbScore(m)*0.5;
     if(!thumbOn&&thumbS>0.62){ if(++thumbFrames>=2){thumbOn=true;thumbFrames=0;} }
@@ -1168,7 +1183,8 @@ paintMode();
 resetAll();
 let prev=performance.now();
 function frame(now){
-  const dt=Math.min(100,now-prev); prev=now;
+  if(REPLAY&&REPLAY.det){ const k=Math.min(REPLAY.f.length-1,REPLAY.started?REPLAY.i+1:0); now=REPLAY.t0+REPLAY.f[k].t; REPLAY.vt=REPLAY.f[k].t; }
+  const dt=Math.max(0,Math.min(100,now-prev)); prev=now;
   detectHand(now);
   hist.push({t:now,x:target.x,y:target.y}); while(hist.length&&now-hist[0].t>500) hist.shift();
   if(now-lastHand>(press?1000:500)&&now-lastMouse>1000&&handSeen){ ptrVisible=false; pinched=false; pinchG=false; thumbOn=false; ratioS=-1; }
@@ -1282,8 +1298,9 @@ window.__t={
   dbg:()=>({sawLock,sawTilt,msgText,dk,dProg:Math.round(dProg),blockPos,tool,anchor,tapeStart,snap:snapShow,cur:{x:Math.round(cur.x),y:Math.round(cur.y)},pb}),
   thumb:(Lm,palm)=>thumbScore(thumbMetrics(Lm,palm)), hover:()=>H0&&{key:H0.key,dom:H0.dom}, pbv:()=>pb, EXP, U, view, get press(){return press&&press.mode;}, get facing(){return facing;}, setPtr:(x,y)=>{lastMouse=performance.now();target.x=x;target.y=y;ptrVisible=true;},
   replay:(data)=>{ if(data.meta&&data.meta.estado) restoreSnap(data.meta.estado); if(data.meta&&data.meta.sens) setSlider(SLIDERS[1],data.meta.sens);
-    REPLAY={f:data.frames.filter(f=>"lm" in f),i:0,t0:performance.now(),started:false,done:false}; return REPLAY.f.length; },
-  replayInfo:()=>REPLAY&&{i:REPLAY.i,n:REPLAY.f.length,done:REPLAY.done,t:REPLAY.f[REPLAY.i]&&REPLAY.f[REPLAY.i].t},
+    const det=!!(data.det); EVLOG.length=0; REPLAY={f:data.frames.filter(f=>"lm" in f),i:0,t0:performance.now(),started:false,done:false,det}; if(det){ prev=REPLAY.t0; } return REPLAY.f.length; },
+  evlog:()=>EVLOG.slice(), pinchTh:()=>({openRef,closedRef,pCloseT,pOpenT}),
+  replayInfo:()=>REPLAY&&{i:REPLAY.i,n:REPLAY.f.length,done:REPLAY.done,t:REPLAY.f[REPLAY.i]&&REPLAY.f[REPLAY.i].t,stage},
   rec:()=>REC&&REC.frames.length, recStart:()=>recStart(), recStop:()=>recStop(), lastDiag:()=>window.__lastDiag,
   sim:(x,y,p)=>{lastHand=performance.now();handSeen=true;target.x=x;target.y=y;ptrVisible=true;pinched=p;}
 };
