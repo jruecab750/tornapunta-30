@@ -1,0 +1,370 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Examen de ciencia con la mano</title>
+<style>
+  *{box-sizing:border-box;margin:0;padding:0}
+  html,body{height:100%;font-family:system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;background:#f4f6fa;color:#1d2433;overflow:hidden}
+  #app{position:fixed;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:24px 24px 24px 24px}
+  .pantalla{display:none;width:min(980px,100%);flex-direction:column;align-items:center;gap:22px}
+  .pantalla.activa{display:flex}
+  h1{font-size:clamp(26px,3.4vw,40px);text-align:center}
+  .sub{font-size:clamp(15px,1.6vw,19px);color:#4a5568;text-align:center;max-width:720px;line-height:1.45}
+  .progreso{font-size:15px;font-weight:600;color:#5a6b8c;letter-spacing:.04em;text-transform:uppercase}
+  .pregunta{font-size:clamp(22px,2.8vw,32px);font-weight:700;text-align:center;line-height:1.3}
+  .opciones{display:grid;grid-template-columns:1fr 1fr;gap:18px;width:100%}
+  .opcion{background:#fff;border:3px solid #d5dbe6;border-radius:18px;padding:26px 20px;font-size:clamp(18px,2vw,24px);font-weight:600;text-align:left;cursor:pointer;display:flex;align-items:center;gap:14px;min-height:96px;transition:border-color .15s,background .15s,transform .1s;color:#1d2433}
+  .opcion .letra{flex:0 0 42px;height:42px;border-radius:50%;background:#e8edf5;display:flex;align-items:center;justify-content:center;font-weight:800;color:#3b4a66}
+  .opcion.hover{border-color:#7aa2f7;transform:scale(1.015)}
+  .opcion.seleccionada{border-color:#2f6fed;background:#eaf1ff}
+  .opcion.seleccionada .letra{background:#2f6fed;color:#fff}
+  .opcion.correcta{border-color:#1f9d55;background:#e6f6ec}
+  .opcion.correcta .letra{background:#1f9d55;color:#fff}
+  .opcion.incorrecta{border-color:#d64545;background:#fdeaea}
+  .opcion.incorrecta .letra{background:#d64545;color:#fff}
+  .opcion.bloqueada{cursor:default}
+  .boton{background:#2f6fed;color:#fff;border:none;border-radius:16px;padding:20px 54px;font-size:clamp(18px,2vw,24px);font-weight:800;letter-spacing:.05em;cursor:pointer;min-width:280px;transition:transform .1s,background .15s,opacity .15s}
+  .boton.hover{transform:scale(1.04);background:#1f5ad6}
+  .boton:disabled{background:#b8c2d6;cursor:not-allowed;opacity:.8}
+  .feedback{width:100%;border-radius:16px;padding:18px 22px;font-size:clamp(16px,1.7vw,20px);line-height:1.45;display:none}
+  .feedback.ok{display:block;background:#e6f6ec;border:2px solid #1f9d55}
+  .feedback.ko{display:block;background:#fdeaea;border:2px solid #d64545}
+  .feedback strong{display:block;font-size:1.15em;margin-bottom:4px}
+  .nota{font-size:clamp(60px,10vw,110px);font-weight:900;color:#2f6fed;line-height:1}
+  .resumen{width:100%;display:flex;flex-direction:column;gap:10px}
+  .resumen div{background:#fff;border-radius:12px;padding:12px 16px;border-left:6px solid #ccc;font-size:17px}
+  .resumen .r-ok{border-left-color:#1f9d55}.resumen .r-ko{border-left-color:#d64545}
+  .estado{font-size:15px;color:#5a6b8c;min-height:20px;text-align:center}
+  /* miniatura de cámara */
+  #mini{position:fixed;left:16px;bottom:16px;width:220px;height:165px;border-radius:14px;overflow:hidden;box-shadow:0 4px 18px rgba(0,0,0,.18);background:#222;display:none;z-index:5}
+  #mini video,#mini canvas{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;transform:scaleX(-1)}
+  #mini .etq{position:absolute;left:8px;top:6px;font-size:12px;color:#fff;background:rgba(0,0,0,.45);padding:2px 8px;border-radius:8px;z-index:2}
+  /* capa del puntero */
+  #capa{position:fixed;inset:0;pointer-events:none;z-index:10}
+  #ajustes{position:fixed;right:14px;top:12px;font-size:13px;color:#4a5568;display:flex;gap:8px;align-items:center;z-index:6}
+  #ajustes select{font-size:13px;padding:3px 6px;border-radius:8px;border:1px solid #c9d1df;background:#fff}
+</style>
+</head>
+<body>
+<div id="app">
+  <!-- INICIO -->
+  <section class="pantalla activa" id="p-inicio">
+    <h1>🔬 Examen rápido de ciencia</h1>
+    <p class="sub">Tres preguntas. Maneja todo con el <b>dedo índice de tu mano derecha</b>: deja la punta del dedo <b>medio segundo</b> sobre una respuesta o un botón y se marcará cuando el círculo se complete.</p>
+    <button class="boton" id="btn-camara" data-dwell>ACTIVAR CÁMARA</button>
+    <p class="estado" id="estado">Pulsa con el ratón para activar la cámara.</p>
+  </section>
+
+  <!-- PREGUNTA -->
+  <section class="pantalla" id="p-pregunta">
+    <div class="progreso" id="progreso">Pregunta 1 de 3</div>
+    <div class="pregunta" id="enunciado"></div>
+    <div class="opciones" id="opciones"></div>
+    <div class="feedback" id="feedback"></div>
+    <button class="boton" id="btn-accion" data-dwell disabled>CONTESTAR</button>
+  </section>
+
+  <!-- FINAL -->
+  <section class="pantalla" id="p-final">
+    <h1>Puntuación final</h1>
+    <div class="nota" id="nota">0 / 3</div>
+    <p class="sub" id="mensaje-final"></p>
+    <div class="resumen" id="resumen"></div>
+    <button class="boton" id="btn-repetir" data-dwell>REPETIR EXAMEN</button>
+  </section>
+</div>
+
+<div id="mini"><span class="etq">Tu mano</span><video id="video" playsinline muted></video><canvas id="esqueleto"></canvas></div>
+<canvas id="capa"></canvas>
+<div id="ajustes">Mano:
+  <select id="sel-mano">
+    <option value="derecha" selected>Derecha</option>
+    <option value="izquierda">Izquierda</option>
+    <option value="cualquiera">Cualquiera</option>
+  </select>
+</div>
+
+<script type="module">
+/* ================== PREGUNTAS ================== */
+const PREGUNTAS = [
+  {
+    texto: "¿Cuál es el planeta más grande del sistema solar?",
+    opciones: ["Saturno", "Júpiter", "La Tierra", "Neptuno"],
+    correcta: 1,
+    explicacion: "Júpiter es el mayor planeta: en su interior cabrían más de 1.300 Tierras. Saturno es el segundo."
+  },
+  {
+    texto: "¿A qué temperatura hierve el agua al nivel del mar?",
+    opciones: ["0 °C", "50 °C", "80 °C", "100 °C"],
+    correcta: 3,
+    explicacion: "A la presión del nivel del mar (1 atmósfera) el agua hierve a 100 °C. A 0 °C se congela. En la montaña, con menos presión, hierve antes."
+  },
+  {
+    texto: "¿Qué gas toman las plantas del aire para hacer la fotosíntesis?",
+    opciones: ["Dióxido de carbono", "Oxígeno", "Nitrógeno", "Helio"],
+    correcta: 0,
+    explicacion: "Las plantas absorben dióxido de carbono (CO₂) y, con la luz del sol y el agua, fabrican azúcares y liberan oxígeno."
+  }
+];
+const LETRAS = ["A","B","C","D"];
+const DWELL_MS = 500;
+
+/* ================== ESTADO DEL EXAMEN ================== */
+let indice = 0, seleccion = null, fase = "elegir", aciertos = 0, historial = [];
+const $ = id => document.getElementById(id);
+
+function mostrar(id){
+  document.querySelectorAll(".pantalla").forEach(p => p.classList.remove("activa"));
+  $(id).classList.add("activa");
+}
+
+function pintarPregunta(){
+  const q = PREGUNTAS[indice];
+  seleccion = null; fase = "elegir";
+  $("progreso").textContent = `Pregunta ${indice+1} de ${PREGUNTAS.length}`;
+  $("enunciado").textContent = q.texto;
+  const cont = $("opciones"); cont.innerHTML = "";
+  q.opciones.forEach((txt,i) => {
+    const b = document.createElement("button");
+    b.className = "opcion"; b.dataset.dwell = ""; b.dataset.i = i;
+    b.innerHTML = `<span class="letra">${LETRAS[i]}</span><span>${txt}</span>`;
+    b.addEventListener("click", () => elegir(i));
+    cont.appendChild(b);
+  });
+  const f = $("feedback"); f.className = "feedback"; f.innerHTML = "";
+  const acc = $("btn-accion"); acc.textContent = "CONTESTAR"; acc.disabled = true;
+  mostrar("p-pregunta");
+}
+
+function elegir(i){
+  if (fase !== "elegir") return;
+  seleccion = i;
+  document.querySelectorAll(".opcion").forEach(o =>
+    o.classList.toggle("seleccionada", Number(o.dataset.i) === i));
+  $("btn-accion").disabled = false;
+}
+
+function contestar(){
+  if (fase !== "elegir" || seleccion === null) return;
+  const q = PREGUNTAS[indice];
+  const ok = seleccion === q.correcta;
+  if (ok) aciertos++;
+  historial.push({ q: q.texto, ok, elegida: q.opciones[seleccion], buena: q.opciones[q.correcta] });
+  fase = "corregida";
+  document.querySelectorAll(".opcion").forEach(o => {
+    const i = Number(o.dataset.i);
+    o.classList.add("bloqueada");
+    o.classList.remove("seleccionada");
+    if (i === q.correcta) o.classList.add("correcta");
+    else if (i === seleccion) o.classList.add("incorrecta");
+  });
+  const f = $("feedback");
+  f.className = "feedback " + (ok ? "ok" : "ko");
+  f.innerHTML = ok
+    ? `<strong>✅ ¡Correcto!</strong>${q.explicacion}`
+    : `<strong>❌ No es correcta.</strong>La respuesta buena es <b>${q.opciones[q.correcta]}</b>. ${q.explicacion}`;
+  $("btn-accion").textContent = indice < PREGUNTAS.length-1 ? "SIGUIENTE PREGUNTA" : "VER PUNTUACIÓN";
+}
+
+function accion(){
+  if (fase === "elegir") contestar();
+  else { indice++; indice < PREGUNTAS.length ? pintarPregunta() : pintarFinal(); }
+}
+
+function pintarFinal(){
+  $("nota").textContent = `${aciertos} / ${PREGUNTAS.length}`;
+  $("mensaje-final").textContent =
+    aciertos === 3 ? "¡Perfecto! Dominas la ciencia básica." :
+    aciertos === 2 ? "¡Muy bien! Solo se te escapó una." :
+    aciertos === 1 ? "Vas por buen camino. Repasa las explicaciones." :
+                     "Ánimo: lee las explicaciones y vuelve a intentarlo.";
+  $("resumen").innerHTML = historial.map((h,i) =>
+    `<div class="${h.ok?'r-ok':'r-ko'}"><b>${i+1}.</b> ${h.q}<br>${h.ok?'✅':'❌'} Tu respuesta: ${h.elegida}${h.ok?'':` · Correcta: <b>${h.buena}</b>`}</div>`).join("");
+  mostrar("p-final");
+}
+
+function reiniciar(){ indice = 0; aciertos = 0; historial = []; pintarPregunta(); }
+
+$("btn-accion").addEventListener("click", accion);
+$("btn-repetir").addEventListener("click", reiniciar);
+$("btn-camara").addEventListener("click", iniciarCamara);
+
+/* ================== CÁMARA + MEDIAPIPE ================== */
+const video = $("video"), esq = $("esqueleto"), ectx = esq.getContext("2d");
+const capa = $("capa"), ctx = capa.getContext("2d");
+let detector = null, camaraLista = false;
+
+function ajustarCapa(){
+  capa.width = innerWidth * devicePixelRatio; capa.height = innerHeight * devicePixelRatio;
+  capa.style.width = innerWidth+"px"; capa.style.height = innerHeight+"px";
+  ctx.setTransform(devicePixelRatio,0,0,devicePixelRatio,0,0);
+}
+addEventListener("resize", ajustarCapa); ajustarCapa();
+
+async function iniciarCamara(){
+  if (camaraLista) { pintarPregunta(); return; }
+  const est = $("estado");
+  try {
+    est.textContent = "Cargando el detector de manos…";
+    const vision = await import("https://cdn.jsdelivr.net/npm/@mediapipe/tasks-vision@0.10.14/vision_bundle.mjs");
+    const fileset = await vision.FilesetResolver.forVisionTasks(
+      "https://cdn.jsdelivr.net/npm/@mediapipe/tasks-vision@0.10.14/wasm");
+    const opciones = (delegate) => ({
+      baseOptions: {
+        modelAssetPath: "https://storage.googleapis.com/mediapipe-models/hand_landmarker/hand_landmarker/float16/1/hand_landmarker.task",
+        delegate
+      },
+      runningMode: "VIDEO", numHands: 2,
+      minHandDetectionConfidence: 0.6, minHandPresenceConfidence: 0.6, minTrackingConfidence: 0.5
+    });
+    try { detector = await vision.HandLandmarker.createFromOptions(fileset, opciones("GPU")); }
+    catch { detector = await vision.HandLandmarker.createFromOptions(fileset, opciones("CPU")); }
+
+    est.textContent = "Pidiendo permiso para la cámara…";
+    const stream = await navigator.mediaDevices.getUserMedia({ video: { facingMode: "user", width: 640, height: 480 }, audio: false });
+    video.srcObject = stream; await video.play();
+    $("mini").style.display = "block";
+    camaraLista = true;
+    requestAnimationFrame(bucle);
+    pintarPregunta();
+  } catch (e) {
+    console.error(e);
+    est.textContent = "No se pudo activar la cámara o el detector. Abre la página por HTTPS y concede permiso. (Puedes jugar con el ratón).";
+    setTimeout(pintarPregunta, 2500);
+  }
+}
+
+/* ---------- elegir la mano según el selector ----------
+   MediaPipe etiqueta la lateralidad como si la imagen estuviera en espejo:
+   con la cámara frontal sin voltear, tu mano DERECHA llega etiquetada "Left". */
+function elegirMano(res){
+  if (!res.landmarks || !res.landmarks.length) return null;
+  const modo = $("sel-mano").value;
+  if (modo === "cualquiera") return res.landmarks[0];
+  const buscada = modo === "derecha" ? "Left" : "Right";
+  for (let i = 0; i < res.landmarks.length; i++){
+    const lab = res.handednesses?.[i]?.[0]?.categoryName || res.handedness?.[i]?.[0]?.categoryName;
+    if (lab === buscada) return res.landmarks[i];
+  }
+  return null;
+}
+
+/* ---------- puntero suavizado y permanencia ---------- */
+let px = null, py = null;
+let objetivo = null, tInicio = 0, bloqueado = null; // bloqueado: elemento ya activado, hay que salir de él
+const SUAVE = 0.35, MARGEN = 0.12; // margen: no hace falta llevar el dedo al borde de la cámara
+
+function mapear(lm){
+  // espejo + ampliación del área útil
+  let nx = 1 - lm.x, ny = lm.y;
+  nx = (nx - MARGEN) / (1 - 2*MARGEN);
+  ny = (ny - MARGEN) / (1 - 2*MARGEN);
+  nx = Math.min(1, Math.max(0, nx)); ny = Math.min(1, Math.max(0, ny));
+  return [nx * innerWidth, ny * innerHeight];
+}
+
+function elementoActivable(x, y){
+  const el = document.elementFromPoint(x, y);
+  const t = el && el.closest("[data-dwell]");
+  if (!t || t.disabled || t.classList.contains("bloqueada")) return null;
+  if (!t.closest(".pantalla.activa")) return null;
+  return t;
+}
+
+function marcarHover(el){
+  document.querySelectorAll(".hover").forEach(h => { if (h !== el) h.classList.remove("hover"); });
+  if (el) el.classList.add("hover");
+}
+
+let ultimoTs = -1;
+function bucle(){
+  requestAnimationFrame(bucle);
+  if (!detector || video.readyState < 2) return;
+  const ts = performance.now();
+  if (ts === ultimoTs) return; ultimoTs = ts;
+  const res = detector.detectForVideo(video, ts);
+  dibujarEsqueleto(res);
+
+  ctx.clearRect(0, 0, innerWidth, innerHeight);
+  const mano = elegirMano(res);
+  if (!mano){ px = py = null; objetivo = null; marcarHover(null); return; }
+
+  const [tx, ty] = mapear(mano[8]); // punta del índice
+  if (px === null){ px = tx; py = ty; }
+  px += (tx - px) * SUAVE; py += (ty - py) * SUAVE;
+
+  const el = elementoActivable(px, py);
+  if (bloqueado && el !== bloqueado) bloqueado = null;
+  const candidato = (el && el !== bloqueado) ? el : null;
+
+  if (candidato !== objetivo){ objetivo = candidato; tInicio = ts; }
+  marcarHover(candidato);
+
+  let progreso = 0;
+  if (objetivo){
+    progreso = Math.min(1, (ts - tInicio) / DWELL_MS);
+    if (progreso >= 1){
+      const activado = objetivo;
+      bloqueado = activado; objetivo = null;
+      activado.click();
+      destello(px, py);
+    }
+  }
+  dibujarPuntero(px, py, progreso);
+}
+
+/* ---------- dibujo del puntero con círculo creciente ---------- */
+let flash = null;
+function destello(x, y){ flash = { x, y, t: performance.now() }; }
+
+function dibujarPuntero(x, y, p){
+  // círculo creciente (relleno) + arco de progreso
+  if (p > 0){
+    const r = 10 + 26 * p;
+    ctx.beginPath(); ctx.arc(x, y, r, 0, Math.PI*2);
+    ctx.fillStyle = `rgba(47,111,237,${0.15 + 0.25*p})`; ctx.fill();
+    ctx.beginPath(); ctx.arc(x, y, 38, -Math.PI/2, -Math.PI/2 + Math.PI*2*p);
+    ctx.strokeStyle = "#2f6fed"; ctx.lineWidth = 5; ctx.lineCap = "round"; ctx.stroke();
+  }
+  // punto del índice
+  ctx.beginPath(); ctx.arc(x, y, 8, 0, Math.PI*2);
+  ctx.fillStyle = "#ff7a00"; ctx.fill();
+  ctx.lineWidth = 3; ctx.strokeStyle = "#fff"; ctx.stroke();
+  // destello al confirmar
+  if (flash){
+    const k = (performance.now() - flash.t) / 350;
+    if (k < 1){
+      ctx.beginPath(); ctx.arc(flash.x, flash.y, 38 + 30*k, 0, Math.PI*2);
+      ctx.strokeStyle = `rgba(31,157,85,${1-k})`; ctx.lineWidth = 6; ctx.stroke();
+    } else flash = null;
+  }
+}
+
+/* ---------- esqueleto en la miniatura ---------- */
+const UNIONES = [[0,1],[1,2],[2,3],[3,4],[0,5],[5,6],[6,7],[7,8],[5,9],[9,10],[10,11],[11,12],
+                 [9,13],[13,14],[14,15],[15,16],[13,17],[17,18],[18,19],[19,20],[0,17]];
+function dibujarEsqueleto(res){
+  esq.width = esq.clientWidth; esq.height = esq.clientHeight;
+  ectx.clearRect(0, 0, esq.width, esq.height);
+  const activa = elegirMano(res);
+  (res.landmarks || []).forEach(lm => {
+    const esActiva = lm === activa;
+    ectx.strokeStyle = esActiva ? "#00e5ff" : "rgba(255,255,255,.45)";
+    ectx.lineWidth = esActiva ? 3 : 2;
+    UNIONES.forEach(([a,b]) => {
+      ectx.beginPath();
+      ectx.moveTo(lm[a].x*esq.width, lm[a].y*esq.height);
+      ectx.lineTo(lm[b].x*esq.width, lm[b].y*esq.height);
+      ectx.stroke();
+    });
+    if (esActiva){
+      ectx.beginPath(); ectx.arc(lm[8].x*esq.width, lm[8].y*esq.height, 6, 0, Math.PI*2);
+      ectx.fillStyle = "#ff7a00"; ectx.fill();
+    }
+  });
+}
+</script>
+</body>
+</html>
