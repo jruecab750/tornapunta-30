@@ -2,11 +2,12 @@
 <html lang="es">
 <head>
 <meta charset="utf-8">
-<meta name="viewport" content="width=device-width,initial-scale=1">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
 <title>Cubo 2×2×2 – control con la mano (pellizco)</title>
 <style>
   *{box-sizing:border-box}
-  html,body{margin:0;height:100%;overflow:hidden;color:#e8eefc;
+  html,body{margin:0;height:100%;overflow:hidden;color:#e8eefc;touch-action:none;overscroll-behavior:none;
+    -webkit-user-select:none;user-select:none;-webkit-touch-callout:none;-webkit-tap-highlight-color:transparent;
     font-family:system-ui,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;
     background:radial-gradient(ellipse at 50% 40%,#f6f9ff 0%,#dce6f8 58%,#c5d4ee 100%)}
   canvas#c{position:fixed;inset:0;width:100%;height:100%;display:block}
@@ -20,7 +21,7 @@
   #hint{position:fixed;left:50%;bottom:22px;transform:translateX(-50%);font-size:16px;opacity:.9;color:#1b2a4a;font-weight:600;
     text-align:center;max-width:70vw;pointer-events:none}
   #ptr{position:fixed;left:0;top:0;width:30px;height:30px;margin:-15px 0 0 -15px;border-radius:50%;pointer-events:none;
-    border:3px solid #0a6e8f;background:#ffffffaa;box-shadow:0 0 10px #0b2a4a66;display:none;z-index:5;transition:width .1s,height .1s,margin .1s,background .1s}
+    border:3px solid #0a6e8f;background:#ffffffaa;box-shadow:0 0 10px #0b2a4a66;display:none;z-index:9;transition:width .1s,height .1s,margin .1s,background .1s}
   #ptr.pinch{width:16px;height:16px;margin:-8px 0 0 -8px;background:#ff9f0a;border-color:#6b3d00;box-shadow:0 0 12px #6b3d00aa}
   #panel{position:fixed;left:16px;top:68px;width:270px;z-index:4;display:flex;flex-direction:column;gap:30px}
   #panel .row{padding:12px 14px 14px;border-radius:16px;background:#0b1226d9;border:1px solid #ffffff1a}
@@ -56,13 +57,72 @@
     #start .card{margin:16px;padding:22px 20px}
     #start h1{font-size:22px}
   }
+  /* ===== MÓVIL: el script pone en <body> las clases compact + portrait | landscape ===== */
+  :root{--st:env(safe-area-inset-top,0px);--sb:env(safe-area-inset-bottom,0px);--sl:env(safe-area-inset-left,0px);--sr:env(safe-area-inset-right,0px)}
+  #optBtn{display:none;position:fixed;z-index:6;right:calc(10px + var(--sr));top:calc(10px + var(--st));align-items:center;gap:6px;
+    padding:8px 14px;border-radius:999px;background:#0b1226e6;border:1px solid #ffffff24;color:#e8eefc;font-weight:700;font-size:14px;cursor:pointer}
+  #optBtn.hover,body.opts #optBtn{box-shadow:0 0 0 2px #ffd60a inset}
+  #inputs .ohead{display:none}
+  #optClose{padding:5px 11px;border-radius:10px;background:#ffffff1a;cursor:pointer;font-size:13px}
+  #optClose.hover{box-shadow:0 0 0 2px #ffd60a inset}
+  .pm{display:none}
+  body.compact .pd{display:none} body.compact .pm{display:block}
+  body.compact #optBtn{display:flex}
+  body.compact #status{left:calc(10px + var(--sl));top:calc(10px + var(--st));font-size:13px;padding:7px 12px;max-width:calc(100vw - 150px)}
+  body.compact #stxt{white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+  body.compact #inputs{display:none;top:calc(56px + var(--st));right:calc(10px + var(--sr));width:min(340px,calc(100vw - 20px));
+    max-height:calc(100% - 66px - var(--st) - var(--sb));overflow:auto;-webkit-overflow-scrolling:touch;touch-action:pan-y;
+    padding:10px;gap:6px;border-radius:16px;background:#0b1226f2;border:1px solid #ffffff26;box-shadow:0 12px 32px #0007;z-index:7}
+  body.compact.opts #inputs{display:flex}
+  body.compact #inputs .ohead{display:flex;justify-content:space-between;align-items:center;font-weight:800;font-size:14px;padding:0 2px 2px}
+  body.compact #inputs .tg{padding:8px 12px;font-size:13.5px}
+  body.compact #inputs .sm{font-size:12px;padding:6px 10px}
+  body.compact #meters{font-size:11px;line-height:1.45}
+  body.compact #heard{min-height:44px;font-size:12.5px}
+  body.compact > #giro{position:fixed;z-index:3;left:calc(10px + var(--sl));top:calc(54px + var(--st));max-width:calc(100vw - 20px);
+    font-size:12px;line-height:1.35;padding:6px 10px;border-radius:12px;background:#0b1226d6;border:1px solid #ffffff1a;color:#e8eefc;font-weight:600;pointer-events:none}
+  body.compact.opts > #giro{visibility:hidden}
+  body.compact #panel label{font-size:11.5px;margin-bottom:6px}
+  body.compact .sl{height:36px;border-radius:18px} body.compact .sl .fill{border-radius:18px}
+  body.compact .sl .thumb{width:30px;height:30px;margin-left:-15px}
+  body.compact #hint{font-size:12.5px;line-height:1.3;max-width:none}
+  body.compact #start{align-items:flex-start;overflow:auto;touch-action:pan-y;padding:calc(12px + var(--st)) 12px calc(12px + var(--sb))}
+  body.compact #start .card{margin:auto;padding:18px;max-width:520px}
+  body.compact #start h1{font-size:21px;margin-bottom:6px}
+  body.compact #start p{font-size:14px;line-height:1.45;margin:6px 0 14px;text-align:left}
+  body.compact #start button{padding:12px 18px}
+  /* móvil en vertical: estado y ⚙ arriba, barras abajo, cubo en medio */
+  body.portrait #video{left:auto;right:calc(10px + var(--sr));top:calc(56px + var(--st));bottom:auto;width:78px;height:104px}
+  body.portrait.cam > #giro{max-width:calc(100vw - 112px)}
+  body.portrait #panel{left:calc(10px + var(--sl));right:calc(10px + var(--sr));top:auto;bottom:calc(10px + var(--sb));width:auto;flex-direction:row;gap:10px}
+  body.portrait #panel .row{flex:1;min-width:0;padding:8px 10px 10px}
+  body.portrait #hint{left:10px;right:10px;bottom:calc(96px + var(--sb));transform:none}
+  /* móvil en horizontal: barras y giro a la izquierda, cubo a la derecha */
+  body.landscape #panel{left:calc(10px + var(--sl));top:calc(52px + var(--st));width:min(210px,30vw);gap:8px}
+  body.landscape #panel .row{padding:7px 10px 9px}
+  body.landscape > #giro{top:auto;bottom:calc(10px + var(--sb));width:min(210px,30vw);max-width:none}
+  body.landscape #video{left:auto;top:auto;right:calc(10px + var(--sr));bottom:calc(10px + var(--sb));width:120px;height:90px}
+  body.landscape #hint{left:calc(min(210px,30vw) + 30px + var(--sl));right:calc(10px + var(--sr));bottom:calc(10px + var(--sb));transform:none}
+  body.landscape.cam #hint{right:calc(140px + var(--sr))}
+  body.landscape #inputs{width:min(540px,calc(100vw - 20px));grid-template-columns:1fr 1fr;align-items:start;column-gap:8px;row-gap:6px;
+    grid-template-areas:"h h" "v m" "c m" "w m" "s m" "d m" "r m"}
+  body.landscape.opts #inputs{display:grid}
+  #inputs .ohead{grid-area:h} #tgVoice{grid-area:v} #tgHead{grid-area:c} #tgWink{grid-area:w} #tgSwap{grid-area:s}
+  #headdbg{grid-area:d} #meters{grid-area:m} #heard{grid-area:r}
 </style>
 </head>
 <body>
+<script>
+/* disposición: escritorio, móvil vertical o móvil horizontal (antes de pintar nada) */
+(function(){ function L(){ var w = innerWidth, h = innerHeight, c = w <= 820 || h <= 520 || (h >= w && w <= 900), b = document.body;
+  b.classList.toggle("compact", c); b.classList.toggle("portrait", c && h >= w); b.classList.toggle("landscape", c && h < w); }
+  window.__layout = L; L(); })();
+</script>
 <canvas id="c"></canvas>
 <video id="video" playsinline muted></video>
 
 <div id="status"><span id="dot"></span><span id="stxt">Sin cámara</span></div>
+<div id="optBtn">⚙ Opciones</div>
 
 
 <div id="panel">
@@ -70,6 +130,7 @@
   <div class="row"><label>SENSIBILIDAD <b id="sv"></b></label><div class="sl" id="slSens"><div class="fill"></div><div class="thumb"></div></div></div>
 </div>
 <div id="inputs">
+  <div class="ohead"><span>⚙ Opciones</span><span id="optClose">✕ Cerrar</span></div>
   <div class="tg on" id="tgVoice">🎤 Voz <b>ON</b></div>
   <div class="tg on" id="tgHead">🙂 Cabeza <b>ON</b></div>
   <div class="tg on" id="tgWink">😉 Guiño <b>ON</b></div>
@@ -85,7 +146,8 @@
 <div id="start">
   <div class="card">
     <h1>Cubo 2×2×2</h1>
-    <p><b>Pellizca</b> (junta pulgar e índice) una pieza del cubo y <b>arrastra</b> en la dirección que quieres girarla: puede ser una capa horizontal, o una columna como una noria. Al soltar, la capa completa sola el giro hasta 90° (o 180° si arrastras más). Pellizca en el <b>fondo</b> y arrastra para girar el cubo entero. Abre los dedos para soltar.<br>También puedes decir <b>derecha, izquierda, arriba, abajo</b> o <b>guiñar</b> el ojo derecho/izquierdo: gira la capa de la pieza iluminada.<br>El vídeo no sale de tu equipo.</p>
+    <p class="pd"><b>Pellizca</b> (junta pulgar e índice) una pieza del cubo y <b>arrastra</b> en la dirección que quieres girarla: puede ser una capa horizontal, o una columna como una noria. Al soltar, la capa completa sola el giro hasta 90° (o 180° si arrastras más). Pellizca en el <b>fondo</b> y arrastra para girar el cubo entero. Abre los dedos para soltar.<br>También puedes decir <b>derecha, izquierda, arriba, abajo</b> o <b>guiñar</b> el ojo derecho/izquierdo: gira la capa de la pieza iluminada.<br>El vídeo no sale de tu equipo.</p>
+    <p class="pm"><b>Con el dedo:</b> arrastra una pieza en la dirección en que quieres girar su capa (salta de 90° en 90°). Arrastra fuera del cubo para girarlo entero. Con dos dedos, zoom.<br><b>Con la cámara:</b> pellizca (junta pulgar e índice) y arrastra igual; abre los dedos para soltar.<br>En <b>⚙ Opciones</b>: voz, cabeza y guiño.<br>El vídeo no sale de tu equipo.</p>
     <button id="go">Activar cámara</button>
     <button id="mouse">Probar con ratón</button>
   </div>
@@ -162,11 +224,11 @@ shadow.rotation.x = -Math.PI/2; shadow.position.set(0,-2.1,0); scene.add(shadow)
 
 /* ---------- BARRAS: ZOOM Y SENSIBILIDAD ---------- */
 // se activan con un pellizco SOSTENIDO unas décimas de segundo sobre ellas, y avanzan de 5 en 5
-let zoom = 1.0, SENS = 0.55, baseZ = 8, baseY = 0;
+let zoom = 1.0, SENS = 0.55, baseZ = 8, baseY = 0, baseX = 0;
 const ARM_MS = 400, GAIN_HAND = 0.6;
 let zoomPct = 100, sensPct = 35;
 try{ zoomPct = +localStorage.getItem("cubo_zoomPct") || zoomPct; sensPct = +localStorage.getItem("cubo_sensPct") || sensPct; }catch(e){}
-function applyZoom(){ camera.position.z = baseZ/zoom; camera.position.y = baseY/zoom; camera.updateProjectionMatrix(); }
+function applyZoom(){ camera.position.z = baseZ/zoom; camera.position.y = baseY/zoom; camera.position.x = baseX/zoom; camera.updateProjectionMatrix(); }
 const SLIDERS = [
   {el:document.getElementById("slZoom"), lab:"zv", min:60, max:200, step:5, key:"cubo_zoomPct", get:()=>zoomPct,
    set:v=>{ zoomPct = v; zoom = v/100; applyZoom(); }},
@@ -185,7 +247,7 @@ SLIDERS.forEach(sl => { sl.set(sl.get()); paintSlider(sl); });
 const $ = id => document.getElementById(id);
 const ptrEl = $("ptr"), video = $("video");
 const target = {x:0,y:0}, cur = {x:0,y:0};
-let ptrVisible = false, lastHand = 0, lastMouse = 0, handSeenOnce = false;
+let ptrVisible = false, lastHand = 0, lastMouse = 0, handSeenOnce = false, lastTouch = 0, mouseDown = false, touchMode = false, inputSrc = "mouse";
 let pinched = false, wasPinched = false;
 let yaw = -0.45, pitch = 0.85;           // orientación del cubo (quieto salvo que lo muevas)
 let grab = null, snap = null, glowKey = "";
@@ -229,15 +291,26 @@ function turnBase(){            // tecla B: gira la capa inferior sola (prueba/a
 }
 const LOG = [];
 const lg = (t, o) => { LOG.push(Object.assign({t:Math.round(performance.now()), e:t}, o||{})); if (LOG.length > 60) LOG.shift(); };
+function uiBlock(x, y){          // móvil: pulsar sobre un panel no gira el cubo
+  if (!document.body.classList.contains("compact")) return false;
+  for (const el of [$("inputs"), $("status"), ...document.querySelectorAll("#panel .row")]){
+    const r = el.getBoundingClientRect(); if (r.width && x >= r.left && x <= r.right && y >= r.top && y <= r.bottom) return true;
+  }
+  return false;
+}
 function grabStart(){
-  if (snap){ lg("grab-ignorado-snap"); return; }
+  if (snap){
+    if (inputSrc === "hand"){ lg("grab-ignorado-snap"); return; }
+    stepSnap(snap.t0 + snap.dur); cubeGroup.updateMatrixWorld(true); lg("snap-completado");   // dedo rápido: el giro anterior termina ya
+  }
   const tk = tgAt(cur.x, cur.y);
   if (tk){ grab = {mode:"tap", tk}; setGlow(null); return; }
   const sl = sliderAt(cur.x, cur.y);
   if (sl){
-    const hand = performance.now() - lastHand < 1000;
+    const hand = inputSrc === "hand";
     grab = {mode:"sliderArm", sl, t: hand ? 0 : ARM_MS, hand}; setGlow(null); lg("barra-armando"); return;   // con ratón no hace falta esperar
   }
+  if (uiBlock(cur.x, cur.y)){ grab = {mode:"none"}; setGlow(null); return; }
   const h = pick(cur.x, cur.y);
   if (h){ grab = {mode:"layer", h, x0:cur.x, y0:cur.y, axis:-1, x:cur.x}; selCubie = h.cubie; setGlow([h.cubie]); lg("grab-capa", {x:Math.round(cur.x), y:Math.round(cur.y)}); }
   else { grab = {mode:"orbit", x:cur.x, y:cur.y}; lg("grab-fondo", {x:Math.round(cur.x), y:Math.round(cur.y)}); }
@@ -275,6 +348,12 @@ function grabEnd(){
             t0:performance.now(), dur:260};
   }
   grab = null;
+}
+function cancelGrab(){
+  if (!grab) return;
+  if (grab.sl){ grab.sl.el.classList.remove("on"); grab.sl.el.querySelector(".thumb").style.transform = ""; }
+  if (grab.mode === "layer" && grab.pivot) snap = {pivot:grab.pivot, layer:grab.layer, axis:AX[grab.axis], from:grab.disp, to:0, t0:performance.now(), dur:200};
+  lg("cancelado", {modo:grab.mode}); grab = null;
 }
 function stepSnap(now){
   if (!snap) return;
@@ -321,7 +400,9 @@ function showTurn(i, side, degAboutAxis){            // degAboutAxis: sobre el e
 }
 
 /* ---------- ÓRDENES POR VOZ Y POR GUIÑO ---------- */
-let headOn = true, selCubie = null, voiceOn = true, winkOn = true, swapWink = false, rec = null, faceLm = null, faceTick = 0, lastCmd = 0, blinkDbg = [0,0];
+// móvil/tableta: voz y cabeza empiezan apagadas (en Android el micro pita a cada rato; al inclinar el móvil la cabeza giraría el cubo sin querer)
+const COARSE = matchMedia("(pointer:coarse)").matches;
+let headOn = !COARSE, selCubie = null, voiceOn = !COARSE, winkOn = true, swapWink = false, rec = null, faceLm = null, faceTick = 0, lastCmd = 0, blinkDbg = [0,0];
 const WINK_MS = 350;
 const heardEl = document.getElementById("heard");
 const DIRTXT = {right:"➡ derecha", left:"⬅ izquierda", up:"⬆ arriba", down:"⬇ abajo"};
@@ -407,27 +488,28 @@ function feedBlink(bl, br, now){        // bl / br = ojo izquierdo / derecho DE 
   if (bl < 0.3 && br < 0.3) winkArmed = true;
 }
 function faceStep(now){
-  if (!faceLm || !winkOn || (faceTick++ % 3) !== 0) return;
+  if (!faceLm || !(winkOn || headOn) || (faceTick++ % 3) !== 0) return;
   let res; try{ res = faceLm.detectForVideo(video, now); }catch(e){ return; }
   const bs = res.faceBlendshapes && res.faceBlendshapes[0];
   if (!bs){ winkSide = 0; return; }
   const get = n => { const c = bs.categories.find(c => c.categoryName === n); return c ? c.score : 0; };
   let bl = get("eyeBlinkLeft"), br = get("eyeBlinkRight"); if (swapWink) [bl, br] = [br, bl];
-  feedBlink(bl, br, now);
+  if (winkOn) feedBlink(bl, br, now);
   const M = res.facialTransformationMatrixes && res.facialTransformationMatrixes[0];
   if (M && headOn){ const e = new THREE.Euler().setFromRotationMatrix(new THREE.Matrix4().fromArray(M.data), "YXZ"); feedHead(e.y*57.2958, e.x*57.2958, e.z*57.2958, now); }
   for (const n of GESTOS){ const v = get(n); MX[n] = Math.max(MX[n]||0, v); VAL[n] = v; }
   if (now - meterT > 150){ meterT = now; paintMeters(); }
-  if (now - lastCmd > 1500) heardMsg(`😉 ojo izq ${bl.toFixed(2)} · ojo dcho ${br.toFixed(2)}`);
+  if (winkOn && now - lastCmd > 1500) heardMsg(`😉 ojo izq ${bl.toFixed(2)} · ojo dcho ${br.toFixed(2)}`);
 }
 /* interruptores (se tocan con ratón o pellizco) */
-const TG = {voice:document.getElementById("tgVoice"), wink:document.getElementById("tgWink"), swap:document.getElementById("tgSwap"), head:document.getElementById("tgHead")};
+const TG = {voice:document.getElementById("tgVoice"), wink:document.getElementById("tgWink"), swap:document.getElementById("tgSwap"), head:document.getElementById("tgHead"), opts:document.getElementById("optBtn"), close:document.getElementById("optClose")};
 function paintToggles(){
   const set = (el, on, yes="ON", no="OFF") => { el.classList.toggle("on", on); el.querySelector("b").textContent = on ? yes : no; };
   set(TG.voice, voiceOn); set(TG.head, headOn); set(TG.wink, winkOn); set(TG.swap, swapWink, "SÍ", "NO");
 }
-function tgAt(x, y){ for (const k in TG){ const r = TG[k].getBoundingClientRect(); if (x >= r.left && x <= r.right && y >= r.top && y <= r.bottom) return k; } return null; }
+function tgAt(x, y){ for (const k in TG){ const r = TG[k].getBoundingClientRect(); if (r.width && x >= r.left && x <= r.right && y >= r.top && y <= r.bottom) return k; } return null; }
 function toggle(k){
+  if (k === "opts" || k === "close"){ document.body.classList.toggle("opts", k === "opts" && !document.body.classList.contains("opts")); return; }
   if (k === "voice"){ voiceOn = !voiceOn; voiceOn ? startVoice() : (stopVoice(), heardMsg("Voz desactivada")); }
   else if (k === "head"){ headOn = !headOn; heardMsg(headOn ? (faceLm ? "Cabeza activada" : "Cabeza: necesita la cámara activada") : "Cabeza desactivada"); }
   else if (k === "wink"){ winkOn = !winkOn; heardMsg(winkOn ? (faceLm ? "Guiño activado" : "Guiño: necesita la cámara activada") : "Guiño desactivado"); }
@@ -436,18 +518,59 @@ function toggle(k){
 }
 paintToggles();
 
-addEventListener("mousemove", e => {
-  lastMouse = performance.now();
+/* ratón y dedo (pointer events). Mientras un dedo toca la pantalla, manda sobre la cámara */
+const touches = new Map(); let pinchZ = null, waitAllUp = false;
+const inStart = e => e.target && e.target.closest && e.target.closest("#start");
+function press(x, y, src){ inputSrc = src; target.x = cur.x = x; target.y = cur.y = y; ptrVisible = true; pinched = wasPinched = true; grabStart(); }
+function release(cancel){ if (!pinched) return; pinched = wasPinched = false; cancel ? cancelGrab() : grabEnd(); }
+addEventListener("pointerdown", e => {
+  if (inStart(e)) return;
+  if (e.pointerType === "touch"){
+    touches.set(e.pointerId, {x:e.clientX, y:e.clientY}); lastTouch = performance.now(); touchMode = true;
+    if (touches.size === 2){                                   // dos dedos: zoom (la capa que se estuviera moviendo vuelve a su sitio)
+      release(true); const [a, b] = [...touches.values()];
+      pinchZ = {d0: Math.hypot(a.x-b.x, a.y-b.y) || 1, z0: zoomPct}; lg("zoom-2-dedos"); return;
+    }
+    if (touches.size === 1 && !waitAllUp) press(e.clientX, e.clientY, "touch");
+    return;
+  }
+  if (e.button !== 0) return;
+  touchMode = false; lastMouse = performance.now();
+  if (lastMouse - lastHand > 1000){ mouseDown = true; press(e.clientX, e.clientY, "mouse"); }
+});
+addEventListener("pointermove", e => {
+  if (e.pointerType === "touch"){
+    if (!touches.has(e.pointerId)) return;
+    touches.set(e.pointerId, {x:e.clientX, y:e.clientY}); lastTouch = performance.now();
+    if (pinchZ && touches.size >= 2){ const [a, b] = [...touches.values()]; setSlider(SLIDERS[0], pinchZ.z0*Math.hypot(a.x-b.x, a.y-b.y)/pinchZ.d0); return; }
+    if (!waitAllUp && pinched){ target.x = cur.x = e.clientX; target.y = cur.y = e.clientY; }
+    return;
+  }
+  lastMouse = performance.now(); touchMode = false;
   if (lastMouse - lastHand > 1000){ target.x = e.clientX; target.y = e.clientY; if(!ptrVisible){cur.x=target.x;cur.y=target.y;} ptrVisible = true; }
 });
-addEventListener("mousedown", e => { if (performance.now() - lastHand > 1000){ target.x = cur.x = e.clientX; target.y = cur.y = e.clientY; pinched = true; } });
-addEventListener("mouseup", () => { if (performance.now() - lastHand > 1000) pinched = false; });
+function pointerEnd(e, cancel){
+  if (e.pointerType === "touch"){
+    if (!touches.delete(e.pointerId)) return;
+    lastTouch = performance.now();
+    if (pinchZ){ if (touches.size < 2){ pinchZ = null; waitAllUp = touches.size > 0; } return; }
+    if (!touches.size){ if (!cancel && !waitAllUp && pinched){ target.x = cur.x = e.clientX; target.y = cur.y = e.clientY; } waitAllUp = false; release(cancel); ptrVisible = false; }
+    return;
+  }
+  if (!mouseDown) return;
+  mouseDown = false; release(cancel);
+}
+addEventListener("pointerup", e => pointerEnd(e, false));
+addEventListener("pointercancel", e => pointerEnd(e, true));
+addEventListener("contextmenu", e => { if (touchMode) e.preventDefault(); });
+document.addEventListener("gesturestart", e => e.preventDefault());       // iOS: sin zoom de la página
 addEventListener("keydown", e => { if (e.key==="b"||e.key==="B") turnBase(); });
 
 function updatePointer(now, dt){
-  if (now - lastHand > (grab ? 1000 : 500) && now - lastMouse > 1000 && handSeenOnce){ ptrVisible = false; pinched = false; ratioS = -1; }
-  cur.x += (target.x - cur.x) * (pinched ? 0.5 : 0.35); cur.y += (target.y - cur.y) * (pinched ? 0.5 : 0.35);
-  ptrEl.style.display = ptrVisible ? "block" : "none";
+  if (now - lastHand > (grab ? 1000 : 500) && now - lastMouse > 1000 && handSeenOnce && !touches.size && !mouseDown){ ptrVisible = false; pinched = false; ratioS = -1; }
+  if (touches.size){ cur.x = target.x; cur.y = target.y; }          // el dedo, sin retardo
+  else { cur.x += (target.x - cur.x) * (pinched ? 0.5 : 0.35); cur.y += (target.y - cur.y) * (pinched ? 0.5 : 0.35); }
+  ptrEl.style.display = ptrVisible && !touchMode ? "block" : "none";
   ptrEl.style.transform = `translate(${cur.x}px,${cur.y}px)`;
   ptrEl.classList.toggle("pinch", pinched);
 
@@ -480,7 +603,7 @@ function updatePointer(now, dt){
         if (m > 0 && sg !== Math.sign(grab.n)) m = 0;
         while (ar >= m + 0.11) m++;
         while (m > 0 && ar < m - 1 + 0.03) m--;
-        if (sg*m !== grab.n){ lg("salto", {n:sg*m}); showTurn(grab.axis, grab.side, sg*m*90); }
+        if (sg*m !== grab.n){ lg("salto", {n:sg*m}); showTurn(grab.axis, grab.side, sg*m*90); if (inputSrc === "touch" && navigator.vibrate) try{ navigator.vibrate(12); }catch(e){} }
         grab.n = sg*m;
         grab.disp += (grab.n*HALF - grab.disp) * (1 - Math.exp(-dt/55));   // llega al salto con suavidad
         grab.pivot.quaternion.setFromAxisAngle(AX[grab.axis], grab.disp);
@@ -508,9 +631,9 @@ async function startCamera(){
   $("start").style.display = "none"; startVoice();
   try{
     const stream = await navigator.mediaDevices.getUserMedia({video:{width:640,height:480,facingMode:"user"},audio:false});
-    video.srcObject = stream; video.style.display = "block"; await video.play();
+    video.srcObject = stream; video.style.display = "block"; await video.play(); document.body.classList.add("cam"); resize();
   }catch(err){
-    setStatus("Cámara no disponible: usa el ratón (o permite la cámara y recarga)", "err"); return;
+    setStatus(`Cámara no disponible: usa ${COARSE ? "el dedo" : "el ratón"} (o permite la cámara y recarga)`, "err"); return;
   }
   setStatus("Cargando seguimiento de manos…");
   try{
@@ -526,11 +649,12 @@ async function startCamera(){
     setStatus("Muestra tu mano a la cámara", "ok");
   }catch(err){
     console.error(err);
-    setStatus("No se pudo cargar el seguimiento de manos (¿sin internet?). Usa el ratón", "err");
+    setStatus(`No se pudo cargar el seguimiento de manos (¿sin internet?). Usa ${COARSE ? "el dedo" : "el ratón"}`, "err");
   }
 }
 $("go").addEventListener("click", startCamera);
-$("mouse").addEventListener("click", () => { $("start").style.display="none"; startVoice(); setStatus("Modo ratón (prueba)"); });
+if (COARSE) $("mouse").textContent = "Usar el dedo";
+$("mouse").addEventListener("click", () => { $("start").style.display="none"; startVoice(); setStatus(COARSE ? "Modo dedo" : "Modo ratón (prueba)"); });
 
 const clamp = v => Math.max(0, Math.min(1, v));
 function detectHand(now){
@@ -538,6 +662,7 @@ function detectHand(now){
   lastVideoTime = video.currentTime;
   faceStep(now);
   const res = landmarker.detectForVideo(video, now);
+  if (touches.size || now - lastTouch < 700) return;        // el dedo en la pantalla manda sobre la cámara
   if (res.landmarks && res.landmarks.length){
     const L = res.landmarks[0], t4 = L[4], t8 = L[8];
     const palm = Math.hypot(L[5].x-L[17].x, L[5].y-L[17].y) || 0.1;
@@ -551,7 +676,7 @@ function detectHand(now){
     target.x = clamp(((1 - mx) - 0.10) / 0.80) * innerWidth;
     target.y = clamp((my - 0.08) / 0.78) * innerHeight;
     if (!ptrVisible){ cur.x = target.x; cur.y = target.y; }
-    ptrVisible = true; lastHand = now; handSeenOnce = true;
+    ptrVisible = true; lastHand = now; handSeenOnce = true; touchMode = false; inputSrc = "hand";
     const ejes = ["X","Y","Z"];
     const est = (grab && grab.axis >= 0) ? `Girando capa sobre el eje ${ejes[grab.axis]}` : pinched ? "Agarrando" : "Mano detectada";
     setStatus(`${est} · pellizco ${ratio.toFixed(2)}`, "ok");
@@ -561,13 +686,44 @@ function detectHand(now){
 }
 
 /* ---------- BUCLE ---------- */
+const HINT_DESK = $("hint").textContent, giroEl = $("giro");
+let frameInfo = null;
 function resize(){
-  const w = innerWidth, h = innerHeight;
+  const w = innerWidth, h = innerHeight, B = document.body.classList;
+  window.__layout();
+  const compact = B.contains("compact");
+  // en móvil el recuadro del giro sale del panel de opciones y queda a la vista
+  if (compact && giroEl.parentNode !== document.body) document.body.appendChild(giroEl);
+  else if (!compact && giroEl.parentNode === document.body) $("inputs").insertBefore(giroEl, $("headdbg"));
+  if (!compact) B.remove("opts");
+  $("hint").textContent = !compact ? HINT_DESK : B.contains("cam") ? "Pellizca una pieza y arrastra (o usa el dedo). Barras: pellizca y espera"
+    : "Arrastra una pieza: gira su capa · Arrastra el fondo: gira el cubo · Dos dedos: zoom";
   renderer.setSize(w, h, false);
   camera.aspect = w / h;
-  if (camera.aspect < 1){ // vertical: más lejos para que quepa el cubo, y subido para dejar sitio al botón
-    baseZ = Math.max(8, 6.8 / camera.aspect); baseY = -baseZ * 0.09;
-  } else { baseZ = 8; baseY = 0; }
+  baseX = 0;
+  if (!compact){
+    if (camera.aspect < 1){ // vertical: más lejos para que quepa el cubo, y subido para dejar sitio al botón
+      baseZ = Math.max(8, 6.8 / camera.aspect); baseY = -baseZ * 0.09;
+    } else { baseZ = 8; baseY = 0; }
+    frameInfo = null;
+  } else {
+    // móvil: el cubo, lo más grande posible en el hueco libre entre los controles
+    const box = id => { const r = $(id).getBoundingClientRect(); return r.width ? r : null; };
+    let x0 = 6, x1 = w - 6, y0 = 6, y1 = h - 6;
+    if (B.contains("portrait")){
+      for (const id of ["status", "optBtn", "giro", "video"]){ const r = box(id); if (r) y0 = Math.max(y0, r.bottom + 6); }
+      for (const id of ["panel", "hint"]){ const r = box(id); if (r) y1 = Math.min(y1, r.top - 6); }
+    } else {
+      for (const id of ["panel", "giro"]){ const r = box(id); if (r) x0 = Math.max(x0, r.right + 8); }
+      const ob = box("optBtn"); if (ob) y0 = ob.bottom + 4;
+      const hb = box("hint"); if (hb) y1 = Math.min(y1, hb.top - 4);
+    }
+    const k = Math.tan(THREE.MathUtils.degToRad(camera.fov/2)), m = Math.max(120, Math.min(x1 - x0, y1 - y0));
+    baseZ = Math.max(5, 1.85*h/(k*m*0.84));         // radio del cubo ≈ 1,85 (con perspectiva) → 84 % del hueco
+    const upp = 2*baseZ*k/h;                         // unidades 3D por píxel a la distancia del cubo
+    baseX = -((x0 + x1)/2 - w/2)*upp; baseY = ((y0 + y1)/2 - h/2)*upp;
+    frameInfo = {x0, x1, y0, y1, baseZ, baseX, baseY};
+  }
   applyZoom();
 }
 addEventListener("resize", resize); resize();
@@ -583,7 +739,7 @@ function frame(now){
   requestAnimationFrame(frame);
 }
 requestAnimationFrame(frame);
-window.__cubo = {log: LOG, showTurn, feedHead, HS, MX, resetMx(){ for (const k in MX) delete MX[k]; }, selScreen:()=>{ensureSel(); const q=new THREE.Vector3(); selCubie.getWorldPosition(q); return toScreen(q);}, command, feedBlink, get sel(){return selCubie && selCubie.position.toArray();}, sim:(x,y,p)=>{lastHand=performance.now();handSeenOnce=true;target.x=x;target.y=y;ptrVisible=true;pinched=p;}, turnBase, pick, get busy(){return !!(grab||snap);}, get layerRot(){return cubies.map(c=>[c.position.x,c.position.y,c.position.z]);}}; // para pruebas
+window.__cubo = {log: LOG, showTurn, feedHead, HS, MX, resetMx(){ for (const k in MX) delete MX[k]; }, selScreen:()=>{ensureSel(); const q=new THREE.Vector3(); selCubie.getWorldPosition(q); return toScreen(q);}, command, feedBlink, get sel(){return selCubie && selCubie.position.toArray();}, sim:(x,y,p)=>{lastHand=performance.now();handSeenOnce=true;target.x=x;target.y=y;ptrVisible=true;pinched=p;}, turnBase, pick, get busy(){return !!(grab||snap);}, get layerRot(){return cubies.map(c=>[c.position.x,c.position.y,c.position.z]);}, get frame(){return frameInfo;}, get zoomPct(){return zoomPct;}, get yawPitch(){return [yaw, pitch];}, get toggles(){return {voiceOn, headOn, winkOn, swapWink};}, get nTouch(){return touches.size;}}; // para pruebas
 </script>
 </body>
 </html>
