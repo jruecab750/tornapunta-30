@@ -11,23 +11,26 @@
     background:radial-gradient(ellipse at 50% 30%,#17234a 0%,#0b1124 60%,#060912 100%)}
   canvas{position:fixed;inset:0;width:100%;height:100%;display:block}
   #ov{pointer-events:none}
-  #video{position:fixed;left:10px;top:10px;width:226px;height:170px;object-fit:cover;transform:scaleX(-1);
+  #video{position:fixed;left:10px;top:10px;width:var(--lw);height:calc(var(--lw)*.75);object-fit:cover;transform:scaleX(-1);
     opacity:.92;border-radius:10px;border:1px solid #ffffff22;pointer-events:none;display:none}
   #status{position:fixed;left:16px;top:16px;z-index:5;display:flex;align-items:center;gap:8px;font-size:12px;
     padding:5px 10px;border-radius:999px;background:#0b1226d9;border:1px solid #ffffff1a;max-width:214px}
   #dot{width:10px;height:10px;border-radius:50%;background:#ffb020;flex:none}
   #dot.ok{background:#3ddc84}#dot.err{background:#ff5a5f}
-  #msg{position:fixed;left:250px;right:540px;top:14px;margin:0 auto;width:fit-content;max-width:none;text-align:center;
+  #msg{position:fixed;left:calc(var(--lw) + 24px);right:440px;top:14px;margin:0 auto;width:fit-content;max-width:none;text-align:center;
     font-size:16px;font-weight:600;line-height:1.3;padding:9px 18px;border-radius:14px;background:#0b1226dd;
     border:1px solid #35e0ff55}
   #msg.err{border-color:#ff5a5f;background:#2a0f16ee}
   #msg.ok{border-color:#3ddc84;background:#0e2619ee}
-  #bottom{position:fixed;left:244px;right:auto;width:544px;bottom:0;height:270px;display:grid;grid-template-columns:1fr;
+  #bottom{position:fixed;left:10px;right:auto;width:540px;bottom:0;height:270px;display:grid;grid-template-columns:1fr;
     gap:18px;padding:6px 12px 10px;background:linear-gradient(to top,#050810ee 70%,#05081000)}
   #check{display:grid;grid-template-columns:repeat(3,1fr);gap:4px 12px;align-content:start;font-size:12px;line-height:1.2;overflow:hidden}
-  #diagBtn{height:34px !important;font-size:12px !important}
   #diagBtn.rec{border-color:#ff3b40;background:#3a0f16;color:#ffd0d3}
   body.rec::after{content:"";position:fixed;inset:0;border:4px solid #ff3b40;pointer-events:none;z-index:60}
+  :root{--lw:min(226px,calc((100vh - 306px) / 2.27))}
+  #angles{position:fixed;left:560px;bottom:10px;width:228px;z-index:4;display:flex;flex-direction:column;gap:8px}
+  .angb{height:72px;display:flex;flex-direction:row !important;align-items:center;gap:8px;padding:4px 10px;font-size:13px;font-weight:800;line-height:1.15;text-align:left;justify-content:flex-start}
+  .angb.sel{border-color:#ffd60a;background:#2e2a10;box-shadow:0 0 0 2px #ffd60a55}
   #check .ttl{grid-column:1/-1;font-size:13.5px;font-weight:800;letter-spacing:.12em;color:#ffd60a;padding:2px 0 3px;border-bottom:1px solid #ffd60a44;margin-bottom:3px}
   #check h4{margin:0 0 5px;font-size:12px;letter-spacing:.08em;text-transform:uppercase;color:#8fb4ff}
   #check div.it{display:flex;gap:6px;margin-bottom:3px;opacity:.55}
@@ -43,6 +46,16 @@
   #sliders .row{flex:1}
   #cubebox{position:fixed;right:10px;top:10px;width:160px;z-index:4;display:flex;flex-direction:column;align-items:center}
   .tbtn.sel{border-color:#35e0ff;background:#10324a}
+  .trow2{display:flex;gap:8px}
+  .tbtn.sm{width:58px;height:62px;font-size:11px;padding:0}
+  .tbtn .ico{width:28px;height:28px;color:#cfe0ff}
+  .tbtn.rst{height:52px;flex-direction:row;gap:6px;font-size:14px;border-color:#ff5a5f77;background:#2a1420}
+  .tbtn.rst .ico{width:22px;height:22px;color:#ffb3b5}
+  .tbtn.need{animation:need 1s ease-in-out infinite}
+  @keyframes need{0%,100%{box-shadow:0 0 0 0 #ffd60a00;border-color:#ffd60a}50%{box-shadow:0 0 0 7px #ffd60a55;border-color:#ffd60a}}
+  .pdemo{display:flex;gap:10px;justify-content:center;margin:6px 0 10px}
+  .pdemo p{font-size:12px;margin:4px 0 0;max-width:160px;line-height:1.3}
+  .bev{display:block;margin:0 auto 2px}
   .dw.hover{border-color:#fff !important;box-shadow:0 0 22px #35e0ffaa;background:#1b3a63}
   #side{position:fixed;left:798px;right:180px;bottom:160px;max-height:300px;z-index:4;display:flex;flex-direction:column;gap:6px;font-size:12.5px;overflow:hidden}
   #side .row{display:flex;gap:8px;flex-wrap:wrap}
@@ -58,7 +71,7 @@
   #ptr svg{width:100%;height:100%;transform:rotate(-90deg)}
   #ptr .c0{fill:#35e0ff22;stroke:#35e0ff;stroke-width:3}
   #ptr.pinch .c0{fill:#ffb02077;stroke:#ffb020}
-  #panel{position:fixed;right:196px;left:auto;top:14px;width:330px;z-index:4;display:flex;flex-direction:column;gap:10px}
+  #panel{position:fixed;right:196px;left:auto;top:14px;width:230px;z-index:4;display:flex;flex-direction:column;gap:10px}
   #panel .row,#sliders .row{padding:6px 10px 7px;border-radius:14px;background:#0b1226d9;border:1px solid #ffffff1a}
   #panel label,#sliders label{display:flex;justify-content:space-between;font-size:12px;letter-spacing:.06em;font-weight:700;opacity:.85;margin-bottom:3px}
   #panel label b,#sliders label b{color:#35e0ff}
@@ -67,14 +80,14 @@
   .sl .thumb{position:absolute;top:3px;width:34px;height:34px;margin-left:-17px;border-radius:50%;background:#35e0ff;box-shadow:0 0 12px #35e0ff88;transition:transform .05s}
   .sl.on .thumb{background:#ffd60a;box-shadow:0 0 18px #ffd60acc}
   .sl.hover{box-shadow:0 0 0 2px #35e0ff inset} .sl.hover .thumb{background:#ffd60a}
-  #nomen{position:fixed;left:10px;top:188px;width:226px;z-index:3;border-radius:10px;overflow:hidden;border:1px solid #ffffff33;background:#fff;pointer-events:none}
+  #nomen{position:fixed;left:10px;top:calc(18px + var(--lw)*.75);width:var(--lw);z-index:3;border-radius:10px;overflow:hidden;border:1px solid #ffffff33;background:#fff;pointer-events:none}
   #nomen img{display:block;width:100%}
   #orbit{width:150px;height:150px;border-radius:50%;position:relative;touch-action:none;border:2px solid #ffffff44;user-select:none}
   #orbit::before{content:"";position:absolute;inset:16%;border-radius:50%;border:1.5px dashed #0008;box-shadow:0 0 0 1px #fff5}
   #orbit.hover{border-color:#35e0ff;box-shadow:0 0 18px #35e0ffcc}
   #orbit.on{border-color:#ffd60a;box-shadow:0 0 22px #ffd60add}
   #orbitlab{font-size:10px;line-height:1.2;text-align:center;opacity:.9;margin-top:3px;width:160px;background:#0b1226cc;border-radius:8px;padding:2px 4px;box-sizing:border-box}
-  #mini{position:fixed;left:10px;top:375px;width:226px;height:165px;z-index:3;border-radius:10px;border:1px solid #ffffff44;pointer-events:none}
+  #mini{position:fixed;left:10px;top:calc(26px + var(--lw)*1.54);width:var(--lw);height:calc(var(--lw)*.73);z-index:3;border-radius:10px;border:1px solid #ffffff44;pointer-events:none}
   #mini span{position:absolute;left:8px;top:4px;font-size:11px;font-weight:700;letter-spacing:.05em;color:#cfe0ff}
   #l3svg{position:fixed;inset:0;width:100%;height:100%;z-index:3;pointer-events:none}
   .l3{position:fixed;z-index:4;pointer-events:none;padding:3px 9px;border-radius:8px;font-size:12px;font-weight:800;letter-spacing:.04em;background:#0b1226e6;border:2px solid #fff;transform:translate(-50%,-50%);white-space:nowrap;display:none}
@@ -82,7 +95,7 @@
   .trow .btn{flex:1;height:42px;font-size:12px;padding:2px 4px;min-width:0;border-radius:10px}
   #ptr .c1{fill:none;stroke:#fff;stroke-width:4;stroke-dasharray:119.4;stroke-dashoffset:119.4;stroke-linecap:round}
   #start{position:fixed;inset:0;display:flex;align-items:center;justify-content:center;background:#060912e6;z-index:20}
-  #start .card{max-width:600px;padding:28px 34px;border-radius:18px;background:#101a36;border:1px solid #ffffff1f;text-align:center}
+  #start .card{max-width:640px;padding:28px 34px;border-radius:18px;background:#101a36;border:1px solid #ffffff1f;text-align:center}
   #start h1{margin:0 0 8px;font-size:25px}#start p{margin:8px 0 18px;line-height:1.5;opacity:.88;font-size:15px}
   #start button{font:inherit;font-weight:600;padding:12px 22px;border-radius:12px;border:0;cursor:pointer;margin:4px}
   #go{background:#35e0ff;color:#04202a}#mouse{background:#233157;color:#e8eefc}
@@ -102,15 +115,14 @@
     <div class="tbtn dw btn" data-key="tool:pencil"><span class="ic">✏️</span>Lápiz</div>
     <div class="tbtn dw btn" data-key="tool:flex"><span class="ic">📏</span>Flexómetro</div>
     <div class="tbtn dw btn" data-key="tool:saw"><span class="ic">🪚</span>Serrucho</div>
-    <div class="tbtn dw btn" data-key="undo"><span class="ic">↶</span>Deshacer</div>
-    <div class="tbtn dw btn" data-key="redo"><span class="ic">↷</span>Rehacer</div>
+    <div class="trow2"><div class="tbtn sm dw btn" data-key="undo"><svg viewBox="0 0 24 24" class="ico"><path d="M6.91 6.91 A7.2 7.2 0 1 0 13.86 5.05" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round"/><path d="M11.35 4.37 L16.19 2.56 L14.63 8.36 Z" fill="currentColor"/></svg><span>Deshacer</span></div><div class="tbtn sm dw btn" data-key="redo"><svg viewBox="0 0 24 24" class="ico"><path d="M17.09 6.91 A7.2 7.2 0 1 1 10.14 5.05" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round"/><path d="M12.65 4.37 L9.37 8.36 L7.81 2.56 Z" fill="currentColor"/></svg><span>Rehacer</span></div></div>
+    <div id="resetBtn" class="tbtn rst dw btn" data-key="reset"><svg viewBox="0 0 24 24" class="ico"><path d="M17.09 6.91 A7.2 7.2 0 1 1 10.14 5.05" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round"/><path d="M12.65 4.37 L9.37 8.36 L7.81 2.56 Z" fill="currentColor"/><circle cx="12" cy="12" r="2.4" fill="currentColor"/></svg><span>Reiniciar</span></div>
   </div>
   <div id="side"></div>
 </div>
 
 <div id="panel">
-  <div class="trow"><div id="front" class="dw btn small" data-key="front">⟲ Frontal</div><div id="voiceBtn" class="dw btn small" data-key="voice"></div><div id="resetBtn" class="dw btn small" data-key="reset">↺ Reiniciar</div></div>
-  <div class="trow"><div id="diagBtn" class="dw btn small" data-key="diag">🩺 Grabar diagnóstico</div></div>
+  <div class="trow"><div id="front" class="dw btn small" data-key="front">⟲ Frontal</div><div id="voiceBtn" class="dw btn small" data-key="voice"></div></div>
 </div>
 <div id="sliders">
   <div class="row"><label>ZOOM <b id="zv"></b></label><div class="sl" id="slZoom"><div class="fill"></div><div class="thumb"></div></div></div>
@@ -118,6 +130,7 @@
 </div>
 <div id="cubebox"><div id="orbit"></div><div id="orbitlab">Arrastra: ↔ eje Z · ↕ eje X<br>borde de la pelota: eje Y</div></div>
 <div id="mini"><span>MONTAJE FINAL</span></div>
+<div id="angles"><div class="dw btn angb" data-key="angle:30"><svg viewBox="0 0 90 58" width="78" height="50" style="flex:none"><line x1="4" y1="50" x2="88" y2="50" stroke="#9fb0d8" stroke-width="2"/><line x1="10" y1="51" x2="5" y2="56" stroke="#7d8db8" stroke-width="1.2"/><line x1="18" y1="51" x2="13" y2="56" stroke="#7d8db8" stroke-width="1.2"/><line x1="26" y1="51" x2="21" y2="56" stroke="#7d8db8" stroke-width="1.2"/><line x1="34" y1="51" x2="29" y2="56" stroke="#7d8db8" stroke-width="1.2"/><line x1="42" y1="51" x2="37" y2="56" stroke="#7d8db8" stroke-width="1.2"/><line x1="50" y1="51" x2="45" y2="56" stroke="#7d8db8" stroke-width="1.2"/><line x1="58" y1="51" x2="53" y2="56" stroke="#7d8db8" stroke-width="1.2"/><line x1="66" y1="51" x2="61" y2="56" stroke="#7d8db8" stroke-width="1.2"/><line x1="74" y1="51" x2="69" y2="56" stroke="#7d8db8" stroke-width="1.2"/><line x1="82" y1="51" x2="77" y2="56" stroke="#7d8db8" stroke-width="1.2"/><line x1="74.0" y1="50" x2="27.2" y2="23.0" stroke="#d9b36c" stroke-width="7" stroke-linecap="round"/><path d="M57.0 50.0 A17 17 0 0 1 59.3 41.5" fill="none" stroke="#ffd60a" stroke-width="2"/><text x="47.0" y="46.8" fill="#ffd60a" font-size="12" font-weight="800" text-anchor="middle" font-family="system-ui">30°</text></svg><span>TORNAPUNTA<br>A 30°</span></div><div class="dw btn angb" data-key="angle:45"><svg viewBox="0 0 90 58" width="78" height="50" style="flex:none"><line x1="4" y1="50" x2="88" y2="50" stroke="#9fb0d8" stroke-width="2"/><line x1="10" y1="51" x2="5" y2="56" stroke="#7d8db8" stroke-width="1.2"/><line x1="18" y1="51" x2="13" y2="56" stroke="#7d8db8" stroke-width="1.2"/><line x1="26" y1="51" x2="21" y2="56" stroke="#7d8db8" stroke-width="1.2"/><line x1="34" y1="51" x2="29" y2="56" stroke="#7d8db8" stroke-width="1.2"/><line x1="42" y1="51" x2="37" y2="56" stroke="#7d8db8" stroke-width="1.2"/><line x1="50" y1="51" x2="45" y2="56" stroke="#7d8db8" stroke-width="1.2"/><line x1="58" y1="51" x2="53" y2="56" stroke="#7d8db8" stroke-width="1.2"/><line x1="66" y1="51" x2="61" y2="56" stroke="#7d8db8" stroke-width="1.2"/><line x1="74" y1="51" x2="69" y2="56" stroke="#7d8db8" stroke-width="1.2"/><line x1="82" y1="51" x2="77" y2="56" stroke="#7d8db8" stroke-width="1.2"/><line x1="74.0" y1="50" x2="35.8" y2="11.8" stroke="#d9b36c" stroke-width="7" stroke-linecap="round"/><path d="M57.0 50.0 A17 17 0 0 1 62.0 38.0" fill="none" stroke="#ffd60a" stroke-width="2"/><text x="48.1" y="43.3" fill="#ffd60a" font-size="12" font-weight="800" text-anchor="middle" font-family="system-ui">45°</text></svg><span>TORNAPUNTA<br>A 45°</span></div><div class="dw btn angb" data-key="angle:60"><svg viewBox="0 0 90 58" width="78" height="50" style="flex:none"><line x1="4" y1="50" x2="88" y2="50" stroke="#9fb0d8" stroke-width="2"/><line x1="10" y1="51" x2="5" y2="56" stroke="#7d8db8" stroke-width="1.2"/><line x1="18" y1="51" x2="13" y2="56" stroke="#7d8db8" stroke-width="1.2"/><line x1="26" y1="51" x2="21" y2="56" stroke="#7d8db8" stroke-width="1.2"/><line x1="34" y1="51" x2="29" y2="56" stroke="#7d8db8" stroke-width="1.2"/><line x1="42" y1="51" x2="37" y2="56" stroke="#7d8db8" stroke-width="1.2"/><line x1="50" y1="51" x2="45" y2="56" stroke="#7d8db8" stroke-width="1.2"/><line x1="58" y1="51" x2="53" y2="56" stroke="#7d8db8" stroke-width="1.2"/><line x1="66" y1="51" x2="61" y2="56" stroke="#7d8db8" stroke-width="1.2"/><line x1="74" y1="51" x2="69" y2="56" stroke="#7d8db8" stroke-width="1.2"/><line x1="82" y1="51" x2="77" y2="56" stroke="#7d8db8" stroke-width="1.2"/><line x1="74.0" y1="50" x2="47.0" y2="3.2" stroke="#d9b36c" stroke-width="7" stroke-linecap="round"/><path d="M57.0 50.0 A17 17 0 0 1 65.5 35.3" fill="none" stroke="#ffd60a" stroke-width="2"/><text x="49.8" y="40.0" fill="#ffd60a" font-size="12" font-weight="800" text-anchor="middle" font-family="system-ui">60°</text></svg><span>TORNAPUNTA<br>A 60°</span></div></div>
 <svg id="l3svg"></svg>
 <div id="nomen" title="Nombres de las caras y aristas de la tabla"><img alt="Caras y aristas de la tabla: tabla, canto, testa, tizón, soga, grueso" src="data:image/png;base64,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"></div>
 <div id="lupa"><canvas id="lc" width="200" height="200" style="position:static;width:200px;height:200px"></canvas></div>
@@ -126,8 +139,9 @@
 
 <div id="start">
   <div class="card">
-    <h1>Tornapunta a 30°</h1>
+    <h1>Trazado y corte de tornapuntas</h1>
     <p>Traza con el <b>lápiz</b>, mide con el <b>flexómetro</b> y corta con el <b>serrucho</b> con la mano: <b>pellizca</b> (pulgar + índice) sobre cada punto o botón para pulsarlo. Para girar la tabla usa la <b>pelota</b> de arriba a la derecha, o pellizca el fondo vacío y arrastra (15° en cada paso). Al soltar el pellizco el giro se detiene.<br>El vídeo no sale de tu equipo.</p>
+    <div id="startDemo"></div>
     <button id="go">Activar cámara</button>
     <button id="mouse">Probar con ratón</button>
   </div>
@@ -141,7 +155,8 @@ import * as THREE from "three";
 
 /* ================= DATOS DEL TORNAPUNTA (PDF P04, 30°) ================= */
 const qs = new URLSearchParams(location.search);
-const L = 50, HH = 10, T = 2, TH = 30, H = 3;      // longitud, tizón, grueso, ángulo, ancho del ejión (cm)
+const L = 50, HH = 10, T = 2, H = 3;               // longitud, tizón, grueso, ancho del ejión (cm)
+let TH = (()=>{ const v=+(qs.get("a")||(()=>{try{return localStorage.getItem("tp_angle")}catch(e){return null}})()||30); return [30,45,60].includes(v)?v:30; })();   // ángulo del tornapunta con la horizontal
 const rad = a => a*Math.PI/180;
 const dirOf = a => ({x:Math.cos(rad(a)), y:Math.sin(rad(a))});
 const f1 = v => v.toFixed(1).replace(".", ",");
@@ -157,15 +172,17 @@ function expected(th, L, h, HH){
   const Q2={x:P2.x-P2.y/Math.tan(rad(a7)), y:0};
   return {E,M,O,P,Q,E2,M2,O2,P2,Q2,a2,a4,a5,a6,a7};
 }
-const EXP = expected(TH, L, H, HH);
-const CUTS = [
+let EXP = expected(TH, L, H, HH);
+const mkCuts = () => [
   {n:1, x:EXP.O.x,  y:EXP.O.y,  ang:EXP.a4},
   {n:2, x:EXP.P.x,  y:EXP.P.y,  ang:EXP.a5},
   {n:3, x:EXP.O2.x, y:EXP.O2.y, ang:EXP.a6},
   {n:4, x:EXP.P2.x, y:EXP.P2.y, ang:EXP.a7},
 ];
-const NAMES = [["E",EXP.E],["M",EXP.M],["O",EXP.O],["P",EXP.P],["Q",EXP.Q],
+let CUTS = mkCuts();
+const mkNames = () => [["E",EXP.E],["M",EXP.M],["O",EXP.O],["P",EXP.P],["Q",EXP.Q],
                ["E′",EXP.E2],["M′",EXP.M2],["O′",EXP.O2],["P′",EXP.P2],["Q′",EXP.Q2]];
+let NAMES = mkNames();
 const CAND = [30,45,60,90,120,135,150];            // líneas candidatas (ángulo con la soga)
 const candLabel = a => a<90 ? `↗ ${a}°` : a===90 ? `⊥ 90°` : `↖ ${180-a}°`;
 const TOL = 0.2;                                    // tolerancia: 2 mm
@@ -297,19 +314,26 @@ const mBeamV = new THREE.MeshStandardMaterial({color:SOFT.v, roughness:.7, trans
 const mEj    = new THREE.MeshStandardMaterial({color:SOFT.e, roughness:.7, transparent:true, opacity:0});
 const setAsmOpacity=f=>{ mBeamH.opacity=mBeamV.opacity=mEj.opacity=f; };
 function box(x0,x1,y0,y1,d,m){ const b=new THREE.Mesh(new THREE.BoxGeometry(x1-x0,y1-y0,d),m); b.position.set((x0+x1)/2,(y0+y1)/2,0); asm.add(b); return b; }
-const footY = (()=>{ // el apoyo de la suela queda a Y=0
-  const r=rad(-TH); return -(EXP.Q.x*Math.sin(r)+EXP.Q.y*Math.cos(r)); })();
-const footX = EXP.P.x*Math.cos(rad(-TH)) - EXP.P.y*Math.sin(rad(-TH));
-const headY = EXP.P2.x*Math.sin(rad(-TH)) + EXP.P2.y*Math.cos(rad(-TH)) + footY;
-const headX = EXP.P2.x*Math.cos(rad(-TH)) - EXP.P2.y*Math.sin(rad(-TH));
 // medidas reales (cm): tablones 5 de grueso × 15 de ancho; ejiones 3 de grueso × 15 de ancho × 20 de largo
 const BEAM_T=5, BEAM_W=15, EJ_LEN=20;
-box(headX, footX+EJ_LEN+10, -BEAM_T, 0, BEAM_W, mBeamH);          // durmiente horizontal: topa contra el vertical
-box(headX-BEAM_T, headX, -BEAM_T, headY+EJ_LEN+6, BEAM_W, mBeamV); // durmiente vertical: llega hasta el suelo
-box(footX, footX+EJ_LEN, 0, H, BEAM_W, mEj);               // ejión del pie (apoya contra el corte 1)
-box(headX, headX+H, headY, headY+EJ_LEN, BEAM_W, mEj);     // ejión de la cabeza (junto al corte 4)
-const ASM_POS = {x:-((headX-BEAM_T)+(footX+EJ_LEN+10))/2, y:-(headY+EJ_LEN+6-BEAM_T)/2};
-asm.position.set(ASM_POS.x, ASM_POS.y);
+let footY, footX, headY, headX, ASM_POS, ASM_K=1;
+function mountGeo(th,E){ const r=rad(-th);                  // el apoyo de la suela queda a Y=0
+  const fY=-(E.Q.x*Math.sin(r)+E.Q.y*Math.cos(r)), fX=E.P.x*Math.cos(r)-E.P.y*Math.sin(r);
+  const hY=E.P2.x*Math.sin(r)+E.P2.y*Math.cos(r)+fY, hX=E.P2.x*Math.cos(r)-E.P2.y*Math.sin(r);
+  return {footY:fY,footX:fX,headY:hY,headX:hX,w:(fX+EJ_LEN+10)-(hX-BEAM_T),h:hY+EJ_LEN+6+BEAM_T}; }
+const MG30=mountGeo(30,expected(30,L,H,HH));
+function buildAsm(){
+  const g=mountGeo(TH,EXP); footY=g.footY; footX=g.footX; headY=g.headY; headX=g.headX;
+  ASM_K=Math.max(1,g.w/MG30.w,g.h/MG30.h);                   // a 45° y 60° el montaje es más alto: la cámara se aleja
+  for(const c of [...asm.children]){ asm.remove(c); c.geometry.dispose(); }
+  box(headX, footX+EJ_LEN+10, -BEAM_T, 0, BEAM_W, mBeamH);          // durmiente horizontal: topa contra el vertical
+  box(headX-BEAM_T, headX, -BEAM_T, headY+EJ_LEN+6, BEAM_W, mBeamV); // durmiente vertical: llega hasta el suelo
+  box(footX, footX+EJ_LEN, 0, H, BEAM_W, mEj);               // ejión del pie (apoya contra el corte 1)
+  box(headX, headX+H, headY, headY+EJ_LEN, BEAM_W, mEj);     // ejión de la cabeza (junto al corte 4)
+  ASM_POS = {x:-((headX-BEAM_T)+(footX+EJ_LEN+10))/2, y:-(headY+EJ_LEN+6-BEAM_T)/2};
+  asm.position.set(ASM_POS.x, ASM_POS.y);
+}
+buildAsm();
 
 /* ---- vista previa del montaje final (gira igual que la tabla) ---- */
 function idealPoly(){ let p=[{x:0,y:0},{x:L,y:0},{x:L,y:HH},{x:0,y:HH}];
@@ -317,14 +341,20 @@ function idealPoly(){ let p=[{x:0,y:0},{x:L,y:0},{x:L,y:HH},{x:0,y:HH}];
 const scene2=new THREE.Scene(); scene2.add(new THREE.AmbientLight(0xffffff,1.1)); const k2=new THREE.DirectionalLight(0xffffff,2); k2.position.set(20,40,60); scene2.add(k2);
 const camera2=new THREE.PerspectiveCamera(30,1.7,1,600); camera2.position.set(0,0,175);
 const miniRoot=new THREE.Group(); scene2.add(miniRoot);
-const miniAsm=new THREE.Group(); miniAsm.position.set(ASM_POS.x,ASM_POS.y,0); miniRoot.add(miniAsm);
-function mbox(x0,x1,y0,y1,d,col){ const b=new THREE.Mesh(new THREE.BoxGeometry(x1-x0,y1-y0,d),new THREE.MeshStandardMaterial({color:col,roughness:.7})); b.position.set((x0+x1)/2,(y0+y1)/2,0); miniAsm.add(b); }
-mbox(headX, footX+EJ_LEN+10, -BEAM_T, 0, BEAM_W, SOFT.h);
-mbox(headX-BEAM_T, headX, -BEAM_T, headY+EJ_LEN+6, BEAM_W, SOFT.v);
-mbox(footX, footX+EJ_LEN, 0, H, BEAM_W, SOFT.e);
-mbox(headX, headX+H, headY, headY+EJ_LEN, BEAM_W, SOFT.e);
-{ const tw=new THREE.Group(); tw.position.set(0,footY,0); tw.rotation.z=rad(-TH); miniAsm.add(tw);
-  const m=new THREE.Mesh(geoFromPoly(idealPoly()),[matTop,matSide,matCut]); m.position.z=-T/2; tw.add(m); }
+const miniAsm=new THREE.Group(); miniRoot.add(miniAsm);
+const MMAT={h:new THREE.MeshStandardMaterial({color:SOFT.h,roughness:.7}),v:new THREE.MeshStandardMaterial({color:SOFT.v,roughness:.7}),e:new THREE.MeshStandardMaterial({color:SOFT.e,roughness:.7})};
+function mbox(x0,x1,y0,y1,d,m){ const b=new THREE.Mesh(new THREE.BoxGeometry(x1-x0,y1-y0,d),m); b.position.set((x0+x1)/2,(y0+y1)/2,0); miniAsm.add(b); }
+function buildMini(){
+  for(const c of [...miniAsm.children]){ miniAsm.remove(c); c.traverse(o=>{ if(o.geometry) o.geometry.dispose(); }); }
+  miniAsm.position.set(ASM_POS.x,ASM_POS.y,0); camera2.position.z=175*ASM_K;
+  mbox(headX, footX+EJ_LEN+10, -BEAM_T, 0, BEAM_W, MMAT.h);
+  mbox(headX-BEAM_T, headX, -BEAM_T, headY+EJ_LEN+6, BEAM_W, MMAT.v);
+  mbox(footX, footX+EJ_LEN, 0, H, BEAM_W, MMAT.e);
+  mbox(headX, headX+H, headY, headY+EJ_LEN, BEAM_W, MMAT.e);
+  const tw=new THREE.Group(); tw.position.set(0,footY,0); tw.rotation.z=rad(-TH); miniAsm.add(tw);
+  const m=new THREE.Mesh(geoFromPoly(idealPoly()),[matTop,matSide,matCut]); m.position.z=-T/2; tw.add(m);
+}
+buildMini();
 const miniEl=document.getElementById("mini");
 
 /* ---- balón de playa de 4 gajos (2 rojos, 2 blancos): gira igual que la tabla y sus ejes ---- */
@@ -482,7 +512,7 @@ function nearestSnap(){
   let best=null, bd=1e9;
   for(const t of getSnaps()){
     const s=boardToScreen(t.x,t.y), d=Math.hypot(s.x-cur.x,s.y-cur.y);
-    const lim=(lastSnap&&Math.hypot(lastSnap.x-t.x,lastSnap.y-t.y)<1e-6)?26:17;
+    const lim=(lastSnap&&Math.hypot(lastSnap.x-t.x,lastSnap.y-t.y)<1e-6)?30:21;
     if(d<lim&&d<bd){bd=d;best=t;}
   }
   lastSnap=best; return best;
@@ -517,26 +547,23 @@ function addLine(x,y,ang){
 }
 const matchCut=(l,c)=>angDiff(l.ang,c.ang)<0.6 && distPtLine({x:c.x,y:c.y},l)<TOL;
 
-const SAW={ blade:[[-5,0],[3,0],[3,2.7],[-5,0.9]],
-  handle:[[3,-0.3],[3,3.1],[3.8,4.9],[6.2,5.4],[8.0,4.8],[9.0,3.2],[9.5,0.6],[9.3,-0.5]],
-  hole:[[4.6,0.7],[5.0,3.5],[6.2,3.9],[7.4,2.9],[8.0,0.7],[6.9,0.2]],
-  rivets:[[3.6,2.8],[3.6,0.5],[8.4,1.6]], toeHole:[-4.2,0.5] };
+const SAW={ blade:[[-5,0],[3,0],[3,1.5],[-5,0.65]],
+  handle:[[3,-0.15],[3,1.89],[3.6,2.97],[5.4,3.27],[6.75,2.91],[7.5,1.95],[7.88,0.39],[7.73,-0.27]],
+  hole:[[4.2,0.45],[4.5,2.13],[5.4,2.37],[6.3,1.77],[6.75,0.45],[5.93,0.15]],
+  rivets:[[3.45,1.71],[3.45,0.33],[7.05,0.99]], toeHole:[-4.3,0.32] };
 function sawSvg(){
   const X=u=>(10+(u+5)*12.5).toFixed(1), Y=v=>(60-v*10).toFixed(1), P=pp=>pp.map((q,i)=>(i?"L":"M")+X(q[0])+" "+Y(q[1])).join(" ")+" Z";
   let t=""; for(let i=0;i<40;i++){ const u=-5+i*0.2; t+=`M${X(u)} ${Y(0)} L${X(u+.1)} ${Y(-.35)} L${X(u+.2)} ${Y(0)} Z `; }
   return `<svg viewBox="0 0 150 66" width="118" height="38" style="flex:none"><defs><linearGradient id="sg" x1="0" x2="1"><stop offset="0" stop-color="#9aa3b3"/><stop offset=".5" stop-color="#e3e7ee"/><stop offset="1" stop-color="#a8b0bf"/></linearGradient></defs><path d="${P(SAW.blade)}" fill="url(#sg)" stroke="#4b5675" stroke-width="1.2"/><path d="${t}" fill="#4b5675"/><path fill-rule="evenodd" d="${P(SAW.handle)} ${P(SAW.hole)}" fill="#2d55b8" stroke="#142a66" stroke-width="1.4"/>${SAW.rivets.map(q=>`<circle cx="${X(q[0])}" cy="${Y(q[1])}" r="1.8" fill="#111b3d"/>`).join("")}<circle cx="${X(SAW.toeHole[0])}" cy="${Y(SAW.toeHole[1])}" r="2.6" fill="#0b1226"/></svg>`;
 }
-const CUTITEM={1:4,2:5,3:10,4:11};
 function cutFail(t){ errors++; cutErr=t; sideDirty=true; say(t,"err",12000); }
 function doCut(){
   const l=lines.find(x=>x.id===sawLock); if(!l) return;
   cutErr="";
-  if(sawTilt==null){ cutFail("Elige primero la inclinación de la hoja (90° vertical)."); errors--; return; }
+  if(sawTilt==null){ cutFail("Elige primero la inclinación de la hoja (90° perpendicular a la cara tabla)."); errors--; return; }
   const c=CUTS.find(c=>matchCut(l,c));
-  const next=[1,2,3,4].find(n=>!cutsDone.includes(n));
-  if(!c){ cutFail(`La línea elegida no es una línea de corte. Ahora toca el corte ${next}: «${ITEMS[CUTITEM[next]][1]}». Comprueba que está trazada por ese punto y con ese ángulo; las líneas auxiliares (como la perpendicular desde M o M′) no se cortan.`); return; }
+  if(!c){ cutFail("Esa línea no es de corte. Las líneas de corte son las rojas (cortes 1 a 4); las auxiliares, como la perpendicular desde M o M′, no se cortan."); return; }
   if(cutsDone.includes(c.n)){ cutFail("Ese corte ya está hecho."); errors--; return; }
-  if(c.n!==next){ cutFail(`Esa línea es el corte ${c.n}, pero el orden es 1, 2, 3 y 4: ahora toca el corte ${next} («${ITEMS[CUTITEM[next]][1]}»).`); return; }
   if(sawTilt!==90){ cutFail(`Con la hoja a ${sawTilt}° el corte sale a bisel y el apoyo no queda plano. Hazlo a 90° (vertical).`); return; }
   const A=clipHalf(poly,l,1), B=clipHalf(poly,l,-1);
   const keep=area(A)>=area(B)?A:B, drop=keep===A?B:A;
@@ -547,7 +574,7 @@ function doCut(){
 
 /* ---- montaje a 30° ---- */
 let mountT0=0; const view0={x:0,y:0,z:0};
-function startMount(){ for(const a of AXN){ view0[a]=wrapA(view[a]); U[a]=0; } stage="mounting"; mountT0=performance.now(); sideDirty=true; asm.visible=true; say("Colocando el tornapunta a 30° entre durmiente y ejión…","ok",3000); }
+function startMount(){ for(const a of AXN){ view0[a]=wrapA(view[a]); U[a]=0; } stage="mounting"; mountT0=performance.now(); sideDirty=true; asm.visible=true; say(`Colocando el tornapunta a ${TH}° entre durmiente y ejión…`,"ok",3000); }
 const ease=t=>t<.5?4*t*t*t:1-Math.pow(-2*t+2,3)/2;
 function suelaLen(){
   const l={x:EXP.P.x,y:EXP.P.y,ang:EXP.a5};
@@ -555,7 +582,14 @@ function suelaLen(){
   return on.length>=2 ? Math.hypot(on[0].x-on[1].x,on[0].y-on[1].y) : NaN;
 }
 
-function resetAll(){ lastNar=null; phaseKey=null; fw=0; fwT=0; setSlider(SLIDERS[0],100); zoomV=100;
+const angleNeedsHold=()=>stage!=="intro"&&(marks.length>0||lines.length>0||cutsDone.length>0);   // con trabajo hecho, cambiar de ejercicio exige mantener el pellizco
+function applyAngle(th){
+  TH=th; try{ localStorage.setItem("tp_angle",th); }catch(e){}
+  EXP=expected(TH,L,H,HH); CUTS=mkCuts(); NAMES=mkNames(); ITEMS=mkItems(); ITEM_PT=mkItemPt(); DET=mkDet(); NAR=mkNar();
+  buildAsm(); buildMini(); snapCache=null; lastCheck=""; paintAngles();
+}
+function paintAngles(){ document.querySelectorAll("[data-key^='angle:']").forEach(b=>b.classList.toggle("sel",+b.dataset.key.slice(6)===TH)); }
+function resetAll(){ lastNar=null; phaseKey=null; phRaw=null; holdUntil=0; cutEnd="head"; fw=0; fwT=0; setSlider(SLIDERS[0],100); zoomV=100;
   resetState(); rebuildBoard();
   pieces.forEach(p=>{holder.remove(p.m);p.m.geometry.dispose();}); pieces.length=0;
   setView0(); piv.rotation.set(0,0,0); piv.position.set(0,5.7,0);
@@ -594,18 +628,17 @@ function computeHover(){
       if(dist<1.2) return {key:"anchorcancel"};
       let a=Math.atan2(v.y,v.x)*180/Math.PI; if(a<0)a+=180; if(a>=180)a-=180;
       let best=null,bd=99; for(const c of CAND){const d=angDiff(a,c); if(d<bd){bd=d;best=c;}}
-      if(bd<7){ hv.rayAng=best; return {key:"ray:"+best,ang:best}; }
+      if(bd<12){ hv.rayAng=best; return {key:"ray:"+best,ang:best}; }
+      return {key:"raynone"};                        // con un punto marcado, el pellizco solo elige línea (o anula tocando el punto)
     }
     const s=nearestSnap(); snapShow=s;
     if(s) return {key:"pt:"+s.x.toFixed(2)+","+s.y.toFixed(2),pt:s};
-    if(inPoly(pb,poly,0.05)) return {key:"pt:free",pt:{x:Math.round(pb.x*20)/20,y:Math.round(pb.y*20)/20}};
-    return null;
+    return null;                                   // solo se marcan puntos que existen (esquinas y cruces): así no se marca uno por error
   }
   if(tool==="flex"){
     if(!tapeStart){
       const s=nearestSnap(); snapShow=s;
       if(s) return {key:"fs:"+s.x.toFixed(2)+","+s.y.toFixed(2),pt:s};
-      if(inPoly(pb,poly,0.05)) return {key:"fs:free",pt:{x:Math.round(pb.x*20)/20,y:Math.round(pb.y*20)/20}};
       return null;
     }
     const S=tapeStart, cands=flexCands(S);
@@ -619,6 +652,7 @@ function computeHover(){
     if(sawLock) return null;
     let best=null,bd=0.9;
     for(const l of lines){
+      const cn=CUTS.find(c=>matchCut(l,c)); if(!cn||cutsDone.includes(cn.n)) continue;   // el serrucho solo se alinea con las líneas rojas pendientes
       const seg=clipLine(l,poly); if(!seg) continue;
       const d=distPtLine(pb,l); if(d>=bd) continue;
       const dd=dirOf(l.ang), t=(pb.x-l.x)*dd.x+(pb.y-l.y)*dd.y;
@@ -641,13 +675,15 @@ function fire(h){
   else if(k==="calib"){ if(landmarker) startCal(); else say("La calibración necesita la cámara activada","err",3000); }
   else if(k==="voice"){ voiceOn=!voiceOn; try{localStorage.setItem("tp_voice",voiceOn?"1":"0")}catch(e){} if(!voiceOn&&synth) synth.cancel(); paintVoice(); lastNar=null; }
   else if(k==="front"){ for(const a of AXN) U[a]-=wrapA(U[a]); say("Vista frontal: ejes X, Y, Z a 0°","ok",2000); }
-  else if(k==="reset") resetAll();
+  else if(k.startsWith("angle:")){ applyAngle(+k.slice(6)); resetAll(); say(`Tornapunta a ${TH}°: así quedará montado`,"ok",3000); }
+  else if(k==="reset"){ if(stage!=="intro") beginTrace(); }
   else if(k.startsWith("tilt:")){ sawTilt=+k.slice(5); sideDirty=true; }
   else if(k==="cut") doCut();
   else if(k==="sawcancel"){ cutErr=""; sawLock=null; sawTilt=null; sideDirty=true; }
   else if(k==="mount") startMount();
   else if(k.startsWith("pt:")){ const pt=(k==="pt:free")?{x:h.pt.x,y:h.pt.y}:h.pt; const m=addMark(pt.x,pt.y); anchor={x:m.x,y:m.y}; say("Punto marcado. Ahora elige una línea: apunta en su dirección y pellizca.","ok",3500); }
-  else if(k==="anchorcancel"){ anchor=null; }
+  else if(k==="anchorcancel"){ anchor=null; say("Punto anulado: elige otro punto","",2500); }
+  else if(k==="raynone"){ say("Apunta hacia una de las líneas discontinuas y pellizca (o pellizca el punto para anularlo)","err",3500); }
   else if(k.startsWith("ray:")){ addLine(anchor.x,anchor.y,h.ang); anchor=null; say("Línea trazada","ok",2000); }
   else if(k.startsWith("fs:")){ tapeStart={x:h.pt.x,y:h.pt.y}; say("Arco de 3 cm fijado: pellizca donde cruza la línea para marcar el punto.","",5000); }
   else if(k==="fcancel"){ tapeStart=null; }
@@ -699,6 +735,7 @@ function pressEnd(now){
     const h=P.h;
     if(h&&h.key){
       if(h.key==="reset"&&now-P.t<RESET_MS) say("Para reiniciar, mantén el pellizco 1,5 s","err",2500);
+      else if(h.key.startsWith("angle:")&&angleNeedsHold()&&now-P.t<RESET_MS) say("Para cambiar de tornapunta mantén el pellizco 1,5 s (se pierde lo trazado)","err",3500);
       else fire(h);
     }
   }
@@ -734,7 +771,7 @@ function inputStep(now,dt){
   } else if(P.mode==="pending"){
     if(P.bgCand&&Math.hypot(target.x-P.raw.x,target.y-P.raw.y)>DRAG_PX){ P.mode="orbit"; P.bg=true; P.base={x:U.x,y:U.y,z:U.z}; P.n={x:0,y:0,z:0}; P.ring=false; P.raw={x:target.x,y:target.y}; P.pos={x:cur.x,y:cur.y}; padEl.classList.add("on"); say("Girando la vista… (abre los dedos para soltar)","",1500); return; }
     P.h=H0;
-    if(P.h&&P.h.key==="reset") ringP=Math.min(1,(now-P.t)/RESET_MS);
+    if(P.h&&(P.h.key==="reset"||(P.h.key.startsWith("angle:")&&angleNeedsHold()))) ringP=Math.min(1,(now-P.t)/RESET_MS);
   } else if(P.mode==="orbit"){
     const g=padGeo();
     (P.uh||(P.uh=[{t:P.t,x:P.base.x,y:P.base.y,z:P.base.z}])).push({t:now,x:U.x,y:U.y,z:U.z}); while(P.uh.length>2&&now-P.uh[1].t>1200) P.uh.shift();
@@ -786,11 +823,20 @@ function drawLayer(ctx,Tf,k,isLupa){
     } }
   ctx.lineCap="round";
   const RECT=[{x:0,y:0},{x:L,y:0},{x:L,y:HH},{x:0,y:HH}];
+  const pul=frameNow<holdUntil?1+0.45*Math.max(0,Math.sin(frameNow/110)):1;
   for(const l of lines){
     const seg=clipLine(l,RECT); if(!seg) continue;
     const a=Tf(seg[0]), b=Tf(seg[1]), hl=(hv.lineId===l.id||sawLock===l.id);
-    ctx.strokeStyle=hl?"#ff8a00":"#26262e"; ctx.lineWidth=(hl?3.4:1.9)*k;
+    const cn=CUTS.find(c=>matchCut(l,c)), live=cn&&!cutsDone.includes(cn.n);
+    if(live){ ctx.strokeStyle=hl?"#ff8a00":"#ff3b2f"; ctx.lineWidth=(hl?5.4:4.4)*k*pul; }
+    else { ctx.strokeStyle=hl?"#ff8a00":"#26262e"; ctx.lineWidth=(hl?3.4:1.9)*k; }
     ctx.beginPath(); ctx.moveTo(a.x,a.y); ctx.lineTo(b.x,b.y); ctx.stroke();
+    if(live&&!isLupa){ const sp=clipLine(l,poly); if(sp){ const m=Tf({x:(sp[0].x+sp[1].x)/2,y:(sp[0].y+sp[1].y)/2}); pill(ctx,"corte "+cn.n,m.x,m.y-16,1,"#ff8a7a"); } }
+  }
+  if(!isLupa&&stage==="trace"&&(phaseKey==="cut-pie"||phaseKey==="cut-head")){       // aviso para cambiar de extremo en los cortes
+    const pend=n=>!cutsDone.includes(n), pie=phaseKey==="cut-pie";
+    if(pie&&(pend(3)||pend(4))){ const q=Tf({x:L*0.40,y:HH/2}); pill(ctx,"◀ CABEZA: apunta aquí",q.x,q.y,1.1,"#ffd60a"); }
+    if(!pie&&(pend(1)||pend(2))){ const q=Tf({x:L*0.60,y:HH/2}); pill(ctx,"PIE: apunta aquí ▶",q.x,q.y,1.1,"#ffd60a"); }
   }
   // candidatas desde el punto marcado
   if(tool==="pencil"&&anchor){
@@ -854,7 +900,7 @@ function drawLayer(ctx,Tf,k,isLupa){
         ctx.fillStyle="#4b5675"; for(let i=0;i<44;i++){ const u=-5+i*0.18; ctx.beginPath(); [[u,0],[u+0.09,-0.3],[u+0.18,0]].forEach((q,j)=>{const p=T2(q[0],q[1]); j?ctx.lineTo(p.x,p.y):ctx.moveTo(p.x,p.y);}); ctx.closePath(); ctx.fill(); }
         path([SAW.handle,SAW.hole],"#2d55b8","#142a66",1.4);
         ctx.fillStyle="#111b3d"; for(const q of SAW.rivets){ const p=T2(q[0],q[1]); ctx.beginPath(); ctx.arc(p.x,p.y,2.2*k,0,7); ctx.fill(); }
-        const th=T2(SAW.toeHole[0],SAW.toeHole[1]); ctx.fillStyle="#0b1226"; ctx.beginPath(); ctx.arc(th.x,th.y,3.4*k,0,7); ctx.fill();
+        const th=T2(SAW.toeHole[0],SAW.toeHole[1]); ctx.fillStyle="#0b1226"; ctx.beginPath(); ctx.arc(th.x,th.y,2.4*k,0,7); ctx.fill();
       }
     }
   }
@@ -880,7 +926,7 @@ function drawLayer(ctx,Tf,k,isLupa){
 
 const lupa=$("lupa"), lc=$("lc"), lctx=lc.getContext("2d"), lread=$("lread");
 function drawLupa(){
-  const show = stage==="trace"&&ptrVisible&&pb&&!(tool==="pencil"&&anchor)&&pb.x>-3&&pb.x<L+3&&pb.y>-3&&pb.y<HH+3&&!hv.dom&&!(press&&press.mode!=="pending");
+  const show = stage==="trace"&&frameNow>=holdUntil&&ptrVisible&&pb&&!(tool==="pencil"&&anchor)&&pb.x>-3&&pb.x<L+3&&pb.y>-3&&pb.y<HH+3&&!hv.dom&&!(press&&press.mode!=="pending");
   lupa.style.display=show?"block":"none";
   const reading = show&&tapeDraw&&tapeDraw.a!==null&&tapeDraw.t!==undefined;
   lread.style.display=reading?"block":"none";
@@ -895,10 +941,45 @@ function drawLupa(){
   lctx.restore();
 }
 
+/* ---- simulación: el pulgar va al índice (bien) / el índice baja al pulgar (mal) ---- */
+function pinchDemo(sz){
+  const skin="#f2c9a0", edge="#9c6b45", kt="0;.35;.65;1";
+  const finger=(vals)=>`<polyline fill="none" stroke="${edge}" stroke-width="17" stroke-linecap="round" stroke-linejoin="round" points="${vals[0]}"><animate attributeName="points" dur="2.4s" repeatCount="indefinite" keyTimes="${kt}" values="${vals.join(";")}"/></polyline>`+
+    `<polyline fill="none" stroke="${skin}" stroke-width="12" stroke-linecap="round" stroke-linejoin="round" points="${vals[0]}"><animate attributeName="points" dur="2.4s" repeatCount="indefinite" keyTimes="${kt}" values="${vals.join(";")}"/></polyline>`;
+  const panel=(ok,idx,thb,dots,txt)=>{ const cx=dots.map(d=>d[0]).join(";"), cy=dots.map(d=>d[1]).join(";");
+    return `<div><svg viewBox="0 0 150 132" width="${sz}" height="${Math.round(sz*132/150)}">
+      <rect x="1" y="1" width="148" height="130" rx="12" fill="${ok?"#0e2619":"#2a0f16"}" stroke="${ok?"#3ddc84":"#ff5a5f"}" stroke-width="2"/>
+      <rect x="58" y="78" width="58" height="46" rx="15" fill="${skin}" stroke="${edge}" stroke-width="2.5"/>
+      <rect x="82" y="62" width="36" height="28" rx="11" fill="${skin}" stroke="${edge}" stroke-width="2.5"/>
+      ${finger(idx)}${finger(thb)}
+      <circle cx="${dots[0][0]}" cy="${dots[0][1]}" r="3" fill="#ffd60a88"/>
+      <circle r="8" fill="none" stroke="#ffd60a" stroke-width="3"><animate attributeName="cx" dur="2.4s" repeatCount="indefinite" keyTimes="${kt}" values="${cx}"/><animate attributeName="cy" dur="2.4s" repeatCount="indefinite" keyTimes="${kt}" values="${cy}"/></circle>
+      <text x="12" y="22" font-size="20" font-weight="900" fill="${ok?"#3ddc84":"#ff5a5f"}" font-family="system-ui">${ok?"✓":"✗"}</text>
+      </svg><p>${txt}</p></div>`; };
+  const I0="70,84 67,61 64,40", T0="60,106 44,93 30,74", T1="60,106 58,78 61,49";
+  const good=panel(true,[I0,I0,I0,I0],[T0,T1,T1,T0],[[55.5,48.5],[63.3,42.3],[63.3,42.3],[55.5,48.5]],"<b>Así:</b> acerca el <b>pulgar</b> a la punta del índice. El puntero casi no se mueve.");
+  const T2="60,106 50,88 44,69", I1="70,84 62,67 47,66";
+  const bad=panel(false,[I0,I1,I1,I0],[T2,T2,T2,T2],[[59,47.3],[46.3,66.8],[46.3,66.8],[59,47.3]],"<b>Así no:</b> si bajas el <b>índice</b> hasta el pulgar, el puntero se desplaza.");
+  return `<div class="pdemo">${good}${bad}</div>`;
+}
+/* ---- dibujo del plano de corte respecto a la cara «tabla» (botones de inclinación de la hoja) ---- */
+function bevelSvg(a){
+  const yT=16, yB=36, cx=52, dx=(yB-yT)/Math.tan(a*Math.PI/180), xt=cx-dx/2, xb=cx+dx/2;
+  const r=9, ax=xt+r, ay=yT, bx=xt+r*Math.cos(a*Math.PI/180), by=yT+r*Math.sin(a*Math.PI/180);
+  const lx=xt+(r+9)*Math.cos(a*Math.PI/360), ly=yT+(r+9)*Math.sin(a*Math.PI/360)+3;
+  return `<svg class="bev" viewBox="0 0 100 44" width="86" height="38">
+    <polygon points="6,${yT} ${xt.toFixed(1)},${yT} ${xb.toFixed(1)},${yB} 6,${yB}" fill="#d9b36c" stroke="#8a6a2f" stroke-width="1"/>
+    <polygon points="${xt.toFixed(1)},${yT} 94,${yT} 94,${yB} ${xb.toFixed(1)},${yB}" fill="#d9b36c55" stroke="#8a6a2f88" stroke-width="1" stroke-dasharray="3 2"/>
+    <line x1="6" y1="${yT}" x2="94" y2="${yT}" stroke="#2fbf71" stroke-width="3"/>
+    <text x="8" y="11" font-size="8.5" font-weight="700" fill="#5fe39a" font-family="system-ui">cara tabla</text>
+    <line x1="${xt.toFixed(1)}" y1="${yT}" x2="${xb.toFixed(1)}" y2="${yB}" stroke="#ff5a3c" stroke-width="2.6"/>
+    <path d="M${ax.toFixed(1)} ${ay} A${r} ${r} 0 0 1 ${bx.toFixed(1)} ${by.toFixed(1)}" fill="none" stroke="#ffd60a" stroke-width="1.6"/>
+    <text x="${lx.toFixed(1)}" y="${ly.toFixed(1)}" font-size="9" font-weight="800" fill="#ffd60a" font-family="system-ui">${a}°</text></svg>`;
+}
 /* ================= PANEL DE PASOS Y LATERAL ================= */
 const hasMark=p=>marks.some(m=>Math.hypot(m.x-p.x,m.y-p.y)<TOL);
 const hasLine=(p,a)=>lines.some(l=>angDiff(l.ang,a)<0.6&&distPtLine(p,l)<TOL);
-const ITEMS=[
+const mkItems=()=>[
  ["Pie","Marca E: vértice del pie",()=>hasMark(EXP.E)],
  ["Pie",`Desde E, línea a 90°−θ (${90-TH}° con la soga)`,()=>hasLine(EXP.E,EXP.a2)],
  ["Pie",`Mide h = ${H} cm sobre ella: marca M`,()=>hasMark(EXP.M)],
@@ -916,45 +997,52 @@ const ITEMS=[
  ["Cortes","Serrucho: corte 3",()=>cutsDone.includes(3)],
  ["Cortes","Serrucho: corte 4",()=>cutsDone.includes(4)],
 ];
-const ITEM_PT=[["E",EXP.E],["E",EXP.E],[null,null],["O",EXP.O],["O",EXP.O],["P",EXP.P],["E′",EXP.E2],["E′",EXP.E2],[null,null],["O′",EXP.O2],["O′",EXP.O2],["P′",EXP.P2]];
-const DET=[
+let ITEMS=mkItems();
+const mkItemPt=()=>[["E",EXP.E],["E",EXP.E],[null,null],["O",EXP.O],["O",EXP.O],["P",EXP.P],["E′",EXP.E2],["E′",EXP.E2],[null,null],["O′",EXP.O2],["O′",EXP.O2],["P′",EXP.P2]];
+let ITEM_PT=mkItemPt();
+const lab=a=>candLabel(a);                        // etiqueta de la línea discontinua (↖ 60°, ↗ 30°, ⊥ 90°)
+const mkDet=()=>[
  "Lápiz: pellizca la esquina inferior derecha de la tabla (punto E).",
- "Pellizca E y elige la línea discontinua ↖ 60°.",
- "Flexómetro (tecla 2): pellizca E; aparece un arco de 3 cm. Pellizca donde el arco cruza la línea: ahí está M.",
+ `Con E marcado, apunta hacia la línea discontinua ${lab(EXP.a2)} y pellizca.`,
+ "Flexómetro: pellizca E; aparece un arco de 3 cm. Pellizca donde el arco cruza la línea: ahí está M.",
  "Lápiz: pellizca M y elige ⊥ 90° hacia arriba, hasta el borde superior: ahí está O.",
- "Pellizca O (se pega solo) y elige la línea ↖ 60°, paralela a E–M. Es el corte 1.",
- "Pellizca P, donde la línea del corte 1 llega al borde derecho, y elige ↗ 30°. Es el corte 2 (la suela).",
- "CABEZA, igual que el pie pero en el extremo izquierdo: pellizca la esquina inferior izquierda de la tabla (E′).",
- "Pellizca E′ y elige la línea discontinua ↗ 30°.",
- "Flexómetro (tecla 2): pellizca E′; aparece un arco de 3 cm. Pellizca donde el arco cruza la línea: ahí está M′.",
+ `Lápiz: pellizca O (se pega solo) y elige la línea ${lab(EXP.a4)}, paralela a E–M. Es el corte 1.`,
+ `Lápiz: pellizca P, donde la línea del corte 1 llega al borde derecho, y elige ${lab(EXP.a5)}. Es el corte 2 (la suela).`,
+ "CABEZA, igual que el pie pero en el extremo izquierdo. Lápiz: pellizca la esquina inferior izquierda de la tabla (E′).",
+ `Con E′ marcado, apunta hacia la línea discontinua ${lab(TH)} y pellizca.`,
+ "Flexómetro: pellizca E′; aparece un arco de 3 cm. Pellizca donde el arco cruza la línea: ahí está M′.",
  "Lápiz: pellizca M′ y elige ⊥ 90° hacia arriba, hasta el borde superior: ahí está O′.",
- "Pellizca O′ y elige la línea ↗ 30°, paralela a E′–M′. Es el corte 3.",
- "Pellizca P′, donde la línea del corte 3 llega al borde izquierdo, y elige ↖ 60°. Es el corte 4.",
- "Serrucho (tecla 3): pellizca la línea del corte 1, elige 90° vertical y pulsa CORTAR.",
- "Serrucho: pellizca la línea del corte 2, elige 90° y pulsa CORTAR.",
- "Serrucho: pellizca la línea del corte 3, elige 90° y pulsa CORTAR.",
- "Serrucho: pellizca la línea del corte 4, elige 90° y pulsa CORTAR.",
+ `Lápiz: pellizca O′ y elige la línea ${lab(EXP.a6)}, paralela a E′–M′. Es el corte 3.`,
+ `Lápiz: pellizca P′, donde la línea del corte 3 llega al borde izquierdo, y elige ${lab(EXP.a7)}. Es el corte 4.`,
+ "Serrucho: pellizca cualquiera de las líneas rojas de corte, elige 90° y pulsa CORTAR (el orden da igual).",
+ "Serrucho: pellizca otra línea roja, elige 90° y pulsa CORTAR.",
+ "Serrucho: pellizca otra línea roja, elige 90° y pulsa CORTAR.",
+ "Serrucho: pellizca la última línea roja, elige 90° y pulsa CORTAR.",
 ];
+let DET=mkDet();
 /* ---- narración por voz (una sola vez por instrucción) ---- */
-const NAR=[
+const NUMW={30:"treinta",45:"cuarenta y cinco",60:"sesenta",90:"noventa"};
+const nw=a=>NUMW[a]||String(a);
+const mkNar=()=>[
  "Empieza marcando el vértice E, en la esquina inferior derecha de la tabla.",
- "Ahora, desde E, traza una línea que forme sesenta grados con la soga.",
- "Con el flexómetro, toca E y verás un arco de tres centímetros. Pellizca donde cruza la línea y aparecerá el punto M.",
+ `Ahora, desde E, traza una línea que forme ${nw(90-TH)} grados con la soga.`,
+ "Toca E y verás un arco de tres centímetros. Pellizca donde cruza la línea y aparecerá el punto M.",
  "Desde M, traza una perpendicular a la soga, hasta el borde superior. Ahí está el punto O.",
- "Desde O, traza otra línea a sesenta grados con la soga, paralela a la anterior. Ese es el corte uno.",
+ `Desde O, traza otra línea a ${nw(90-TH)} grados con la soga, paralela a la anterior. Ese es el corte uno.`,
  "Marca P, donde esa línea llega al borde derecho, y traza una perpendicular. Es el corte dos, la suela.",
  "Vamos con la cabeza. Marca el vértice E prima, en la esquina inferior izquierda de la tabla.",
- "Desde E prima, traza una línea que forme treinta grados con la soga.",
- "Con el flexómetro, toca E prima y verás un arco de tres centímetros. Pellizca donde cruza la línea y aparecerá el punto M prima.",
+ `Desde E prima, traza una línea que forme ${nw(TH)} grados con la soga.`,
+ "Toca E prima y verás un arco de tres centímetros. Pellizca donde cruza la línea y aparecerá el punto M prima.",
  "Desde M prima, sube en perpendicular hasta el borde superior. Ahí está O prima.",
- "Desde O prima, traza una línea a treinta grados, paralela a la anterior. Es el corte tres.",
- "Marca P prima, donde esa línea llega al borde izquierdo, y traza una perpendicular. Es el corte cuatro.",
- "Ahora, con el serrucho, corta por la línea del corte uno. Elige la hoja perpendicular a la cara de la tabla y pulsa cortar.",
- "Sigue con el serrucho por la línea del corte dos, la suela. Hoja perpendicular a la cara y pulsa cortar.",
- "Ahora el corte tres, en la cabeza. Hoja perpendicular a la cara y pulsa cortar.",
- "Y por último, el corte cuatro. Hoja perpendicular a la cara y pulsa cortar."];
-const NAR_DONE="Todos los cortes están hechos. Pulsa montar a treinta grados.";
-const NAR_INTRO="Este es el tornapunta ya montado. Puedes girarlo con la pelota. Cuando quieras, pulsa Comenzar a trazar y cortar el tornapunta.";
+ `Desde O prima, traza una línea a ${nw(TH)} grados, paralela a la anterior. Es el corte tres.`,
+ "Marca P prima, donde esa línea llega al borde izquierdo, y traza una perpendicular. Es el corte cuatro."];
+let NAR=mkNar();
+const STEP_TOOL=["pencil","pencil","flex","pencil","pencil","pencil","pencil","pencil","flex","pencil","pencil","pencil"];
+const TOOL_SAY={pencil:"Coge el lápiz.",flex:"Coge el flexómetro.",saw:"Coge el serrucho."};
+const NAR_CUT=["Trazado terminado. Ahora corta por las cuatro líneas rojas, en el orden que quieras. Elige la hoja perpendicular a la cara de la tabla.",
+  "Corte hecho. Quedan tres.","Bien. Quedan dos.","Muy bien. Queda el último corte."];
+const narDone=()=>`Todos los cortes están hechos. Pulsa montar a ${nw(TH)} grados.`;
+const narIntro=()=>`Este es el tornapunta a ${nw(TH)} grados ya montado. Puedes girarlo con la pelota. Cuando quieras, pulsa Comenzar a trazar y cortar el tornapunta.`;
 const NAR_MOUNTED="Montaje terminado. El tornapunta queda apoyado entre el durmiente vertical y el ejión.";
 let voiceOn=true; try{ voiceOn=localStorage.getItem("tp_voice")!=="0"; }catch(e){}
 const synth=window.speechSynthesis; let voiceObj=null, lastNar=null;
@@ -966,21 +1054,51 @@ function pickVoice(){
 if(synth){ pickVoice(); synth.onvoiceschanged=pickVoice; }
 function speak(t){ if(!voiceOn||!synth||!t) return; try{ synth.cancel(); const u=new SpeechSynthesisUtterance(t); u.lang=voiceObj?voiceObj.lang:"es-ES"; if(voiceObj) u.voice=voiceObj; u.rate=0.95; u.pitch=1; u.volume=1; synth.speak(u); }catch(e){} }
 function paintVoice(){ const b=document.getElementById("voiceBtn"); if(b) b.textContent=voiceOn?"🔊 Voz":"🔇 Sin voz"; }
-function narrate(){
+function reqTool(){ if(stage!=="trace") return null; const ns=nextStep(); if(ns<0) return null; return ns<12?STEP_TOOL[ns]:(cutsDone.length<4?"saw":null); }
+function narrate(now){
   if(navigator.userActivation&&!navigator.userActivation.hasBeenActive) return;
   let key;
+  if(stage==="trace") phaseNow(now);                 // detecta ya el fin de un extremo (el paso puede haberse completado en este mismo fotograma)
   if(stage==="mounted") key="mounted"; else if(stage==="intro") key="intro"; else if(stage==="mounting") return;
-  else if(cutsDone.length===4) key="done"; else key="s"+nextStep();
+  else if(now<holdUntil) key="hold-"+holdPh;
+  else if(cutsDone.length===4) key="done";
+  else { const ns=nextStep(); key=ns>=12?"cut"+cutsDone.length:"s"+ns; }
   if(key===lastNar) return; lastNar=key;
-  speak(key==="intro"?NAR_INTRO:key==="mounted"?NAR_MOUNTED:key==="done"?NAR_DONE:NAR[+key.slice(1)]);
+  let t;
+  if(key==="intro") t=narIntro(); else if(key==="mounted") t=NAR_MOUNTED; else if(key==="done") t=narDone();
+  else if(key==="hold-pie") t="Pie terminado. Fíjate en las líneas rojas: son los cortes uno y dos. Ahora vamos a la cabeza.";
+  else if(key==="hold-head") t="Cabeza terminada. Las líneas rojas son los cortes tres y cuatro.";
+  else if(key.startsWith("cut")){ t=NAR_CUT[+key.slice(3)]; if(tool!=="saw") t=TOOL_SAY.saw+" "+t; }
+  else { const i=+key.slice(1); t=NAR[i]; const rq=STEP_TOOL[i]; if(rq&&rq!==tool) t=TOOL_SAY[rq]+" "+t; }
+  speak(t);
 }
 function phaseOf(){ if(stage!=="trace") return null; if(cutsDone.length>=4) return "all"; const ni=nextStep(); if(ni<0) return "all";
-  return (ni<=5||ni===12||ni===13)?"pie":"head"; }
+  return ni<=5?"pie":ni<=11?"head":"cut"; }
+let phRaw=null, holdUntil=0, holdPh=null, cutEnd="head", endCand=null, endCandT=0, frameNow=0;
+function phaseNow(now){
+  const raw=phaseOf();
+  if(raw!==phRaw){
+    if(phRaw==="pie"&&raw==="head"){ holdUntil=now+4500; holdPh="pie"; say("PIE trazado: las líneas rojas son los cortes 1 y 2. Ahora vamos a la cabeza…","ok",4500); }
+    else if(phRaw==="head"&&raw==="cut"){ holdUntil=now+4500; holdPh="head"; cutEnd="head"; say("CABEZA trazada: las líneas rojas son los cortes 3 y 4.","ok",4500); }
+    else if(raw!=="cut"&&raw!=="head"&&raw!=="pie") holdUntil=0;
+    phRaw=raw;
+  }
+  if(now<holdUntil) return holdPh;
+  if(raw==="cut"){                                   // los cortes se hacen en el extremo al que apunta la mano
+    if(pb&&ptrVisible&&!press&&sawLock==null&&pb.y>-3&&pb.y<HH+3&&!(H0&&H0.dom)){
+      const want=pb.x<L*0.48?"head":pb.x>L*0.52?"pie":null;
+      if(want&&want!==cutEnd){ if(endCand!==want){ endCand=want; endCandT=now; } else if(now-endCandT>650){ cutEnd=want; endCand=null; } }
+      else endCand=null;
+    } else endCand=null;
+    return "cut-"+cutEnd;
+  }
+  return raw;
+}
 const AXD={x:["X",1],y:["Z",1],z:["Y",-1]};   // ejes internos de three.js → ejes del alumno (Z vertical)
 const VIEW0={x:15,y:-30,z:0};
 function setView0(){ for(const a of AXN){ U[a]=VIEW0[a]; view[a]=VIEW0[a]; } }
 const nextStep=()=>{ for(let i=0;i<ITEMS.length;i++) if(!ITEMS[i][2]()) return i; return -1; };
-paintVoice();
+paintVoice(); paintAngles();
 const checkEl=$("check"); let lastCheck="";
 function renderCheck(){
   const st=ITEMS.map(i=>i[2]()); const sig=st.join("");
@@ -988,7 +1106,7 @@ function renderCheck(){
   const nxt=st.indexOf(false); let html=`<div class="ttl">INSTRUCCIONES PASO A PASO</div>`;
   for(const g of ["Pie","Cabeza","Cortes"]){
     html+=`<div><h4>${g}</h4>`;
-    ITEMS.forEach((it,i)=>{ if(it[0]!==g) return; html+=`<div class="it ${st[i]?"done":i===nxt?"next":""}"><span class="bx">${st[i]?"✓":""}</span><span>${it[1]}</span></div>`; });
+    ITEMS.forEach((it,i)=>{ if(it[0]!==g) return; html+=`<div class="it ${st[i]?"done":(i===nxt||(nxt>=12&&i>=12))?"next":""}"><span class="bx">${st[i]?"✓":""}</span><span>${it[1]}</span></div>`; });
     html+="</div>";
   }
   checkEl.innerHTML=html;
@@ -999,15 +1117,15 @@ function renderSide(){
   document.querySelectorAll(".tbtn[data-key^='tool:']").forEach(b=>b.classList.toggle("sel",b.dataset.key==="tool:"+tool&&stage==="trace"));
   let h="";
   if(stage==="intro"){
-    h+=`<div class="rep" style="background:#0e1f3a;border-color:#35e0ff"><b>Así quedará el tornapunta montado.</b><br>Gira la pelota (o pellizca el fondo y arrastra) para verlo desde todos los lados. Suelta el pellizco antes de ir a los botones.</div><div class="dw btn big" data-key="begin" style="height:76px;font-size:15px;line-height:1.2">COMENZAR A TRAZAR Y CORTAR EL TORNAPUNTA</div>`;
+    h+=`<div class="rep" style="background:#0e1f3a;border-color:#35e0ff"><b>Tornapunta a ${TH}°: así quedará montado.</b> Gíralo con la pelota. Para pulsar, haz la pinza así:</div>${pinchDemo(118)}<div class="dw btn big" data-key="begin" style="height:76px;font-size:15px;line-height:1.2">COMENZAR A TRAZAR Y CORTAR EL TORNAPUNTA</div>`;
   } else if(stage==="mounted"){
     const s=suelaLen(), secs=Math.round((performance.now()-tStart)/1000);
-    h+=`<div class="rep"><b>¡Tornapunta montado a 30°!</b><br>Durmientes 5 × 15 cm · ejiones 20 × 3 cm<br>Suela P–Q = <b>${isNaN(s)?"—":f1(s)} cm</b> (objetivo ${f1(EXP.P.x-EXP.Q.x>0?Math.hypot(EXP.P.x-EXP.Q.x,EXP.P.y-EXP.Q.y):0)} cm)<br>Errores: ${errors} · Tiempo: ${Math.floor(secs/60)} min ${secs%60} s</div>`;
+    h+=`<div class="rep"><b>¡Tornapunta montado a ${TH}°!</b><br>Durmientes 5 × 15 cm · ejiones 20 × 3 cm<br>Suela P–Q = <b>${isNaN(s)?"—":f1(s)} cm</b> (objetivo ${f1(EXP.P.x-EXP.Q.x>0?Math.hypot(EXP.P.x-EXP.Q.x,EXP.P.y-EXP.Q.y):0)} cm)<br>Errores: ${errors} · Tiempo: ${Math.floor(secs/60)} min ${secs%60} s</div>`;
   } else if(stage==="trace" && cutsDone.length===4){
-    h+=`<div class="dw btn big" data-key="mount">MONTAR A 30°</div>`;
+    h+=`<div class="dw btn big" data-key="mount">MONTAR A ${TH}°</div>`;
   } else if(stage==="trace" && tool==="saw" && sawLock!=null){
     h+=sawSvg()+`<div class="row">`;
-    for(const a of [90,60,45]) h+=`<div class="dw btn ${sawTilt===a?"sel":""}" data-key="tilt:${a}" style="min-width:0;flex:${a===90?"1.7":"1"};font-size:12px;height:46px;line-height:1.1;padding:2px 4px">${a===90?"90° perpendicular a la cara":a+"° bisel"}</div>`;
+    for(const a of [90,60,45]) h+=`<div class="dw btn ${sawTilt===a?"sel":""}" data-key="tilt:${a}" style="min-width:0;flex:1;font-size:11.5px;height:84px;line-height:1.1;padding:2px 4px">${bevelSvg(a)}${a===90?"90° perpendicular a la cara tabla":a+"° bisel"}</div>`;
     h+=`</div>${cutErr?`<div class="rep" style="border-color:#ff5a5f;background:#2a0f16;color:#ffd0d3;font-size:11.5px;line-height:1.25;padding:5px 8px;max-height:84px;overflow:hidden">${cutErr}</div>`:""}<div class="row" style="flex-wrap:nowrap"><div class="dw btn big" style="flex:1;height:50px;font-size:16px;width:auto" data-key="cut">CORTAR</div><div class="dw btn small" data-key="sawcancel">Cancelar</div></div>`;
   } else {
     h+=`<div style="opacity:.85;line-height:1.45"><b>Pellizca</b> (pulgar + índice) sobre un punto, línea o botón para pulsarlo.<br><b>Vista:</b> pelota o <b>fondo vacío</b>: pellizca y arrastra (↔ eje Z, ↕ eje X, borde de la pelota = eje Y). X e Y forman el suelo; Z es la vertical. Sobre la tabla el pellizco solo traza.<br>Tabla: ${L} × ${HH} cm · ejión h = ${H} cm · θ = ${TH}°</div>`;
@@ -1020,8 +1138,8 @@ function contextHint(){
   if(stage==="intro") return "Montaje terminado: gíralo con la pelota y pulsa COMENZAR";
   if(stage==="mounted") return "Montaje terminado";
   if(!facing&&stage==="trace") return "La cara de trazado queda de espaldas: pulsa «Vista frontal»";
-  if(cutsDone.length===4) return "Todos los cortes hechos. Pulsa MONTAR A 30°.";
-  if(tool==="saw"&&sawLock!=null) return "Elige la inclinación de la hoja (90° vertical) y pulsa CORTAR";
+  if(cutsDone.length===4) return `Todos los cortes hechos. Pulsa MONTAR A ${TH}°.`;
+  if(tool==="saw"&&sawLock!=null) return "Elige la inclinación de la hoja (90° perpendicular a la cara tabla) y pulsa CORTAR";
   const ni=nextStep(); let t=ni>=0?`Paso ${ni+1} de ${ITEMS.length}: ${DET[ni]}`:"";
   if(tool==="pencil"&&anchor) t="Punto marcado. Elige ahora una línea discontinua apuntando en su dirección y pellizca.";
   if(tool==="flex"&&tapeStart) t="Pellizca donde el arco de 3 cm cruza la línea para marcar el punto.";
@@ -1045,6 +1163,7 @@ async function startCamera(){
     setStatus("Muestra tu mano a la cámara","ok");
   }catch(e){ console.error(e); setStatus("No se pudo cargar el seguimiento de manos (¿sin internet?). Usa el ratón","err"); }
 }
+$("startDemo").innerHTML=pinchDemo(150);
 $("go").addEventListener("click",startCamera);
 $("mouse").addEventListener("click",()=>{ $("start").style.display="none"; setStatus("Modo ratón (prueba)"); });
 const clamp=v=>Math.max(0,Math.min(1,v));
@@ -1071,7 +1190,7 @@ function stepCal(now,m){
       cal=null; } }
 }
 /* ================= DIAGNÓSTICO: graba lo que detecta la cámara (solo números, sin imagen) ================= */
-const APP_VER="v17";
+const APP_VER="v18";
 /* Umbrales de pellizco adaptados a cada mano (se aprenden de los últimos 3 s).
    El diagnóstico mostró manos cuya postura "abierta" ronda 0,60-0,70: con un umbral fijo de 0,72 el pellizco no se soltaba nunca. */
 const PH=[]; let openRef=0.75, closedRef=0.22, pCloseT=0.38, pOpenT=0.51, pCondT=null;
@@ -1169,7 +1288,7 @@ function detectHand(now){
     if(!cal&&clickMode==="thumb"&&!calOk&&!window.__calAsked){ window.__calAsked=true; startCal(); }
     if(cal) stepCal(now,m);
     pinched = cal ? false : (clickMode==="thumb" ? (thumbOn||pinchG) : pinchG);
-    const px=clickMode==="thumb"?t8.x:(t4.x+t8.x)/2, py=clickMode==="thumb"?t8.y:(t4.y+t8.y)/2;   // puntero = punta del índice (modo pulgar) o punto medio (pellizco)
+    const px=clickMode==="thumb"?t8.x:t4.x*0.25+t8.x*0.75, py=clickMode==="thumb"?t8.y:t4.y*0.25+t8.y*0.75;   // puntero cerca de la punta del índice: acercar el pulgar apenas lo mueve   // puntero = punta del índice (modo pulgar) o punto medio (pellizco)
     target.x=clamp(((1-px)-0.10)/0.80)*W; target.y=clamp((py-0.08)/0.78)*Hh;
     if(!ptrVisible){cur.x=target.x;cur.y=target.y;}
     ptrVisible=true; lastHand=now; handSeen=true;
@@ -1183,6 +1302,7 @@ paintMode();
 resetAll();
 let prev=performance.now();
 function frame(now){
+  frameNow=now;
   if(REPLAY&&REPLAY.det){ const k=Math.min(REPLAY.f.length-1,REPLAY.started?REPLAY.i+1:0); now=REPLAY.t0+REPLAY.f[k].t; REPLAY.vt=REPLAY.f[k].t; }
   const dt=Math.max(0,Math.min(100,now-prev)); prev=now;
   detectHand(now);
@@ -1197,9 +1317,11 @@ function frame(now){
     piv.position.set(0,5.7,0); piv.rotation.set(rad(view.x),rad(view.y),rad(view.z));
     holder.position.set(-L/2,-5,0); holder.rotation.set(0,0,0);
     stageG.updateMatrixWorld(true);
-    const ph=phaseOf();
+    const ph=phaseNow(now);
     if(ph!==phaseKey){ phaseKey=ph;
       if(ph==="pie"||ph==="head"){ fxT=ph==="pie"?L:0; foT=ph==="pie"?0.11:-0.4; fwT=1; setSlider(SLIDERS[0],130); say(ph==="pie"?"Zoom al extremo del PIE (punto E)":"Zoom al extremo de la CABEZA (punto E′)","",2600); }
+      else if(ph==="cut-pie"||ph==="cut-head"){ const pie=ph==="cut-pie"; fxT=pie?L:0; foT=pie?0.22:-0.35; fwT=1; setSlider(SLIDERS[0],115);
+        say(pie?"Cortes en el PIE (para ir a la cabeza, apunta a la izquierda de la tabla)":"Cortes en la CABEZA (para ir al pie, apunta a la derecha de la tabla)","",3200); }
       else { fwT=0; setSlider(SLIDERS[0],100); } }
     fw+=(fwT-fw)*f2; fx+=(fxT-fx)*f2; fo+=(foT-fo)*f2;
     const dz=camZ0/zoomK; _fv.set(fx,fy,T/2); holder.localToWorld(_fv);
@@ -1211,7 +1333,7 @@ function frame(now){
     piv.position.set(0,5.7*(1-e),0);
     holder.position.set(hx,hy-piv.position.y,0); holder.rotation.set(0,0,rad(-TH)*e);
     stageG.position.y=14*e; if(fin) stageG.rotation.set(rad(view.x),rad(view.y),rad(view.z)); else stageG.rotation.set(rad(VIEW0.x)*e,rad(VIEW0.y)*e,rad(VIEW0.z)*e);
-    { const dzM=camZ0/zoomK*(1+2.3*e), wpp=2*dzM*Math.tan(rad(15))/Hh, cx=Math.min(W/2,(244+W-190)/2-90), cy=215; camera.position.set(-(cx-W/2)*wpp*e,(14-(Hh/2-cy)*wpp)*e,dzM); }   // centro del montaje (origen de stageG) en (cx,cy)
+    { const dzM=camZ0/zoomK*(1+2.3*e)*(1+(ASM_K-1)*e), wpp=2*dzM*Math.tan(rad(15))/Hh, cx=Math.min(W/2,(miniEl.getBoundingClientRect().right+8+W-190)/2-90), cy=215; camera.position.set(-(cx-W/2)*wpp*e,(14-(Hh/2-cy)*wpp)*e,dzM); }   // centro del montaje (origen de stageG) en (cx,cy)
     const f=Math.max(0,Math.min(1,(p-0.35)/0.5)); setAsmOpacity(f);
     if(stage==="mounting"&&p>=1){ stage="mounted"; setView0(); sideDirty=true; say("Tornapunta montado: la suela queda horizontal y el corte 1 vertical","ok",9000); }
   }
@@ -1229,7 +1351,8 @@ function frame(now){
   if(h&&h.dom){ document.querySelectorAll(".dw").forEach(e=>e.classList.toggle("hover",e===h.el)); }
   else document.querySelectorAll(".dw.hover").forEach(e=>e.classList.remove("hover"));
 
-  narrate();
+  narrate(now);
+  { const rq=reqTool(); document.querySelectorAll(".tbtn[data-key^='tool:']").forEach(b=>b.classList.toggle("need",!!rq&&b.dataset.key==="tool:"+rq&&tool!==rq)); }
   ptrEl.style.display=ptrVisible?"block":"none";
   ptrEl.style.transform=`translate(${cur.x}px,${cur.y}px)`;
   pring.style.strokeDashoffset=String(119.4*(1-ringP));
@@ -1296,10 +1419,11 @@ window.__t={
   toScreen:(x,y)=>boardToScreen(x,y),
   get s(){return {marks,lines,polyLen:poly.length,cutsDone,stage,errors,checks:ITEMS.map(i=>i[2]()),suela:suelaLen(),tool,anchor:!!anchor};},
   dbg:()=>({sawLock,sawTilt,msgText,dk,dProg:Math.round(dProg),blockPos,tool,anchor,tapeStart,snap:snapShow,cur:{x:Math.round(cur.x),y:Math.round(cur.y)},pb}),
-  thumb:(Lm,palm)=>thumbScore(thumbMetrics(Lm,palm)), hover:()=>H0&&{key:H0.key,dom:H0.dom}, pbv:()=>pb, EXP, U, view, get press(){return press&&press.mode;}, get facing(){return facing;}, setPtr:(x,y)=>{lastMouse=performance.now();target.x=x;target.y=y;ptrVisible=true;},
+  thumb:(Lm,palm)=>thumbScore(thumbMetrics(Lm,palm)), hover:()=>H0&&{key:H0.key,dom:H0.dom}, pbv:()=>pb, get EXP(){return EXP;}, get TH(){return TH;}, U, view, get press(){return press&&press.mode;}, get facing(){return facing;}, setPtr:(x,y)=>{lastMouse=performance.now();target.x=x;target.y=y;ptrVisible=true;},
   replay:(data)=>{ if(data.meta&&data.meta.estado) restoreSnap(data.meta.estado); if(data.meta&&data.meta.sens) setSlider(SLIDERS[1],data.meta.sens);
     const det=!!(data.det); EVLOG.length=0; REPLAY={f:data.frames.filter(f=>"lm" in f),i:0,t0:performance.now(),started:false,done:false,det}; if(det){ prev=REPLAY.t0; } return REPLAY.f.length; },
   evlog:()=>EVLOG.slice(), pinchTh:()=>({openRef,closedRef,pCloseT,pOpenT}),
+  phase:()=>phaseKey,
   replayInfo:()=>REPLAY&&{i:REPLAY.i,n:REPLAY.f.length,done:REPLAY.done,t:REPLAY.f[REPLAY.i]&&REPLAY.f[REPLAY.i].t,stage},
   rec:()=>REC&&REC.frames.length, recStart:()=>recStart(), recStop:()=>recStop(), lastDiag:()=>window.__lastDiag,
   sim:(x,y,p)=>{lastHand=performance.now();handSeen=true;target.x=x;target.y=y;ptrVisible=true;pinched=p;}
