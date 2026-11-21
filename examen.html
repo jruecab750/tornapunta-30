@@ -3,20 +3,21 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Examen de ciencia con la mano</title>
+<title>Preguntas curiosas con la mano</title>
 <style>
   *{box-sizing:border-box;margin:0;padding:0}
   html,body{height:100%;font-family:system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;background:#f4f6fa;color:#1d2433;overflow:hidden}
-  #app{position:fixed;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:24px 24px 24px 24px}
-  .pantalla{display:none;width:min(980px,100%);flex-direction:column;align-items:center;gap:22px}
+  #app{position:fixed;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:20px 28px}
+  body.camara #app{padding-left:420px}
+  .pantalla{display:none;width:min(1000px,100%);flex-direction:column;align-items:center;gap:min(2.2vh,20px)}
   .pantalla.activa{display:flex}
-  h1{font-size:clamp(26px,3.4vw,40px);text-align:center}
-  .sub{font-size:clamp(15px,1.6vw,19px);color:#4a5568;text-align:center;max-width:720px;line-height:1.45}
-  .progreso{font-size:15px;font-weight:600;color:#5a6b8c;letter-spacing:.04em;text-transform:uppercase}
-  .pregunta{font-size:clamp(22px,2.8vw,32px);font-weight:700;text-align:center;line-height:1.3}
-  .opciones{display:grid;grid-template-columns:1fr 1fr;gap:18px;width:100%}
-  .opcion{background:#fff;border:3px solid #d5dbe6;border-radius:18px;padding:26px 20px;font-size:clamp(18px,2vw,24px);font-weight:600;text-align:left;cursor:pointer;display:flex;align-items:center;gap:14px;min-height:96px;transition:border-color .15s,background .15s,transform .1s;color:#1d2433}
-  .opcion .letra{flex:0 0 42px;height:42px;border-radius:50%;background:#e8edf5;display:flex;align-items:center;justify-content:center;font-weight:800;color:#3b4a66}
+  h1{font-size:min(5vw,6vh,52px);text-align:center}
+  .sub{font-size:min(2.4vw,3.2vh,26px);color:#4a5568;text-align:center;max-width:820px;line-height:1.45}
+  .progreso{font-size:min(2vw,2.6vh,22px);font-weight:700;color:#5a6b8c;letter-spacing:.04em;text-transform:uppercase}
+  .pregunta{font-size:min(3.6vw,4.8vh,44px);font-weight:800;text-align:center;line-height:1.25}
+  .opciones{display:grid;grid-template-columns:1fr 1fr;gap:min(2vh,18px);width:100%}
+  .opcion{background:#fff;border:4px solid #d5dbe6;border-radius:20px;padding:min(2.4vh,22px) 20px;font-size:min(2.8vw,3.8vh,34px);font-weight:700;text-align:left;cursor:pointer;display:flex;align-items:center;gap:16px;min-height:min(13vh,112px);transition:border-color .15s,background .15s,transform .1s;color:#1d2433}
+  .opcion .letra{flex:0 0 1.6em;height:1.6em;border-radius:50%;background:#e8edf5;display:flex;align-items:center;justify-content:center;font-weight:900;color:#3b4a66}
   .opcion.hover{border-color:#7aa2f7;transform:scale(1.015)}
   .opcion.seleccionada{border-color:#2f6fed;background:#eaf1ff}
   .opcion.seleccionada .letra{background:#2f6fed;color:#fff}
@@ -25,34 +26,38 @@
   .opcion.incorrecta{border-color:#d64545;background:#fdeaea}
   .opcion.incorrecta .letra{background:#d64545;color:#fff}
   .opcion.bloqueada{cursor:default}
-  .boton{background:#2f6fed;color:#fff;border:none;border-radius:16px;padding:20px 54px;font-size:clamp(18px,2vw,24px);font-weight:800;letter-spacing:.05em;cursor:pointer;min-width:280px;transition:transform .1s,background .15s,opacity .15s}
+  .boton{background:#2f6fed;color:#fff;border:none;border-radius:18px;padding:min(2.6vh,22px) 56px;font-size:min(2.6vw,3.4vh,30px);font-weight:900;letter-spacing:.05em;cursor:pointer;min-width:320px;transition:transform .1s,background .15s,opacity .15s}
   .boton.hover{transform:scale(1.04);background:#1f5ad6}
   .boton:disabled{background:#b8c2d6;cursor:not-allowed;opacity:.8}
-  .feedback{width:100%;border-radius:16px;padding:18px 22px;font-size:clamp(16px,1.7vw,20px);line-height:1.45;display:none}
-  .feedback.ok{display:block;background:#e6f6ec;border:2px solid #1f9d55}
-  .feedback.ko{display:block;background:#fdeaea;border:2px solid #d64545}
+  .boton.verde{background:#1f9d55}.boton.verde.hover{background:#17803f}
+  .feedback{width:100%;border-radius:18px;padding:min(2vh,18px) 24px;font-size:min(2.2vw,3vh,26px);line-height:1.4;display:none}
+  .feedback.ok{display:block;background:#e6f6ec;border:3px solid #1f9d55}
+  .feedback.ko{display:block;background:#fdeaea;border:3px solid #d64545}
   .feedback strong{display:block;font-size:1.15em;margin-bottom:4px}
-  .nota{font-size:clamp(60px,10vw,110px);font-weight:900;color:#2f6fed;line-height:1}
+  .cabecera-final{width:100%;display:flex;align-items:center;justify-content:space-between;gap:20px}
+  .cabecera-final h1{text-align:left}
+  .nota{font-size:min(11vw,14vh,130px);font-weight:900;color:#2f6fed;line-height:1}
   .resumen{width:100%;display:flex;flex-direction:column;gap:10px}
-  .resumen div{background:#fff;border-radius:12px;padding:12px 16px;border-left:6px solid #ccc;font-size:17px}
+  .resumen div{background:#fff;border-radius:14px;padding:12px 18px;border-left:8px solid #ccc;font-size:min(2vw,2.7vh,24px);line-height:1.35}
   .resumen .r-ok{border-left-color:#1f9d55}.resumen .r-ko{border-left-color:#d64545}
-  .estado{font-size:15px;color:#5a6b8c;min-height:20px;text-align:center}
-  /* miniatura de cámara */
-  #mini{position:fixed;left:16px;bottom:16px;width:220px;height:165px;border-radius:14px;overflow:hidden;box-shadow:0 4px 18px rgba(0,0,0,.18);background:#222;display:none;z-index:5}
+  .estado{font-size:min(1.9vw,2.6vh,22px);color:#5a6b8c;min-height:24px;text-align:center}
+  /* miniatura de cámara (columna izquierda) */
+  #mini{position:fixed;left:20px;bottom:20px;width:380px;height:285px;border-radius:16px;overflow:hidden;box-shadow:0 6px 22px rgba(0,0,0,.2);background:#222;display:none;z-index:5}
   #mini video,#mini canvas{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;transform:scaleX(-1)}
-  #mini .etq{position:absolute;left:8px;top:6px;font-size:12px;color:#fff;background:rgba(0,0,0,.45);padding:2px 8px;border-radius:8px;z-index:2}
-  /* capa del puntero */
+  #mini .etq{position:absolute;left:10px;top:8px;font-size:15px;color:#fff;background:rgba(0,0,0,.45);padding:3px 10px;border-radius:8px;z-index:2}
+  #marcador{position:fixed;left:20px;top:20px;width:380px;display:none;flex-direction:column;gap:8px;font-size:20px;color:#3b4a66;z-index:5}
+  #marcador b{font-size:26px;color:#1d2433}
   #capa{position:fixed;inset:0;pointer-events:none;z-index:10}
-  #ajustes{position:fixed;right:14px;top:12px;font-size:13px;color:#4a5568;display:flex;gap:8px;align-items:center;z-index:6}
-  #ajustes select{font-size:13px;padding:3px 6px;border-radius:8px;border:1px solid #c9d1df;background:#fff}
+  #ajustes{position:fixed;right:16px;top:12px;font-size:16px;color:#4a5568;display:flex;gap:10px;align-items:center;z-index:6}
+  #ajustes select,#ajustes button{font-size:16px;padding:4px 8px;border-radius:8px;border:1px solid #c9d1df;background:#fff;cursor:pointer}
 </style>
 </head>
 <body>
 <div id="app">
   <!-- INICIO -->
   <section class="pantalla activa" id="p-inicio">
-    <h1>🔬 Examen rápido de ciencia</h1>
-    <p class="sub">Tres preguntas. Maneja todo con el <b>dedo índice de tu mano derecha</b>: deja la punta del dedo <b>medio segundo</b> sobre una respuesta o un botón y se marcará cuando el círculo se complete.</p>
+    <h1>🧠 Preguntas curiosas</h1>
+    <p class="sub">Tres preguntas por partida, distintas cada vez. Juega con el <b>dedo índice de tu mano derecha</b>: deja la punta del dedo <b>medio segundo</b> sobre una respuesta o un botón y se marcará cuando el círculo se complete.</p>
     <button class="boton" id="btn-camara" data-dwell>ACTIVAR CÁMARA</button>
     <p class="estado" id="estado">Pulsa con el ratón para activar la cámara.</p>
   </section>
@@ -68,14 +73,17 @@
 
   <!-- FINAL -->
   <section class="pantalla" id="p-final">
-    <h1>Puntuación final</h1>
+    <div class="cabecera-final">
+      <h1>Puntuación final</h1>
+      <button class="boton verde" id="btn-repetir" data-dwell>JUGAR OTRA VEZ</button>
+    </div>
     <div class="nota" id="nota">0 / 3</div>
     <p class="sub" id="mensaje-final"></p>
     <div class="resumen" id="resumen"></div>
-    <button class="boton" id="btn-repetir" data-dwell>REPETIR EXAMEN</button>
   </section>
 </div>
 
+<div id="marcador"><span>Partida <b id="m-partida">1</b></span><span>Aciertos acumulados: <b id="m-total">0</b></span></div>
 <div id="mini"><span class="etq">Tu mano</span><video id="video" playsinline muted></video><canvas id="esqueleto"></canvas></div>
 <canvas id="capa"></canvas>
 <div id="ajustes">Mano:
@@ -84,46 +92,103 @@
     <option value="izquierda">Izquierda</option>
     <option value="cualquiera">Cualquiera</option>
   </select>
+  <button id="btn-sonido" title="Sonido">🔊</button>
 </div>
 
 <script type="module">
-/* ================== PREGUNTAS ================== */
-const PREGUNTAS = [
-  {
-    texto: "¿Cuál es el planeta más grande del sistema solar?",
-    opciones: ["Saturno", "Júpiter", "La Tierra", "Neptuno"],
-    correcta: 1,
-    explicacion: "Júpiter es el mayor planeta: en su interior cabrían más de 1.300 Tierras. Saturno es el segundo."
-  },
-  {
-    texto: "¿A qué temperatura hierve el agua al nivel del mar?",
-    opciones: ["0 °C", "50 °C", "80 °C", "100 °C"],
-    correcta: 3,
-    explicacion: "A la presión del nivel del mar (1 atmósfera) el agua hierve a 100 °C. A 0 °C se congela. En la montaña, con menos presión, hierve antes."
-  },
-  {
-    texto: "¿Qué gas toman las plantas del aire para hacer la fotosíntesis?",
-    opciones: ["Dióxido de carbono", "Oxígeno", "Nitrógeno", "Helio"],
-    correcta: 0,
-    explicacion: "Las plantas absorben dióxido de carbono (CO₂) y, con la luz del sol y el agua, fabrican azúcares y liberan oxígeno."
-  }
+/* ================== BANCO DE PREGUNTAS (la primera opción es la correcta; se barajan) ================== */
+const BANCO = [
+  ["¿Cuántos corazones tiene un pulpo?", ["Tres","Uno","Dos","Ocho"], "Tiene tres: dos bombean sangre a las branquias y uno al resto del cuerpo."],
+  ["¿De qué color es la sangre de un pulpo?", ["Azul","Roja","Verde","Transparente"], "Es azul porque usa cobre (hemocianina) para llevar el oxígeno, no hierro como nosotros."],
+  ["¿Cuál es el único mamífero capaz de volar?", ["El murciélago","La ardilla voladora","El colibrí","El pingüino"], "El murciélago vuela de verdad; la ardilla voladora solo planea y el colibrí es un ave."],
+  ["¿Cuántos huesos tiene una persona adulta?", ["206","106","306","26"], "Un adulto tiene unos 206. Un bebé nace con más, pero muchos se sueldan al crecer."],
+  ["¿En qué planeta dura más un día que un año?", ["Venus","Marte","Mercurio","Júpiter"], "Venus gira tan despacio sobre sí mismo que da la vuelta al Sol antes de completar un día."],
+  ["¿Qué metal es líquido a temperatura ambiente?", ["Mercurio","Hierro","Aluminio","Plata"], "El mercurio es el único metal líquido a temperatura ambiente; por eso se usaba en termómetros."],
+  ["¿Cuántas patas tiene una araña?", ["Ocho","Seis","Diez","Cuatro"], "Las arañas tienen ocho patas. Los insectos, como las hormigas, tienen seis."],
+  ["¿Cuánto tarda la luz del Sol en llegar a la Tierra?", ["8 minutos","8 segundos","8 horas","8 días"], "Unos 8 minutos y 20 segundos: el Sol que ves es el de hace 8 minutos."],
+  ["¿Qué alimento puede durar miles de años sin estropearse?", ["La miel","El pan","La leche","El queso"], "En tumbas egipcias se ha encontrado miel de miles de años todavía comestible."],
+  ["¿Cuál es el órgano más grande del cuerpo humano?", ["La piel","El hígado","El cerebro","Los pulmones"], "La piel: en un adulto pesa unos 4 kilos y ocupa casi 2 metros cuadrados."],
+  ["¿Qué animal tiene huellas dactilares casi iguales a las nuestras?", ["El koala","El perro","El gato","El caballo"], "Las huellas del koala se parecen tanto a las humanas que podrían confundir a un investigador."],
+  ["¿Qué gas hay en mayor cantidad en el aire que respiramos?", ["Nitrógeno","Oxígeno","Dióxido de carbono","Hidrógeno"], "El aire es casi un 78 % nitrógeno; el oxígeno es solo un 21 %."],
+  ["¿Cuál es el océano más grande?", ["Pacífico","Atlántico","Índico","Ártico"], "El Pacífico es tan grande que en él cabrían todos los continentes juntos."],
+  ["¿Cuál es el animal terrestre más rápido?", ["El guepardo","El león","El caballo","El avestruz"], "El guepardo supera los 100 km/h, pero solo aguanta esa velocidad unos segundos."],
+  ["¿Cuál es el planeta más caliente del sistema solar?", ["Venus","Mercurio","Marte","Júpiter"], "Aunque Mercurio está más cerca del Sol, Venus es más caliente: su atmósfera atrapa el calor."],
+  ["¿Cuál es el animal más grande que ha existido?", ["La ballena azul","El tiranosaurio","El elefante","El megalodón"], "La ballena azul puede medir unos 30 metros: más que cualquier dinosaurio conocido."],
+  ["¿Dónde está el hueso más pequeño del cuerpo?", ["En el oído","En el pie","En la mano","En la nariz"], "Es el estribo, en el oído: mide unos 3 milímetros."],
+  ["¿A qué velocidad viaja la luz, más o menos?", ["300.000 km/s","300 km/s","3.000 km/s","3 millones de km/s"], "Unos 300.000 km por segundo: daría siete vueltas y media a la Tierra en un segundo."],
+  ["¿Qué mide un sismógrafo?", ["Terremotos","Lluvia","Viento","Temperatura"], "Registra las vibraciones del suelo para medir los terremotos."],
+  ["¿Cuántos dientes tiene un adulto con las muelas del juicio?", ["32","20","28","40"], "32 dientes. Sin las muelas del juicio, 28. Un niño tiene 20 dientes de leche."],
+  ["¿Qué animal duerme a veces con medio cerebro despierto?", ["El delfín","El oso","El búho","La vaca"], "El delfín duerme con una mitad del cerebro cada vez, para seguir respirando y vigilando."],
+  ["¿Cuál es el elemento más abundante del universo?", ["Hidrógeno","Oxígeno","Carbono","Hierro"], "Alrededor de tres de cada cuatro átomos del universo son de hidrógeno."],
+  ["¿Qué se mide en decibelios?", ["El sonido","La luz","El peso","La electricidad"], "Los decibelios miden la intensidad del sonido. A partir de unos 85 dB puede dañar el oído."],
+  ["¿Cuál es la montaña más alta del mundo?", ["Everest","Kilimanjaro","Mont Blanc","Aconcagua"], "El Everest mide unos 8.849 metros sobre el nivel del mar."],
+  ["¿Cuál es el planeta más grande del sistema solar?", ["Júpiter","Saturno","La Tierra","Neptuno"], "Dentro de Júpiter cabrían más de 1.300 Tierras."],
+  ["¿A qué temperatura hierve el agua al nivel del mar?", ["100 °C","0 °C","50 °C","80 °C"], "A 100 °C. En la montaña, con menos presión, hierve a menos temperatura."],
+  ["¿Qué gas toman las plantas del aire para la fotosíntesis?", ["Dióxido de carbono","Oxígeno","Nitrógeno","Helio"], "Toman CO₂ y, con luz y agua, fabrican azúcares y liberan oxígeno."]
 ];
-const LETRAS = ["A","B","C","D"];
-const DWELL_MS = 500;
+const POR_PARTIDA = 3, LETRAS = ["A","B","C","D"], DWELL_MS = 500, ESPERA_PANTALLA = 1200;
 
-/* ================== ESTADO DEL EXAMEN ================== */
-let indice = 0, seleccion = null, fase = "elegir", aciertos = 0, historial = [];
+const barajar = a => { a = a.slice(); for (let i = a.length-1; i > 0; i--){ const j = Math.floor(Math.random()*(i+1)); [a[i],a[j]] = [a[j],a[i]]; } return a; };
+
+/* mazo: no repite preguntas hasta agotar el banco (se recuerda entre visitas si el navegador lo permite) */
+let mazo = [];
+try { mazo = JSON.parse(localStorage.getItem("pc_mazo") || "[]").filter(i => i < BANCO.length); } catch {}
+function sacarPreguntas(){
+  if (mazo.length < POR_PARTIDA) mazo = barajar([...BANCO.keys()]);
+  const elegidas = mazo.splice(0, POR_PARTIDA);
+  try { localStorage.setItem("pc_mazo", JSON.stringify(mazo)); } catch {}
+  return elegidas.map(i => {
+    const [texto, ops, explicacion] = BANCO[i];
+    const orden = barajar([0,1,2,3]);
+    return { texto, explicacion, opciones: orden.map(k => ops[k]), correcta: orden.indexOf(0) };
+  });
+}
+
+/* ================== SONIDOS SUAVES ================== */
+let audio = null, sonidoOn = true;
+function tono(freq, dur = 0.12, tipo = "sine", vol = 0.06, retraso = 0){
+  if (!sonidoOn) return;
+  try {
+    audio = audio || new (window.AudioContext || window.webkitAudioContext)();
+    const t = audio.currentTime + retraso, o = audio.createOscillator(), g = audio.createGain();
+    o.type = tipo; o.frequency.setValueAtTime(freq, t);
+    g.gain.setValueAtTime(0.0001, t); g.gain.exponentialRampToValueAtTime(vol, t + 0.015);
+    g.gain.exponentialRampToValueAtTime(0.0001, t + dur);
+    o.connect(g).connect(audio.destination); o.start(t); o.stop(t + dur + 0.02);
+  } catch {}
+}
+const SON = {
+  encima:   () => tono(880, 0.05, "sine", 0.025),
+  marcar:   () => { tono(660, 0.08, "triangle", 0.05); tono(990, 0.1, "triangle", 0.04, 0.06); },
+  acierto:  () => { tono(523, 0.15, "sine", 0.06); tono(659, 0.15, "sine", 0.06, 0.12); tono(784, 0.28, "sine", 0.06, 0.24); },
+  fallo:    () => { tono(330, 0.18, "triangle", 0.05); tono(247, 0.3, "triangle", 0.05, 0.16); },
+  final:    () => [523,659,784,1047].forEach((f,i) => tono(f, 0.22, "sine", 0.05, i*0.13))
+};
+document.getElementById("btn-sonido").addEventListener("click", e => {
+  sonidoOn = !sonidoOn; e.currentTarget.textContent = sonidoOn ? "🔊" : "🔇";
+});
+
+/* ================== ESTADO DEL JUEGO ================== */
+let preguntas = [], indice = 0, seleccion = null, fase = "elegir", aciertos = 0, historial = [];
+let partida = 0, totalAciertos = 0, finCambioPantalla = 0;
 const $ = id => document.getElementById(id);
 
 function mostrar(id){
   document.querySelectorAll(".pantalla").forEach(p => p.classList.remove("activa"));
   $(id).classList.add("activa");
+  finCambioPantalla = performance.now() + ESPERA_PANTALLA; // evita pulsar sin querer lo que aparece bajo el dedo
+}
+
+function nuevaPartida(){
+  preguntas = sacarPreguntas(); indice = 0; aciertos = 0; historial = [];
+  partida++; $("m-partida").textContent = partida;
+  pintarPregunta();
 }
 
 function pintarPregunta(){
-  const q = PREGUNTAS[indice];
+  const q = preguntas[indice];
   seleccion = null; fase = "elegir";
-  $("progreso").textContent = `Pregunta ${indice+1} de ${PREGUNTAS.length}`;
+  $("progreso").textContent = `Pregunta ${indice+1} de ${preguntas.length}`;
   $("enunciado").textContent = q.texto;
   const cont = $("opciones"); cont.innerHTML = "";
   q.opciones.forEach((txt,i) => {
@@ -140,7 +205,7 @@ function pintarPregunta(){
 
 function elegir(i){
   if (fase !== "elegir") return;
-  seleccion = i;
+  seleccion = i; SON.marcar();
   document.querySelectorAll(".opcion").forEach(o =>
     o.classList.toggle("seleccionada", Number(o.dataset.i) === i));
   $("btn-accion").disabled = false;
@@ -148,15 +213,14 @@ function elegir(i){
 
 function contestar(){
   if (fase !== "elegir" || seleccion === null) return;
-  const q = PREGUNTAS[indice];
-  const ok = seleccion === q.correcta;
-  if (ok) aciertos++;
+  const q = preguntas[indice], ok = seleccion === q.correcta;
+  if (ok){ aciertos++; totalAciertos++; $("m-total").textContent = totalAciertos; }
+  ok ? SON.acierto() : SON.fallo();
   historial.push({ q: q.texto, ok, elegida: q.opciones[seleccion], buena: q.opciones[q.correcta] });
   fase = "corregida";
   document.querySelectorAll(".opcion").forEach(o => {
     const i = Number(o.dataset.i);
-    o.classList.add("bloqueada");
-    o.classList.remove("seleccionada");
+    o.classList.add("bloqueada"); o.classList.remove("seleccionada");
     if (i === q.correcta) o.classList.add("correcta");
     else if (i === seleccion) o.classList.add("incorrecta");
   });
@@ -164,31 +228,30 @@ function contestar(){
   f.className = "feedback " + (ok ? "ok" : "ko");
   f.innerHTML = ok
     ? `<strong>✅ ¡Correcto!</strong>${q.explicacion}`
-    : `<strong>❌ No es correcta.</strong>La respuesta buena es <b>${q.opciones[q.correcta]}</b>. ${q.explicacion}`;
-  $("btn-accion").textContent = indice < PREGUNTAS.length-1 ? "SIGUIENTE PREGUNTA" : "VER PUNTUACIÓN";
+    : `<strong>❌ No es correcta.</strong>La buena es <b>${q.opciones[q.correcta]}</b>. ${q.explicacion}`;
+  $("btn-accion").textContent = indice < preguntas.length-1 ? "SIGUIENTE PREGUNTA" : "VER PUNTUACIÓN";
 }
 
 function accion(){
   if (fase === "elegir") contestar();
-  else { indice++; indice < PREGUNTAS.length ? pintarPregunta() : pintarFinal(); }
+  else { SON.marcar(); indice++; indice < preguntas.length ? pintarPregunta() : pintarFinal(); }
 }
 
 function pintarFinal(){
-  $("nota").textContent = `${aciertos} / ${PREGUNTAS.length}`;
+  $("nota").textContent = `${aciertos} / ${preguntas.length}`;
   $("mensaje-final").textContent =
-    aciertos === 3 ? "¡Perfecto! Dominas la ciencia básica." :
+    aciertos === 3 ? "¡Pleno! Eres una enciclopedia andante." :
     aciertos === 2 ? "¡Muy bien! Solo se te escapó una." :
-    aciertos === 1 ? "Vas por buen camino. Repasa las explicaciones." :
-                     "Ánimo: lee las explicaciones y vuelve a intentarlo.";
+    aciertos === 1 ? "No está mal. ¿Otra partida con preguntas nuevas?" :
+                     "Ánimo: la siguiente partida trae preguntas distintas.";
   $("resumen").innerHTML = historial.map((h,i) =>
     `<div class="${h.ok?'r-ok':'r-ko'}"><b>${i+1}.</b> ${h.q}<br>${h.ok?'✅':'❌'} Tu respuesta: ${h.elegida}${h.ok?'':` · Correcta: <b>${h.buena}</b>`}</div>`).join("");
+  SON.final();
   mostrar("p-final");
 }
 
-function reiniciar(){ indice = 0; aciertos = 0; historial = []; pintarPregunta(); }
-
 $("btn-accion").addEventListener("click", accion);
-$("btn-repetir").addEventListener("click", reiniciar);
+$("btn-repetir").addEventListener("click", () => { SON.marcar(); nuevaPartida(); });
 $("btn-camara").addEventListener("click", iniciarCamara);
 
 /* ================== CÁMARA + MEDIAPIPE ================== */
@@ -204,7 +267,8 @@ function ajustarCapa(){
 addEventListener("resize", ajustarCapa); ajustarCapa();
 
 async function iniciarCamara(){
-  if (camaraLista) { pintarPregunta(); return; }
+  tono(1, 0.01, "sine", 0.0001); // desbloquea el audio con el clic
+  if (camaraLista) { nuevaPartida(); return; }
   const est = $("estado");
   try {
     est.textContent = "Cargando el detector de manos…";
@@ -225,25 +289,25 @@ async function iniciarCamara(){
     est.textContent = "Pidiendo permiso para la cámara…";
     const stream = await navigator.mediaDevices.getUserMedia({ video: { facingMode: "user", width: 640, height: 480 }, audio: false });
     video.srcObject = stream; await video.play();
-    $("mini").style.display = "block";
+    document.body.classList.add("camara");
+    $("mini").style.display = "block"; $("marcador").style.display = "flex";
     camaraLista = true;
     requestAnimationFrame(bucle);
-    pintarPregunta();
+    nuevaPartida();
   } catch (e) {
     console.error(e);
     est.textContent = "No se pudo activar la cámara o el detector. Abre la página por HTTPS y concede permiso. (Puedes jugar con el ratón).";
-    setTimeout(pintarPregunta, 2500);
+    setTimeout(nuevaPartida, 2500);
   }
 }
 
 /* ---------- elegir la mano según el selector ----------
-   MediaPipe etiqueta la lateralidad como si la imagen estuviera en espejo:
-   con la cámara frontal sin voltear, tu mano DERECHA llega etiquetada "Left". */
+   Comprobado en uso real: con esta configuración la mano DERECHA llega etiquetada "Right". */
 function elegirMano(res){
   if (!res.landmarks || !res.landmarks.length) return null;
   const modo = $("sel-mano").value;
   if (modo === "cualquiera") return res.landmarks[0];
-  const buscada = modo === "derecha" ? "Left" : "Right";
+  const buscada = modo === "derecha" ? "Right" : "Left";
   for (let i = 0; i < res.landmarks.length; i++){
     const lab = res.handednesses?.[i]?.[0]?.categoryName || res.handedness?.[i]?.[0]?.categoryName;
     if (lab === buscada) return res.landmarks[i];
@@ -253,11 +317,10 @@ function elegirMano(res){
 
 /* ---------- puntero suavizado y permanencia ---------- */
 let px = null, py = null;
-let objetivo = null, tInicio = 0, bloqueado = null; // bloqueado: elemento ya activado, hay que salir de él
-const SUAVE = 0.35, MARGEN = 0.12; // margen: no hace falta llevar el dedo al borde de la cámara
+let objetivo = null, tInicio = 0, bloqueado = null;
+const SUAVE = 0.35, MARGEN = 0.12;
 
 function mapear(lm){
-  // espejo + ampliación del área útil
   let nx = 1 - lm.x, ny = lm.y;
   nx = (nx - MARGEN) / (1 - 2*MARGEN);
   ny = (ny - MARGEN) / (1 - 2*MARGEN);
@@ -295,11 +358,13 @@ function bucle(){
   if (px === null){ px = tx; py = ty; }
   px += (tx - px) * SUAVE; py += (ty - py) * SUAVE;
 
+  const enEspera = ts < finCambioPantalla;
   const el = elementoActivable(px, py);
   if (bloqueado && el !== bloqueado) bloqueado = null;
+  if (enEspera && el) bloqueado = el; // lo que aparece bajo el dedo tras cambiar de pantalla exige salir y volver a entrar
   const candidato = (el && el !== bloqueado) ? el : null;
 
-  if (candidato !== objetivo){ objetivo = candidato; tInicio = ts; }
+  if (candidato !== objetivo){ objetivo = candidato; tInicio = ts; if (candidato) SON.encima(); }
   marcarHover(candidato);
 
   let progreso = 0;
@@ -320,23 +385,20 @@ let flash = null;
 function destello(x, y){ flash = { x, y, t: performance.now() }; }
 
 function dibujarPuntero(x, y, p){
-  // círculo creciente (relleno) + arco de progreso
   if (p > 0){
-    const r = 10 + 26 * p;
+    const r = 12 + 30 * p;
     ctx.beginPath(); ctx.arc(x, y, r, 0, Math.PI*2);
     ctx.fillStyle = `rgba(47,111,237,${0.15 + 0.25*p})`; ctx.fill();
-    ctx.beginPath(); ctx.arc(x, y, 38, -Math.PI/2, -Math.PI/2 + Math.PI*2*p);
-    ctx.strokeStyle = "#2f6fed"; ctx.lineWidth = 5; ctx.lineCap = "round"; ctx.stroke();
+    ctx.beginPath(); ctx.arc(x, y, 44, -Math.PI/2, -Math.PI/2 + Math.PI*2*p);
+    ctx.strokeStyle = "#2f6fed"; ctx.lineWidth = 6; ctx.lineCap = "round"; ctx.stroke();
   }
-  // punto del índice
-  ctx.beginPath(); ctx.arc(x, y, 8, 0, Math.PI*2);
+  ctx.beginPath(); ctx.arc(x, y, 10, 0, Math.PI*2);
   ctx.fillStyle = "#ff7a00"; ctx.fill();
   ctx.lineWidth = 3; ctx.strokeStyle = "#fff"; ctx.stroke();
-  // destello al confirmar
   if (flash){
     const k = (performance.now() - flash.t) / 350;
     if (k < 1){
-      ctx.beginPath(); ctx.arc(flash.x, flash.y, 38 + 30*k, 0, Math.PI*2);
+      ctx.beginPath(); ctx.arc(flash.x, flash.y, 44 + 30*k, 0, Math.PI*2);
       ctx.strokeStyle = `rgba(31,157,85,${1-k})`; ctx.lineWidth = 6; ctx.stroke();
     } else flash = null;
   }
@@ -360,7 +422,7 @@ function dibujarEsqueleto(res){
       ectx.stroke();
     });
     if (esActiva){
-      ectx.beginPath(); ectx.arc(lm[8].x*esq.width, lm[8].y*esq.height, 6, 0, Math.PI*2);
+      ectx.beginPath(); ectx.arc(lm[8].x*esq.width, lm[8].y*esq.height, 7, 0, Math.PI*2);
       ectx.fillStyle = "#ff7a00"; ectx.fill();
     }
   });
