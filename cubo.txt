@@ -109,6 +109,24 @@
   body.landscape.opts #inputs{display:grid}
   #inputs .ohead{grid-area:h} #tgVoice{grid-area:v} #tgHead{grid-area:c} #tgWink{grid-area:w} #tgSwap{grid-area:s}
   #headdbg{grid-area:d} #meters{grid-area:m} #heard{grid-area:r}
+  /* pantallas táctiles: todo lo que se toca mide al menos 44 px de alto (WCAG 2.5.5) */
+  @media (pointer:coarse){
+    #optBtn{min-height:44px;padding:0 16px}
+    #optClose{min-height:44px;display:inline-flex;align-items:center;padding:0 14px}
+    #tgVoice,#tgHead,#tgWink,#tgSwap{min-height:44px;align-items:center}
+    .sl,body.compact .sl{height:44px;border-radius:22px}
+    .sl .fill,body.compact .sl .fill{border-radius:22px}
+    .sl .thumb,body.compact .sl .thumb{top:4px;width:36px;height:36px;margin-left:-18px}
+    #start button{min-height:44px}
+    body.compact #inputs{top:calc(62px + var(--st));max-height:calc(100% - 72px - var(--st) - var(--sb))}
+    body.portrait > #giro{top:calc(62px + var(--st))}
+    body.portrait #video{top:calc(62px + var(--st))}
+    body.portrait #hint{bottom:calc(104px + var(--sb))}
+  }
+  /* horizontal: la cabecera del panel ⚙ va arriba a la derecha y los 4 interruptores caben sin desplazar */
+  body.landscape #inputs{grid-template-areas:"v h" "c m" "w m" "s m" "d m" "r m"}
+  /* móviles muy bajos en horizontal: el recuadro del giro, más compacto */
+  @media (max-height:380px){ body.landscape > #giro{font-size:10.5px;line-height:1.25;padding:5px 8px} }
 </style>
 </head>
 <body>
