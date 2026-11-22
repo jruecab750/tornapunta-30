@@ -260,24 +260,32 @@ import * as THREE from "three";
 
 /* ================= DATOS DEL TORNAPUNTA (PDF P04, 30°) ================= */
 const qs = new URLSearchParams(location.search);
-const L = 50, HH = 10, T = 2, H = 3;               // longitud, tizón, grueso, ancho del ejión (cm)
+const L = 50, HH = 10, T = 2;               // longitud, tizón, grueso, ancho del ejión (cm)
 let TH = (()=>{ const v=+(qs.get("a")||(()=>{try{return localStorage.getItem("tp_angle")}catch(e){return null}})()||30); return [30,45,60].includes(v)?v:30; })();   // ángulo del tornapunta con la horizontal
+/* grosor de los ejiones en cada ejercicio (cm): [horizontal (pie), vertical (cabeza)] */
+const EJ_GROSOR={30:[3,3],45:[4.5,4.5],60:[6,5]};
+let HP=3, HC=3;                                      // h del pie (ejión horizontal) y de la cabeza (ejión vertical)
+function setEj(th){ [HP,HC]=EJ_GROSOR[th]||[3,3]; }
+const hAt=S=>S.x>L/2?HP:HC;                          // el flexómetro mide el ejión del extremo donde se apoya
+const cmW=v=>({3:"tres centímetros",4.5:"cuatro centímetros y medio",5:"cinco centímetros",6:"seis centímetros"})[v]||(String(v).replace(".",",")+" centímetros");
 const rad = a => a*Math.PI/180;
 const dirOf = a => ({x:Math.cos(rad(a)), y:Math.sin(rad(a))});
 const f1 = v => v.toFixed(1).replace(".", ",");
+const fh = v => Math.abs(v-Math.round(v))<1e-9 ? String(Math.round(v)) : f1(v);
 
-function expected(th, L, h, HH){
+function expected(th, L, hp, hc, HH){
   const E={x:L,y:0}, a2=90+th;
-  const M={x:E.x+h*Math.cos(rad(a2)), y:E.y+h*Math.sin(rad(a2))};
+  const M={x:E.x+hp*Math.cos(rad(a2)), y:E.y+hp*Math.sin(rad(a2))};
   const O={x:M.x,y:HH}, a4=a2;
   const P={x:L, y:O.y+(L-O.x)*Math.tan(rad(a4))}, a5=th;
   const Q={x:P.x-P.y/Math.tan(rad(a5)), y:0};
-  const E2={x:0,y:0}, M2={x:h*Math.cos(rad(th)), y:h*Math.sin(rad(th))}, O2={x:M2.x,y:HH}, a6=th;
+  const E2={x:0,y:0}, M2={x:hc*Math.cos(rad(th)), y:hc*Math.sin(rad(th))}, O2={x:M2.x,y:HH}, a6=th;
   const P2={x:0, y:O2.y+(0-O2.x)*Math.tan(rad(a6))}, a7=th+90;
   const Q2={x:P2.x-P2.y/Math.tan(rad(a7)), y:0};
   return {E,M,O,P,Q,E2,M2,O2,P2,Q2,a2,a4,a5,a6,a7};
 }
-let EXP = expected(TH, L, H, HH);
+setEj(TH);
+let EXP = expected(TH, L, HP, HC, HH);
 const mkCuts = () => [
   {n:1, x:EXP.O.x,  y:EXP.O.y,  ang:EXP.a4},
   {n:2, x:EXP.P.x,  y:EXP.P.y,  ang:EXP.a5},
@@ -434,15 +442,15 @@ function mountGeo(th,E){ const r=rad(-th);                  // el apoyo de la su
   const fY=-(E.Q.x*Math.sin(r)+E.Q.y*Math.cos(r)), fX=E.P.x*Math.cos(r)-E.P.y*Math.sin(r);
   const hY=E.P2.x*Math.sin(r)+E.P2.y*Math.cos(r)+fY, hX=E.P2.x*Math.cos(r)-E.P2.y*Math.sin(r);
   return {footY:fY,footX:fX,headY:hY,headX:hX,w:(fX+EJ_LEN+10)-(hX-BEAM_T),h:hY+EJ_LEN+6+BEAM_T}; }
-const MG30=mountGeo(30,expected(30,L,H,HH));
+const MG30=mountGeo(30,expected(30,L,3,3,HH));
 function buildAsm(){
   const g=mountGeo(TH,EXP); footY=g.footY; footX=g.footX; headY=g.headY; headX=g.headX;
   ASM_K=Math.max(1,g.w/MG30.w,g.h/MG30.h);                   // a 45° y 60° el montaje es más alto: la cámara se aleja
   for(const c of [...asm.children]){ asm.remove(c); c.traverse(o=>{ if(o.geometry) o.geometry.dispose(); }); }
   box(headX, footX+EJ_LEN+10, -BEAM_T, 0, BEAM_W, mBeamH);          // durmiente horizontal: topa contra el vertical
   box(headX-BEAM_T, headX, -BEAM_T, headY+EJ_LEN+6, BEAM_W, mBeamV); // durmiente vertical: llega hasta el suelo
-  box(footX, footX+EJ_LEN, 0, H, BEAM_W, mEj);               // ejión del pie (apoya contra el corte 1)
-  box(headX, headX+H, headY, headY+EJ_LEN, BEAM_W, mEj);     // ejión de la cabeza (junto al corte 4)
+  box(footX, footX+EJ_LEN, 0, HP, BEAM_W, mEj);               // ejión del pie (apoya contra el corte 1)
+  box(headX, headX+HC, headY, headY+EJ_LEN, BEAM_W, mEj);     // ejión de la cabeza (junto al corte 4)
   ASM_POS = {x:-((headX-BEAM_T)+(footX+EJ_LEN+10))/2, y:-(headY+EJ_LEN+6-BEAM_T)/2};
   asm.position.set(ASM_POS.x, ASM_POS.y);
 }
@@ -464,8 +472,8 @@ function buildMini(){
   miniAsm.position.set(ASM_POS.x,ASM_POS.y,0); camera2.position.z=175*ASM_K;
   mbox(headX, footX+EJ_LEN+10, -BEAM_T, 0, BEAM_W, MMAT.h);
   mbox(headX-BEAM_T, headX, -BEAM_T, headY+EJ_LEN+6, BEAM_W, MMAT.v);
-  mbox(footX, footX+EJ_LEN, 0, H, BEAM_W, MMAT.e);
-  mbox(headX, headX+H, headY, headY+EJ_LEN, BEAM_W, MMAT.e);
+  mbox(footX, footX+EJ_LEN, 0, HP, BEAM_W, MMAT.e);
+  mbox(headX, headX+HC, headY, headY+EJ_LEN, BEAM_W, MMAT.e);
   const tw=new THREE.Group(); tw.position.set(0,footY,0); tw.rotation.z=rad(-TH); miniAsm.add(tw);
   const m=new THREE.Mesh(geoFromPoly(idealPoly()),[matTop,matSide,matCut]); m.position.z=-T/2; addEdges(m,mEdgeM); tw.add(m);
 }
@@ -509,7 +517,7 @@ const L3=[
   {t:"TORNAPUNTA", col:"#e6c887", anchor:()=>holder.localToWorld(new THREE.Vector3(L*0.5,HH*0.55,T/2)), dx:70, dy:-85},
   {t:"DURMIENTE HORIZONTAL", col:"#86b4de", anchor:()=>asm.localToWorld(new THREE.Vector3(footX-5,-BEAM_T,BEAM_W/2)), dx:-10, dy:32},
   {t:"DURMIENTE VERTICAL", col:"#9fd29a", anchor:()=>asm.localToWorld(new THREE.Vector3(headX-BEAM_T/2,headY+EJ_LEN+1,BEAM_W/2)), dx:-120, dy:-10},
-  {t:"EJIÓN", col:"#c4aee6", anchor:()=>asm.localToWorld(new THREE.Vector3(footX+EJ_LEN*0.6,H,BEAM_W/2)), dx:40, dy:-70},
+  {t:"EJIÓN", col:"#c4aee6", anchor:()=>asm.localToWorld(new THREE.Vector3(footX+EJ_LEN*0.6,HP,BEAM_W/2)), dx:40, dy:-70},
 ].map(o=>{ o.el=document.createElement("div"); o.el.className="l3"; o.el.textContent=o.t; o.el.style.borderColor=o.col; o.el.style.color=o.col; document.body.appendChild(o.el);
   o.ln=document.createElementNS("http://www.w3.org/2000/svg","line"); o.ln.setAttribute("stroke",o.col); o.ln.setAttribute("stroke-width","2"); document.getElementById("l3svg").appendChild(o.ln); return o; });
 function updateLabels(){
@@ -778,7 +786,7 @@ function suelaLen(){
 const angleNeedsHold=()=>stage!=="intro"&&(marks.length>0||lines.length>0||cutsDone.length>0);   // con trabajo hecho, cambiar de ejercicio exige mantener el pellizco
 function applyAngle(th){
   TH=th; try{ localStorage.setItem("tp_angle",th); }catch(e){}
-  EXP=expected(TH,L,H,HH); CUTS=mkCuts(); NAMES=mkNames(); ITEMS=mkItems(); ITEM_PT=mkItemPt(); DET=mkDet(); NAR=mkNar();
+  setEj(TH); EXP=expected(TH,L,HP,HC,HH); CUTS=mkCuts(); NAMES=mkNames(); ITEMS=mkItems(); ITEM_PT=mkItemPt(); DET=mkDet(); NAR=mkNar();
   buildAsm(); buildMini(); snapCache=null; lastCheck=""; paintAngles();
 }
 function paintAngles(){ document.querySelectorAll("[data-key^='angle:']").forEach(b=>b.classList.toggle("sel",+b.dataset.key.slice(6)===TH)); }
@@ -797,10 +805,10 @@ function beginTrace(){
   say("Empieza por marcar el vértice E: la esquina inferior derecha de la tabla","",5000);
 }
 
-/* puntos donde el arco de 3 cm (radio H alrededor del punto inicial) corta las líneas trazadas por ese punto */
+/* puntos donde el arco de h cm (grosor del ejión de ese extremo, alrededor del punto inicial) corta las líneas trazadas por ese punto */
 function flexCands(S){ const out=[];
   for(const l of lines){ if(distPtLine(S,l)>=0.05) continue; const d=dirOf(l.ang);
-    for(const sg of [1,-1]){ const e={x:S.x+d.x*H*sg,y:S.y+d.y*H*sg,a:l.ang,sg};
+    for(const sg of [1,-1]){ const h=hAt(S), e={x:S.x+d.x*h*sg,y:S.y+d.y*h*sg,a:l.ang,sg};
       if(e.x>=-0.05&&e.x<=L+0.05&&e.y>=-0.05&&e.y<=HH+0.05&&!out.some(c=>Math.hypot(c.x-e.x,c.y-e.y)<0.05)) out.push(e); } }
   return out; }
 /* ================= HOVER + DWELL ================= */
@@ -839,8 +847,8 @@ function computeHover(){
     if(Math.hypot(pb.x-S.x,pb.y-S.y)<0.8){ tapeDraw={s:S,a:null}; return {key:"fcancel"}; }
     let best=null,bd=1.7; for(const c of cands){ const dd=Math.hypot(pb.x-c.x,pb.y-c.y); if(dd<bd){bd=dd;best=c;} }
     if(!best){ tapeDraw={s:S,a:null}; return null; }
-    tapeDraw={s:S,a:best.a,t:H*best.sg};
-    return {key:"fe:"+best.a+":"+(H*best.sg),pt:{x:best.x,y:best.y}};
+    tapeDraw={s:S,a:best.a,t:hAt(S)*best.sg};
+    return {key:"fe:"+best.a+":"+(hAt(S)*best.sg),pt:{x:best.x,y:best.y}};
   }
   if(tool==="saw"){
     if(sawLock) return null;
@@ -883,7 +891,7 @@ function fire(h){
   else if(k==="anchorcancel"){ anchor=null; say("Punto anulado: elige otro punto","",2500); }
   else if(k==="raynone"){ say("Apunta hacia una de las líneas discontinuas y pellizca (o pellizca el punto para anularlo)","err",3500); }
   else if(k.startsWith("ray:")){ addLine(anchor.x,anchor.y,h.ang); anchor=null; say("Línea trazada","ok",2000); }
-  else if(k.startsWith("fs:")){ tapeStart={x:h.pt.x,y:h.pt.y}; say("Arco de 3 cm fijado: pellizca donde cruza la línea para marcar el punto.","",5000); }
+  else if(k.startsWith("fs:")){ tapeStart={x:h.pt.x,y:h.pt.y}; say(`Arco de ${fh(hAt(tapeStart))} cm (grosor del ejión) fijado: pellizca donde cruza la línea para marcar el punto.`,"",5000); }
   else if(k==="fcancel"){ tapeStart=null; }
   else if(k.startsWith("fe:")){ const m=addMark(h.pt.x,h.pt.y); tapeStart=null; say(`Medida marcada: ${f1(Math.abs(parseFloat(k.split(":")[2])))} cm`,"ok",3000); }
   else if(k.startsWith("sl:")){ cutErr=""; sawLock=h.lineId; sideDirty=true; say("Hoja alineada. Elige la inclinación de la hoja y pulsa CORTAR.","",6000); }
@@ -1050,17 +1058,18 @@ function drawLayer(ctx,Tf,k,isLupa){
     }
     ctx.strokeStyle="#35e0ff"; ctx.lineWidth=2*k; ctx.beginPath(); ctx.arc(A.x,A.y,9*k,0,7); ctx.stroke();
   }
-  // flexómetro: arco fijo de 3 cm y puntos de corte con las líneas
+  // flexómetro: arco del grosor del ejión de ese extremo y puntos de corte con las líneas
   if(tool==="flex"&&tapeStart){
     const S=tapeStart, N=96; ctx.save(); ctx.setLineDash([8*k,6*k]); ctx.strokeStyle="#ffd60a"; ctx.lineWidth=2.6*k; ctx.lineCap="butt"; ctx.beginPath(); let pen=false;
-    for(let i=0;i<=N;i++){ const t=i/N*Math.PI*2, p={x:S.x+H*Math.cos(t),y:S.y+H*Math.sin(t)};
+    const hS=hAt(S);
+    for(let i=0;i<=N;i++){ const t=i/N*Math.PI*2, p={x:S.x+hS*Math.cos(t),y:S.y+hS*Math.sin(t)};
       if(p.x<-0.05||p.x>L+0.05||p.y<-0.05||p.y>HH+0.05){ pen=false; continue; }
       const q=Tf(p); pen?ctx.lineTo(q.x,q.y):ctx.moveTo(q.x,q.y); pen=true; }
     ctx.stroke(); ctx.restore();
     const cs=flexCands(S);
-    for(const c of cs){ const q=Tf(c), hot=tapeDraw&&tapeDraw.a===c.a&&tapeDraw.t===H*c.sg;
+    for(const c of cs){ const q=Tf(c), hot=tapeDraw&&tapeDraw.a===c.a&&tapeDraw.t===hS*c.sg;
       ctx.fillStyle=hot?"#fff":"#ffd60a"; ctx.strokeStyle="#111"; ctx.lineWidth=1.5*k; ctx.beginPath(); ctx.arc(q.x,q.y,(hot?8:6)*k,0,7); ctx.fill(); ctx.stroke(); }
-    if(!isLupa&&cs[0]){ const t0=(cs[0].a+(cs[0].sg<0?180:0)+22)*Math.PI/180, q=Tf({x:S.x+(H+1.1)*Math.cos(t0),y:S.y+(H+1.1)*Math.sin(t0)}); pill(ctx,f1(H)+" cm",q.x,q.y,1.05,"#ffd60a"); }
+    if(!isLupa&&cs[0]){ const t0=(cs[0].a+(cs[0].sg<0?180:0)+22)*Math.PI/180, q=Tf({x:S.x+(hS+1.1)*Math.cos(t0),y:S.y+(hS+1.1)*Math.sin(t0)}); pill(ctx,fh(hS)+" cm",q.x,q.y,1.05,"#ffd60a"); }
   }
   if(tapeDraw&&tapeDraw.a!==null&&tapeDraw.t!==undefined){
     const d=dirOf(tapeDraw.a), S=tapeDraw.s, ts=tapeDraw.t, sg=ts<0?-1:1;
@@ -1207,13 +1216,13 @@ const hasLine=(p,a)=>lines.some(l=>angDiff(l.ang,a)<0.6&&distPtLine(p,l)<TOL);
 const mkItems=()=>[
  ["Pie","Marca E: vértice del pie",()=>hasMark(EXP.E)],
  ["Pie",`Desde E, línea a 90°−θ (${90-TH}° con la soga)`,()=>hasLine(EXP.E,EXP.a2)],
- ["Pie",`Mide h = ${H} cm sobre ella: marca M`,()=>hasMark(EXP.M)],
+ ["Pie",`Mide h = ${fh(HP)} cm (grosor del ejión${HP===HC?"":" horizontal"}) sobre ella: marca M`,()=>hasMark(EXP.M)],
  ["Pie","Desde M, perpendicular a la soga hasta O",()=>hasLine(EXP.M,90)],
  ["Pie","Corte 1: por O, paralela a E–M",()=>hasLine(EXP.O,EXP.a4)],
  ["Pie","Corte 2 (suela): por P, perpendicular a O–P",()=>hasLine(EXP.P,EXP.a5)],
  ["Cabeza","Marca E′: vértice de la cabeza",()=>hasMark(EXP.E2)],
  ["Cabeza",`Desde E′, línea a θ = ${TH}° con la soga`,()=>hasLine(EXP.E2,TH)],
- ["Cabeza",`Mide h = ${H} cm sobre ella: marca M′`,()=>hasMark(EXP.M2)],
+ ["Cabeza",`Mide h = ${fh(HC)} cm (grosor del ejión${HP===HC?"":" vertical"}) sobre ella: marca M′`,()=>hasMark(EXP.M2)],
  ["Cabeza","Desde M′, perpendicular a la soga hasta O′",()=>hasLine(EXP.M2,90)],
  ["Cabeza","Corte 3: por O′, paralela a E′–M′",()=>hasLine(EXP.O2,EXP.a6)],
  ["Cabeza","Corte 4: por P′, perpendicular a O′–P′",()=>hasLine(EXP.P2,EXP.a7)],
@@ -1229,13 +1238,14 @@ const lab=a=>candLabel(a);                        // etiqueta de la línea disco
 const mkDet=()=>[
  "Lápiz: pellizca la esquina inferior derecha de la tabla (punto E).",
  `Con E marcado, apunta hacia la línea discontinua ${lab(EXP.a2)} y pellizca.`,
- "Flexómetro: pellizca E; aparece un arco de 3 cm. Pellizca donde el arco cruza la línea: ahí está M.",
+ `Flexómetro: pellizca E; aparece un arco de ${fh(HP)} cm, que es el grosor de nuestro ejión${HP===HC?"":" horizontal"} en este ejercicio. Pellizca donde el arco cruza la línea: ahí está M.`,
  "Lápiz: pellizca M y elige ⊥ 90° hacia arriba, hasta el borde superior: ahí está O.",
  `Lápiz: pellizca O (se pega solo) y elige la línea ${lab(EXP.a4)}, paralela a E–M. Es el corte 1.`,
  `Lápiz: pellizca P, donde la línea del corte 1 llega al borde derecho, y elige ${lab(EXP.a5)}. Es el corte 2 (la suela).`,
  "CABEZA, igual que el pie pero en el extremo izquierdo. Lápiz: pellizca la esquina inferior izquierda de la tabla (E′).",
  `Con E′ marcado, apunta hacia la línea discontinua ${lab(TH)} y pellizca.`,
- "Flexómetro: pellizca E′; aparece un arco de 3 cm. Pellizca donde el arco cruza la línea: ahí está M′.",
+ (HP===HC?`Flexómetro: pellizca E′; aparece un arco de ${fh(HC)} cm, el grosor de nuestro ejión en este ejercicio (igual que en el pie). Pellizca donde el arco cruza la línea: ahí está M′.`
+   :`Flexómetro: ¡ojo!, en este ejercicio el ejión vertical tiene ${fh(HC)} cm de grosor (no ${fh(HP)}). Pellizca E′; aparece un arco de ${fh(HC)} cm. Pellizca donde el arco cruza la línea: ahí está M′.`),
  "Lápiz: pellizca M′ y elige ⊥ 90° hacia arriba, hasta el borde superior: ahí está O′.",
  `Lápiz: pellizca O′ y elige la línea ${lab(EXP.a6)}, paralela a E′–M′. Es el corte 3.`,
  `Lápiz: pellizca P′, donde la línea del corte 3 llega al borde izquierdo, y elige ${lab(EXP.a7)}. Es el corte 4.`,
@@ -1251,13 +1261,14 @@ const nw=a=>NUMW[a]||String(a);
 const mkNar=()=>[
  "Empieza marcando el vértice E, en la esquina inferior derecha de la tabla.",
  `Ahora, desde E, traza una línea que forme ${nw(90-TH)} grados con la soga.`,
- "Toca E y verás un arco de tres centímetros. Pellizca donde cruza la línea y aparecerá el punto M.",
+ `Marca ${cmW(HP)} desde E: es el grosor de nuestro ejión${HP===HC?"":" horizontal"} en este ejercicio. Toca E y verás un arco de ${cmW(HP)}. Pellizca donde cruza la línea y aparecerá el punto M.`,
  "Desde M, traza una perpendicular a la soga, hasta el borde superior. Ahí está el punto O.",
  `Desde O, traza otra línea a ${nw(90-TH)} grados con la soga, paralela a la anterior. Ese es el corte uno.`,
  "Marca P, donde esa línea llega al borde derecho, y traza una perpendicular. Es el corte dos, la suela.",
  "Vamos con la cabeza. Marca el vértice E prima, en la esquina inferior izquierda de la tabla.",
  `Desde E prima, traza una línea que forme ${nw(TH)} grados con la soga.`,
- "Toca E prima y verás un arco de tres centímetros. Pellizca donde cruza la línea y aparecerá el punto M prima.",
+ (HP===HC?`Marca ${cmW(HC)} desde E prima: el mismo grosor de ejión que en el pie. Toca E prima y verás un arco de ${cmW(HC)}. Pellizca donde cruza la línea y aparecerá el punto M prima.`
+   :`Atención: en este ejercicio el ejión vertical tiene ${cmW(HC)} de grosor. Marca ${cmW(HC)} desde E prima: toca E prima y verás el arco. Pellizca donde cruza la línea y aparecerá el punto M prima.`),
  "Desde M prima, sube en perpendicular hasta el borde superior. Ahí está O prima.",
  `Desde O prima, traza una línea a ${nw(TH)} grados, paralela a la anterior. Es el corte tres.`,
  "Marca P prima, donde esa línea llega al borde izquierdo, y traza una perpendicular. Es el corte cuatro."];
@@ -1342,10 +1353,10 @@ function renderSide(){
   document.querySelectorAll(".tbtn[data-key^='tool:']").forEach(b=>b.classList.toggle("sel",b.dataset.key==="tool:"+tool&&stage==="trace"));
   let h="";
   if(stage==="intro"){
-    h+=`<div class="rep" style="background:#0e1f3a;border-color:#35e0ff"><b>Tornapunta a ${TH}°: así quedará montado.</b> Gíralo con la pelota${CPT()?" o arrastrando el fondo":""}.${CPT()&&!camOn()?"":" Para pulsar, haz la pinza así:"}</div>${CPT()&&!camOn()?"":pinchDemo(CPT()?72:104)}<div class="dw btn big" data-key="begin" style="height:76px;font-size:15px;line-height:1.2">COMENZAR A TRAZAR Y CORTAR EL TORNAPUNTA</div>`;
+    h+=`<div class="rep" style="background:#0e1f3a;border-color:#35e0ff"><b>Tornapunta a ${TH}°: así quedará montado.</b> ${HP===HC?`Ejiones de ${fh(HP)} cm.`:`Ejión horizontal de ${fh(HP)} cm y vertical de ${fh(HC)} cm.`} Gíralo con la pelota${CPT()?" o arrastrando el fondo":""}.${CPT()&&!camOn()?"":" Para pulsar, haz la pinza así:"}</div>${CPT()&&!camOn()?"":pinchDemo(CPT()?72:104)}<div class="dw btn big" data-key="begin" style="height:76px;font-size:15px;line-height:1.2">COMENZAR A TRAZAR Y CORTAR EL TORNAPUNTA</div>`;
   } else if(stage==="mounted"){
     const s=suelaLen(), secs=Math.round((performance.now()-tStart)/1000);
-    h+=`<div class="rep"><b>¡Tornapunta montado a ${TH}°!</b><br>Durmientes 5 × 15 cm · ejiones 20 × 3 cm<br>Suela P–Q = <b>${isNaN(s)?"—":f1(s)} cm</b> (objetivo ${f1(EXP.P.x-EXP.Q.x>0?Math.hypot(EXP.P.x-EXP.Q.x,EXP.P.y-EXP.Q.y):0)} cm)<br>Errores: ${errors} · Tiempo: ${Math.floor(secs/60)} min ${secs%60} s</div>`;
+    h+=`<div class="rep"><b>¡Tornapunta montado a ${TH}°!</b><br>Durmientes 5 × 15 cm · ${HP===HC?`ejiones 20 × ${fh(HP)} cm`:`ejión horizontal 20 × ${fh(HP)} cm · vertical 20 × ${fh(HC)} cm`}<br>Suela P–Q = <b>${isNaN(s)?"—":f1(s)} cm</b> (objetivo ${f1(EXP.P.x-EXP.Q.x>0?Math.hypot(EXP.P.x-EXP.Q.x,EXP.P.y-EXP.Q.y):0)} cm)<br>Errores: ${errors} · Tiempo: ${Math.floor(secs/60)} min ${secs%60} s</div>`;
   } else if(stage==="trace" && cutsDone.length===4){
     h+=`<div class="dw btn big" data-key="mount">MONTAR A ${TH}°</div>`;
   } else if(stage==="trace" && tool==="saw" && sawLock!=null){
@@ -1355,7 +1366,7 @@ function renderSide(){
   } else {
     if(CPT()&&phaseOf()==="cut"){ const he=cutEnd==="head";
       h+=`<div class="row"><div class="dw btn ${he?"sel":""}" data-key="end:head" style="flex:1">◀ Cortes en la CABEZA</div><div class="dw btn ${he?"":"sel"}" data-key="end:pie" style="flex:1">Cortes en el PIE ▶</div></div>`; }
-    h+=`<div class="help" style="opacity:.85;line-height:1.45"><b>Pellizca</b> (pulgar + índice) sobre un punto, línea o botón para pulsarlo.<br><b>Vista:</b> pelota o <b>fondo vacío</b>: pellizca y arrastra (↔ eje Z, ↕ eje X, borde de la pelota = eje Y). X e Y forman el suelo; Z es la vertical. Sobre la tabla el pellizco solo traza.<br>Tabla: ${L} × ${HH} cm · ejión h = ${H} cm · θ = ${TH}°</div>`;
+    h+=`<div class="help" style="opacity:.85;line-height:1.45"><b>Pellizca</b> (pulgar + índice) sobre un punto, línea o botón para pulsarlo.<br><b>Vista:</b> pelota o <b>fondo vacío</b>: pellizca y arrastra (↔ eje Z, ↕ eje X, borde de la pelota = eje Y). X e Y forman el suelo; Z es la vertical. Sobre la tabla el pellizco solo traza.<br>Tabla: ${L} × ${HH} cm · ${HP===HC?`ejiones h = ${fh(HP)} cm`:`ejión horizontal h = ${fh(HP)} cm, vertical h = ${fh(HC)} cm`} · θ = ${TH}°</div>`;
   }
   $("resetBtn").style.visibility=(stage==="mounting"||stage==="intro")?"hidden":"visible"; $("tools").style.opacity=stage==="trace"?1:.35;
   sideEl.innerHTML=h;
@@ -1370,7 +1381,7 @@ function contextHint(){
   if(tool==="saw"&&sawLock!=null) return "Elige la inclinación de la hoja (90° perpendicular a la cara tabla) y pulsa CORTAR";
   const ni=nextStep(); let t=ni>=0?`Paso ${ni+1} de ${ITEMS.length}: ${DET[ni]}`:"";
   if(tool==="pencil"&&anchor) t="Punto marcado. Elige ahora una línea discontinua apuntando en su dirección y pellizca.";
-  if(tool==="flex"&&tapeStart) t="Pellizca donde el arco de 3 cm cruza la línea para marcar el punto.";
+  if(tool==="flex"&&tapeStart) t=`Pellizca donde el arco de ${fh(hAt(tapeStart))} cm (grosor del ejión) cruza la línea para marcar el punto.`;
   return t;
 }
 
@@ -1420,7 +1431,7 @@ function stepCal(now,m){
       cal=null; } }
 }
 /* ================= DIAGNÓSTICO: graba lo que detecta la cámara (solo números, sin imagen) ================= */
-const APP_VER="v20";
+const APP_VER="v21";
 /* Umbrales de pellizco adaptados a cada mano (se aprenden de los últimos 3 s).
    El diagnóstico mostró manos cuya postura "abierta" ronda 0,60-0,70: con un umbral fijo de 0,72 el pellizco no se soltaba nunca. */
 const PH=[]; let openRef=0.75, closedRef=0.22, pCloseT=0.38, pOpenT=0.51, pCondT=null;
