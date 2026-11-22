@@ -2,11 +2,12 @@
 <html lang="es">
 <head>
 <meta charset="utf-8">
-<meta name="viewport" content="width=device-width,initial-scale=1">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
 <title>Tornapunta a 30° – trazado y corte con la mano</title>
 <style>
   *{box-sizing:border-box}
-  html,body{margin:0;height:100%;overflow:hidden;color:#e8eefc;
+  html,body{margin:0;height:100%;overflow:hidden;color:#e8eefc;touch-action:none;overscroll-behavior:none;
+    -webkit-user-select:none;user-select:none;-webkit-touch-callout:none;-webkit-tap-highlight-color:transparent;
     font-family:system-ui,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;
     background:radial-gradient(ellipse at 50% 30%,#17234a 0%,#0b1124 60%,#060912 100%)}
   canvas{position:fixed;inset:0;width:100%;height:100%;display:block}
@@ -96,20 +97,121 @@
   .trow{display:flex;gap:8px}
   .trow .btn{flex:1;height:42px;font-size:12px;padding:2px 4px;min-width:0;border-radius:10px}
   #ptr .c1{fill:none;stroke:#fff;stroke-width:4;stroke-dasharray:119.4;stroke-dashoffset:119.4;stroke-linecap:round}
-  #start{position:fixed;inset:0;display:flex;align-items:center;justify-content:center;background:#060912e6;z-index:20}
-  #start .card{max-width:640px;padding:28px 34px;border-radius:18px;background:#101a36;border:1px solid #ffffff1f;text-align:center}
+  #start{position:fixed;inset:0;display:flex;align-items:flex-start;justify-content:center;background:#060912e6;z-index:20;
+    overflow-y:auto;touch-action:pan-y;-webkit-overflow-scrolling:touch;padding:12px}
+  #start .card{margin:auto;max-width:640px;padding:28px 34px;border-radius:18px;background:#101a36;border:1px solid #ffffff1f;text-align:center}
   #start h1{margin:0 0 8px;font-size:25px}#start p{margin:8px 0 18px;line-height:1.5;opacity:.88;font-size:15px}
   #start button{font:inherit;font-weight:600;padding:12px 22px;border-radius:12px;border:0;cursor:pointer;margin:4px}
   #go{background:#35e0ff;color:#04202a}#mouse{background:#233157;color:#e8eefc}
+  /* ===== MÓVIL Y PANTALLAS PEQUEÑAS: el script pone en <body> compact + portrait | landscape ===== */
+  :root{--st:env(safe-area-inset-top,0px);--sb:env(safe-area-inset-bottom,0px);--sl:env(safe-area-inset-left,0px);--sr:env(safe-area-inset-right,0px)}
+  #hdrBtns,.sheet,.pm{display:none}
+  body.compact .pd{display:none} body.compact .pm{display:block}
+  body.compact #bottom{height:0;width:0;padding:0;background:none}
+  body.compact #status{left:calc(10px + var(--sl));top:calc(12px + var(--st));max-width:150px;font-size:12px}
+  body.compact #stxt{white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+  body.compact #hdrBtns{display:flex;position:fixed;z-index:6;right:calc(10px + var(--sr));top:calc(8px + var(--st));gap:6px}
+  body.compact .hb{min-height:44px;min-width:44px;padding:0 10px;font-size:13px;border-radius:12px;flex-direction:row;gap:4px;white-space:nowrap}
+  body.compact.sh-pasos #pasosBtn,body.compact.sh-opts #optBtn{border-color:#ffd60a;box-shadow:0 0 0 2px #ffd60a55}
+  body.compact #msg{left:calc(10px + var(--sl));right:calc(10px + var(--sr));top:calc(60px + var(--st));width:auto;margin:0;
+    font-size:13px;line-height:1.3;padding:6px 10px;border-radius:12px}
+  body.compact #video{opacity:.6;z-index:2}
+  body.compact #cubebox{width:84px;top:auto}
+  body.compact #orbit{width:84px;height:84px}
+  body.compact #orbitlab{display:none}
+  body.compact .trow2{display:contents}
+  body.compact #tools .tbtn{min-width:0;border-radius:12px;padding:0 2px;font-size:10px;gap:1px;line-height:1.1}
+  body.compact #tools .tbtn .ic{font-size:22px}
+  body.compact #tools .tbtn .ico{width:22px;height:22px}
+  body.compact #tools .tbtn.rst{flex-direction:column;gap:1px;font-size:10px}
+  body.compact #side{font-size:12px;gap:5px;overflow:auto;touch-action:pan-y}
+  body.compact #side .help{display:none}
+  body.compact #side .btn{height:48px;min-width:0;font-size:13.5px;padding:6px 10px}
+  body.compact #side .big{height:56px !important;font-size:14px !important}
+  body.compact #side .rep{font-size:12.5px;padding:6px 10px;line-height:1.35}
+  body.compact .pdemo{margin:2px 0 4px;gap:6px} body.compact .pdemo svg{width:72px;height:auto}
+  body.compact .pdemo p{font-size:10.5px;max-width:120px}
+  body.compact #lupa{width:140px;height:140px} body.compact #lupa canvas{width:140px !important;height:140px !important}
+  body.compact #lread{font-size:20px}
+  body.compact #start .card{padding:18px;max-width:560px}
+  body.compact #start h1{font-size:21px} body.compact #start p{font-size:14px;line-height:1.45;margin:6px 0 12px;text-align:left}
+  /* hojas desplegables: 📋 Pasos (instrucciones, nomenclatura, montaje final) y ⚙ Opciones */
+  body.compact .sheet{position:fixed;z-index:7;left:calc(10px + var(--sl));right:calc(10px + var(--sr));top:calc(60px + var(--st));
+    flex-direction:column;gap:8px;overflow:auto;touch-action:pan-y;-webkit-overflow-scrolling:touch}
+  body.compact.sh-pasos #sheetPasos,body.compact.sh-opts #sheetOpts{display:flex}
+  body.compact .shead{display:flex;justify-content:space-between;align-items:center;gap:8px;padding:6px 6px 6px 12px;border-radius:14px;
+    background:#0b1226f2;border:1px solid #ffffff26;font-weight:800;font-size:14px;flex:none}
+  body.compact .shx{min-height:44px;padding:0 14px;font-size:13px;border-radius:12px;flex-direction:row}
+  body.compact #sheetPasos{bottom:calc(10px + var(--sb))}
+  body.compact #sheetPasos #check{position:static;grid-template-columns:1fr;overflow:visible;background:#0b1226f2;border:1px solid #ffffff26;
+    border-radius:14px;padding:10px;font-size:12.5px;flex:none}
+  body.compact #sheetPasos #nomen{position:static;width:100%;top:auto;left:auto;flex:none}
+  body.compact #sheetPasos #mini{position:relative;left:auto;top:auto;width:100%;height:190px;flex:none}
+  body.compact #sheetOpts{max-height:calc(100% - 70px - var(--st) - var(--sb));padding:10px;background:#0b1226f5;border:1px solid #ffffff26;
+    border-radius:16px;box-shadow:0 12px 32px #0008}
+  body.compact #sheetOpts #angles{position:static;width:auto;left:auto;bottom:auto;flex-direction:row;gap:8px}
+  body.compact #sheetOpts .angb{flex:1;min-width:0;height:100px;flex-direction:column !important;justify-content:center;text-align:center;font-size:11.5px;gap:4px;padding:4px}
+  body.compact #sheetOpts #sliders{position:static;left:auto;right:auto;bottom:auto}
+  body.compact #sheetOpts #panel{position:static;width:auto;left:auto;right:auto;top:auto}
+  /* móvil en vertical: aviso arriba; herramientas en una fila abajo; encima, el panel de cada paso y la pelota */
+  body.portrait #video{left:auto;right:calc(10px + var(--sr));top:calc(132px + var(--st));width:72px;height:96px}
+  body.portrait #tools{left:calc(10px + var(--sl));right:calc(10px + var(--sr));top:auto;bottom:calc(10px + var(--sb));flex-direction:row;gap:5px}
+  body.portrait #tools .tbtn{width:auto;height:58px;flex:1.25 1 0}
+  body.portrait #tools .tbtn.sm{flex:.85 1 0;height:58px}
+  body.portrait #tools .tbtn.rst{flex:1 1 0;height:58px}
+  body.portrait #cubebox{right:calc(10px + var(--sr));bottom:calc(78px + var(--sb))}
+  body.portrait #side{left:calc(10px + var(--sl));right:calc(104px + var(--sr));top:auto;bottom:calc(78px + var(--sb));max-height:44vh}
+  /* móvil en horizontal: estado y panel de cada paso a la izquierda; herramientas y pelota a la derecha */
+  body.landscape .hb .tx{display:none}
+  body.landscape #msg{left:calc(170px + var(--sl));right:calc(116px + var(--sr));top:calc(8px + var(--st));font-size:12.5px}
+  body.landscape #video{left:calc(10px + var(--sl));top:auto;bottom:calc(10px + var(--sb));width:96px;height:72px}
+  body.landscape #tools{left:auto;right:calc(10px + var(--sr));top:calc(60px + var(--st));display:grid;grid-template-columns:64px 64px;gap:6px}
+  body.landscape #tools .tbtn{width:64px;height:52px}
+  body.landscape #tools [data-key="tool:pencil"]{order:1} body.landscape #tools [data-key="tool:flex"]{order:2}
+  body.landscape #tools [data-key="tool:saw"]{order:3} body.landscape #resetBtn{order:4}
+  body.landscape #tools [data-key="undo"]{order:5} body.landscape #tools [data-key="redo"]{order:6}
+  body.landscape #cubebox{right:calc(34px + var(--sr));bottom:calc(10px + var(--sb))}
+  body.landscape #side{left:calc(10px + var(--sl));right:auto;top:calc(52px + var(--st));bottom:auto;width:min(220px,30vw);
+    max-height:calc(100% - 62px - var(--st) - var(--sb))}
+  body.landscape.cam #side{max-height:calc(100% - 146px - var(--st) - var(--sb))}
+  body.landscape #sheetPasos{display:none}
+  body.landscape.sh-pasos #sheetPasos{display:grid;grid-template-columns:minmax(0,1fr) min(240px,32vw);grid-auto-rows:min-content;align-items:start}
+  body.landscape #sheetPasos .shead{grid-column:1/-1}
+  body.landscape #sheetPasos #check{grid-column:1;grid-row:2/span 2;grid-template-columns:repeat(3,1fr)}
+  body.landscape #sheetPasos #nomen{grid-column:2;grid-row:2}
+  body.landscape #sheetPasos #mini{grid-column:2;grid-row:3;height:150px}
+  body.landscape #sheetOpts{left:auto;width:min(600px,calc(100vw - 20px))}
+  body.landscape.sh-opts #sheetOpts{display:grid;grid-template-columns:1fr 1fr;align-items:start;gap:8px}
+  body.landscape #sheetOpts .shead{grid-column:1/-1}
+  body.landscape #sheetOpts #angles{grid-column:1;grid-row:2/span 2;flex-direction:column}
+  body.landscape #sheetOpts .angb{height:58px;flex-direction:row !important;justify-content:flex-start;text-align:left}
+  body.landscape #sheetOpts #sliders{grid-column:2;grid-row:2} body.landscape #sheetOpts #panel{grid-column:2;grid-row:3}
+  /* con una hoja abierta no se ven el aviso ni las etiquetas de detrás */
+  body.compact.sh-pasos #msg,body.compact.sh-opts #msg,body.compact.sh-pasos .l3,body.compact.sh-opts .l3,
+  body.compact.sh-pasos #l3svg,body.compact.sh-opts #l3svg,body.compact.sh-pasos #side{visibility:hidden}
+  /* pantallas táctiles: todo lo que se toca mide al menos 44 px de alto (WCAG 2.5.5) */
+  @media (pointer:coarse){
+    #side .small,#panel .btn,.trow .btn,#start button{min-height:44px}
+    .sl{height:44px;border-radius:22px} .sl .fill{border-radius:22px} .sl .thumb{top:4px;width:36px;height:36px;margin-left:-18px}
+  }
 </style>
 </head>
 <body>
+<script>
+/* disposición: escritorio, móvil vertical o móvil horizontal (antes de pintar nada) */
+(function(){ function L(){ var w=innerWidth, h=innerHeight, c=w<1180||h<600||h>=w, b=document.body;
+  b.classList.toggle("compact",c); b.classList.toggle("portrait",c&&h>=w); b.classList.toggle("landscape",c&&h<w); }
+  window.__layout=L; L(); })();
+</script>
 <canvas id="gl"></canvas>
 <canvas id="ov"></canvas>
 <video id="video" playsinline muted></video>
 
 <div id="status"><span id="dot"></span><span id="stxt">Sin cámara</span></div>
 <div id="msg">Cargando…</div>
+<div id="hdrBtns"><div id="pasosBtn" class="dw btn hb" data-key="sheet:pasos">📋<span class="tx"> Pasos</span></div><div id="optBtn" class="dw btn hb" data-key="sheet:opts">⚙<span class="tx"> Opciones</span></div></div>
+<div id="sheetPasos" class="sheet"><div class="shead"><span>📋 Pasos y referencias</span><span class="dw btn shx" data-key="sheet:close">✕ Cerrar</span></div></div>
+<div id="sheetOpts" class="sheet"><div class="shead"><span>⚙ Opciones</span><span class="dw btn shx" data-key="sheet:close">✕ Cerrar</span></div></div>
 
 <div id="bottom">
   <div id="check"></div>
@@ -142,7 +244,8 @@
 <div id="start">
   <div class="card">
     <h1>Trazado y corte de tornapuntas</h1>
-    <p>Traza con el <b>lápiz</b>, mide con el <b>flexómetro</b> y corta con el <b>serrucho</b> con la mano: <b>pellizca</b> (pulgar + índice) sobre cada punto o botón para pulsarlo. Para girar la tabla usa la <b>pelota</b> de arriba a la derecha, o pellizca el fondo vacío y arrastra (15° en cada paso). Al soltar el pellizco el giro se detiene.<br>El vídeo no sale de tu equipo.</p>
+    <p class="pd">Traza con el <b>lápiz</b>, mide con el <b>flexómetro</b> y corta con el <b>serrucho</b> con la mano: <b>pellizca</b> (pulgar + índice) sobre cada punto o botón para pulsarlo. Para girar la tabla usa la <b>pelota</b> de arriba a la derecha, o pellizca el fondo vacío y arrastra (15° en cada paso). Al soltar el pellizco el giro se detiene.<br>El vídeo no sale de tu equipo.</p>
+    <p class="pm">Traza con el <b>lápiz</b>, mide con el <b>flexómetro</b> y corta con el <b>serrucho</b>.<br><b>Con el dedo:</b> toca un punto o un botón (puedes deslizar el dedo para apuntar y soltarlo encima). Arrastra el fondo para girar la tabla; con dos dedos, zoom.<br><b>Con la cámara:</b> pellizca (pulgar + índice) como en el portátil.<br>En <b>📋 Pasos</b> están las instrucciones y en <b>⚙ Opciones</b> los tornapuntas a 30°, 45° y 60°.<br>El vídeo no sale de tu equipo.</p>
     <div id="startDemo"></div>
     <button id="go">Activar cámara</button>
     <button id="mouse">Probar con ratón</button>
@@ -243,7 +346,11 @@ function resetState(){
   marks=[]; lines=[]; history=[]; tool="pencil"; anchor=null; tapeStart=null; sawLock=null; sawTilt=null;
   redoSt=[]; cutsDone=[]; stage="intro"; errors=0; tStart=performance.now(); idc=1; geoVer=1; snapCache=null; sideDirty=true; tapeDraw=null;
 }
-function say(t,k="",ms=4500){ msgText=t; msgKind=k; msgUntil=performance.now()+ms; }
+var touchUI=false;     // el último manejo fue con el dedo: los avisos dicen «toca» en vez de «pellizca»
+function tx(t){ if(!touchUI||typeof t!=="string") return t;
+  return t.replace(/\s*\(pulgar \+ índice\)/g,"").replace(/\bPellizca\b/g,"Toca").replace(/\bpellizca\b/g,"toca").replace(/\bpellizcar\b/g,"tocar")
+    .replace(/\bpellizcando\b/g,"tocando").replace(/\bel pellizco\b/g,"el dedo").replace(/\bpellizco\b/g,"toque"); }
+function say(t,k="",ms=4500){ msgText=tx(t); msgKind=k; msgUntil=performance.now()+ms; }
 
 /* ================= ESCENA 3D ================= */
 const glc = document.getElementById("gl");
@@ -431,13 +538,48 @@ function dropPiece(pts){
 /* cámara y proyección */
 let W=innerWidth, Hh=innerHeight, camZ0=60;
 const ov = document.getElementById("ov"), octx = ov.getContext("2d");
+const CPT=()=>document.body.classList.contains("compact"), PORT=()=>document.body.classList.contains("portrait");
+const ZTR=()=>CPT()?(PORT()?320:260):130, ZCUT=()=>CPT()?(PORT()?280:230):115;   // zoom al trazar / cortar en cada extremo
+/* en móvil, instrucciones, nomenclatura y montaje final van a «📋 Pasos»; ángulos, barras y Frontal/Voz a «⚙ Opciones» */
+const SHEET_MOVES=[["check","sheetPasos"],["nomen","sheetPasos"],["mini","sheetPasos"],["angles","sheetOpts"],["sliders","sheetOpts"],["panel","sheetOpts"]], SHEET_PH={};
+function placeSheets(){
+  const c=CPT();
+  for(const [id,sh] of SHEET_MOVES){ const el=document.getElementById(id), dest=document.getElementById(sh); if(!el||!dest) continue;
+    if(!SHEET_PH[id]){ SHEET_PH[id]=document.createComment("sitio-"+id); el.parentNode.insertBefore(SHEET_PH[id],el); }
+    if(c&&el.parentNode!==dest) dest.appendChild(el);
+    else if(!c&&el.parentNode===dest) SHEET_PH[id].parentNode.insertBefore(el,SHEET_PH[id]); }
+  if(!c) document.body.classList.remove("sh-pasos","sh-opts");
+}
+/* en móvil, la cámara 3D se centra en el hueco que dejan los paneles (desplazamiento de la proyección) */
+let FRAME=null;
+function reframe(){
+  if(!CPT()){ camera.clearViewOffset(); camera.near=0.1; camera.far=500; camera.aspect=W/Hh; camZ0=(L/0.60)/(2*Math.tan(rad(15))*camera.aspect); camera.updateProjectionMatrix(); FRAME=null; return; }
+  camera.near=0.5; camera.far=4000;                                // en vertical la cámara se aleja más para que quepa el montaje
+  const g=id=>document.getElementById(id), box=id=>{ const e=g(id); if(!e) return null; const r=e.getBoundingClientRect(); return r.width>0&&r.height>0?r:null; };
+  const m=g("msg"), md=m.style.display; m.style.display="block"; const mr=m.getBoundingClientRect(); m.style.display=md;
+  let x0=6, x1=W-6, y0=6, y1=Hh-6;
+  if(PORT()){
+    y0=Math.max(y0,mr.top+64+6);                                   // sitio fijo para 3 líneas de aviso (el encuadre no salta)
+    const hb=box("hdrBtns"); if(hb) y0=Math.max(y0,hb.bottom+6);
+    for(const id of ["tools","side","cubebox"]){ const r=box(id); if(r) y1=Math.min(y1,r.top-6); }
+  } else {
+    y0=Math.max(y0,mr.top+48+6);                                   // 2 líneas de aviso
+    const sd=box("side"); if(sd) x0=Math.max(x0,sd.right+8);
+    for(const id of ["tools","cubebox"]){ const r=box(id); if(r) x1=Math.min(x1,r.left-8); }
+  }
+  const fw=Math.max(140,x1-x0), fh=Math.max(140,y1-y0);
+  camera.aspect=fw/fh; camera.setViewOffset(fw,fh,-x0,-y0,W,Hh);
+  camZ0=(L/0.60)/(2*Math.tan(rad(15))*camera.aspect);
+  FRAME={x0,x1,y0,y1};
+}
 function resize(){
   W=innerWidth; Hh=innerHeight;
+  if(window.__layout) window.__layout();
+  placeSheets();
   renderer.setSize(W,Hh,false);
   ov.width=W*Math.min(devicePixelRatio,2); ov.height=Hh*Math.min(devicePixelRatio,2);
-  camera.aspect=W/Hh;
-  camZ0 = (L/0.60) / (2*Math.tan(rad(15))*camera.aspect);
-  camera.updateProjectionMatrix();
+  try{ SLIDERS[0].max=CPT()?400:200; setSlider(SLIDERS[0],zoomPct); }catch(e){}     // al arrancar aún no existen las barras
+  reframe();
 }
 addEventListener("resize",resize); resize();
 
@@ -467,12 +609,55 @@ const target={x:0,y:0}, cur={x:0,y:0};
 let ptrVisible=false, lastHand=0, lastMouse=0, handSeen=false;
 let pinched=false, wasPinched=false, ratioS=-1, pinchFrames=0, press=null, ringP=0, H0=null;
 const hist=[];
-addEventListener("mousemove",e=>{
-  lastMouse=performance.now();
+/* ratón y dedo (pointer events). Con el dedo: tocar pulsa; deslizar apunta y al soltar se pulsa; arrastrar el fondo gira; dos dedos, zoom */
+const touches=new Map(); let pinchZ=null, waitAllUp=false, lastTouch=0, mouseDown=false, touchMode=false, inputSrc="mouse";
+const COARSE=matchMedia("(pointer:coarse)").matches;
+const inStart=e=>e.target&&e.target.closest&&e.target.closest("#start");
+function pDown(x,y,src){ inputSrc=src; target.x=cur.x=x; target.y=cur.y=y; ptrVisible=true; pinched=wasPinched=true; pressStart(performance.now()); }
+function pUp(cancel,x,y){ if(!pinched) return; pinched=wasPinched=false;
+  if(cancel){ cancelPress(); return; }
+  if(x!==undefined&&inputSrc==="touch"){ target.x=cur.x=x; target.y=cur.y=y; refreshHover(); if(press&&press.mode==="pending") press.h=H0; }
+  pressEnd(performance.now()); }
+function cancelPress(){ const P=press; press=null; if(!P) return; padEl.classList.remove("on");
+  if(P.sl){ P.sl.el.classList.remove("on"); P.sl.el.querySelector(".thumb").style.transform=""; } recEvent("pc",[P.mode]); }
+addEventListener("pointerdown",e=>{
+  if(inStart(e)) return;
+  if(e.pointerType==="touch"){
+    touches.set(e.pointerId,{x:e.clientX,y:e.clientY}); lastTouch=performance.now(); touchMode=true; touchUI=true;
+    if(touches.size===2){ pUp(true); const [a,b]=[...touches.values()]; pinchZ={d0:Math.hypot(a.x-b.x,a.y-b.y)||1,z0:zoomPct}; return; }
+    if(touches.size===1&&!waitAllUp) pDown(e.clientX,e.clientY,"touch");
+    return;
+  }
+  if(e.button!==0) return;
+  touchMode=false; touchUI=false; lastMouse=performance.now();
+  if(lastMouse-lastHand>1000){ mouseDown=true; pDown(e.clientX,e.clientY,"mouse"); }
+});
+addEventListener("pointermove",e=>{
+  if(e.pointerType==="touch"){
+    if(!touches.has(e.pointerId)) return;
+    touches.set(e.pointerId,{x:e.clientX,y:e.clientY}); lastTouch=performance.now();
+    if(pinchZ&&touches.size>=2){ const [a,b]=[...touches.values()]; setSlider(SLIDERS[0],pinchZ.z0*Math.hypot(a.x-b.x,a.y-b.y)/pinchZ.d0); return; }
+    if(!waitAllUp&&pinched){ target.x=e.clientX; target.y=e.clientY; }
+    return;
+  }
+  lastMouse=performance.now(); touchMode=false;
   if(lastMouse-lastHand>1000){ target.x=e.clientX; target.y=e.clientY; if(!ptrVisible||!pinched){cur.x=target.x;cur.y=target.y;} ptrVisible=true; }
 });
-addEventListener("mousedown",e=>{ if(performance.now()-lastHand>1000){ lastMouse=performance.now(); target.x=cur.x=e.clientX; target.y=cur.y=e.clientY; ptrVisible=true; pinched=true; } });
-addEventListener("mouseup",()=>{ if(performance.now()-lastHand>1000) pinched=false; });
+function pointerEnd(e,cancel){
+  if(e.pointerType==="touch"){
+    if(!touches.delete(e.pointerId)) return;
+    lastTouch=performance.now();
+    if(pinchZ){ if(touches.size<2){ pinchZ=null; waitAllUp=touches.size>0; } return; }
+    if(!touches.size){ waitAllUp=false; pUp(cancel,e.clientX,e.clientY); ptrVisible=false; target.x=cur.x=-9999; target.y=cur.y=-9999; }
+    return;
+  }
+  if(!mouseDown) return;
+  mouseDown=false; pUp(cancel);
+}
+addEventListener("pointerup",e=>pointerEnd(e,false));
+addEventListener("pointercancel",e=>pointerEnd(e,true));
+addEventListener("contextmenu",e=>{ if(touchMode) e.preventDefault(); });
+document.addEventListener("gesturestart",e=>e.preventDefault());       // iOS: sin zoom de la página
 addEventListener("keydown",e=>{
   if(e.key==="1") setTool("pencil"); if(e.key==="2") setTool("flex"); if(e.key==="3") setTool("saw");
   if(e.key==="z"||e.key==="Z") undo();
@@ -490,7 +675,7 @@ let zoomPct=100, sensPct=35;
 let phaseKey=null, fxT=50, fx=50, fy=5, fwT=0, fw=0, zoomV=100, foT=0.11, fo=0.11; const _fv=new THREE.Vector3();
 try{ zoomPct=+localStorage.getItem("tp_zoomPct")||zoomPct; sensPct=+localStorage.getItem("tp_sensPct")||sensPct; }catch(e){}
 const SLIDERS=[
-  {el:document.getElementById("slZoom"), lab:"zv", min:60, max:200, step:5, key:"tp_zoomPct", get:()=>zoomPct, set:v=>{zoomPct=v;}},
+  {el:document.getElementById("slZoom"), lab:"zv", min:60, max:CPT()?400:200, step:5, key:"tp_zoomPct", get:()=>zoomPct, set:v=>{zoomPct=v;}},
   {el:document.getElementById("slSens"), lab:"sv", min:5, max:100, step:5, key:"tp_sensPct", get:()=>sensPct, set:v=>{sensPct=v;}},
 ];
 function paintSlider(sl){ const t=(sl.get()-sl.min)/(sl.max-sl.min)*100;
@@ -498,7 +683,7 @@ function paintSlider(sl){ const t=(sl.get()-sl.min)/(sl.max-sl.min)*100;
   document.getElementById(sl.lab).textContent=sl.get()+"%"; }
 function setSlider(sl,v){ v=Math.max(sl.min,Math.min(sl.max,Math.round(v/sl.step)*sl.step));
   if(v!==sl.get()){ sl.set(v); try{localStorage.setItem(sl.key,v)}catch(e){} } paintSlider(sl); }
-function sliderAt(x,y){ for(const sl of SLIDERS){ const r=sl.el.getBoundingClientRect(); if(x>=r.left-6&&x<=r.right+6&&y>=r.top-4&&y<=r.bottom+4) return sl; } return null; }
+function sliderAt(x,y){ for(const sl of SLIDERS){ const r=sl.el.getBoundingClientRect(); if(r.width>0&&x>=r.left-6&&x<=r.right+6&&y>=r.top-4&&y<=r.bottom+4) return sl; } return null; }
 SLIDERS.forEach(sl=>{ sl.set(sl.get()); paintSlider(sl); });
 
 /* ================= SNAP (imán) ================= */
@@ -520,7 +705,7 @@ function nearestSnap(){
   let best=null, bd=1e9;
   for(const t of getSnaps()){
     const s=boardToScreen(t.x,t.y), d=Math.hypot(s.x-cur.x,s.y-cur.y);
-    const lim=(lastSnap&&Math.hypot(lastSnap.x-t.x,lastSnap.y-t.y)<1e-6)?30:21;
+    const lim=((lastSnap&&Math.hypot(lastSnap.x-t.x,lastSnap.y-t.y)<1e-6)?30:21)*(touchUI?1.45:1);
     if(d<lim&&d<bd){bd=d;best=t;}
   }
   lastSnap=best; return best;
@@ -628,6 +813,7 @@ function computeHover(){
     const r=el.getBoundingClientRect();
     if(cur.x>=r.left-6&&cur.x<=r.right+6&&cur.y>=r.top-6&&cur.y<=r.bottom+6) return {key:el.dataset.key,dom:true,el};
   }
+  if(sheetAt(cur.x,cur.y)) return null;               // sobre una hoja desplegada no se traza en la tabla
   if(stage!=="trace"||!ptrVisible||!pb) return null;
 
   if(tool==="pencil"){
@@ -674,7 +860,11 @@ function computeHover(){
 
 function fire(h){
   const k=h.key; recEvent("fire",k);
-  if(k.startsWith("tool:")) setTool(k.slice(5));
+  if(k.startsWith("sheet:")){ const B=document.body.classList;
+    if(k==="sheet:close") B.remove("sh-pasos","sh-opts");
+    else { const c=k==="sheet:pasos"?"sh-pasos":"sh-opts"; B.remove(c==="sh-pasos"?"sh-opts":"sh-pasos"); B.toggle(c); } }
+  else if(k.startsWith("end:")){ cutEnd=k.slice(4); endCand=null; sideDirty=true; }
+  else if(k.startsWith("tool:")) setTool(k.slice(5));
   else if(k==="diag"){ REC?recStop():recStart(); }
   else if(k==="undo") undo();
   else if(k==="redo") redo();
@@ -683,7 +873,7 @@ function fire(h){
   else if(k==="calib"){ if(landmarker) startCal(); else say("La calibración necesita la cámara activada","err",3000); }
   else if(k==="voice"){ voiceOn=!voiceOn; try{localStorage.setItem("tp_voice",voiceOn?"1":"0")}catch(e){} if(!voiceOn&&synth) synth.cancel(); paintVoice(); lastNar=null; }
   else if(k==="front"){ for(const a of AXN) U[a]-=wrapA(U[a]); say("Vista frontal: ejes X, Y, Z a 0°","ok",2000); }
-  else if(k.startsWith("angle:")){ applyAngle(+k.slice(6)); resetAll(); say(`Tornapunta a ${TH}°: así quedará montado`,"ok",3000); }
+  else if(k.startsWith("angle:")){ document.body.classList.remove("sh-opts"); applyAngle(+k.slice(6)); resetAll(); say(`Tornapunta a ${TH}°: así quedará montado`,"ok",3000); }
   else if(k==="reset"){ if(stage!=="intro") beginTrace(); }
   else if(k.startsWith("tilt:")){ sawTilt=+k.slice(5); sideDirty=true; }
   else if(k==="cut") doCut();
@@ -704,7 +894,9 @@ function refreshHover(){ pb=(ptrVisible&&stage==="trace")?screenToBoard(cur.x,cu
 const padEl=document.getElementById("orbit");
 const rc3=new THREE.Raycaster();
 /* zonas con botones: si un giro desde el fondo entra en ellas, el giro se suelta */
-const UI_IDS=["tools","panel","cubebox","sliders","side"];
+const UI_IDS=["tools","panel","cubebox","sliders","side","hdrBtns","sheetPasos","sheetOpts"];
+function sheetAt(x,y){ for(const id of ["sheetPasos","sheetOpts"]){ const e=document.getElementById(id), r=e&&e.getBoundingClientRect();
+  if(r&&r.width>0&&x>=r.left&&x<=r.right&&y>=r.top&&y<=r.bottom) return true; } return false; }
 function uiAt(x,y,ids){ for(const id of (ids||UI_IDS)){ const e=document.getElementById(id); if(!e) continue; const r=e.getBoundingClientRect();
   if(r.width>0&&r.height>0&&x>=r.left-12&&x<=r.right+12&&y>=r.top-12&&y<=r.bottom+12) return true; } return false; }
 /* al soltar, se deshace lo girado en los últimos 220 ms (el gesto de abrir los dedos mueve el puntero) */
@@ -716,7 +908,7 @@ function rewindU(P,now,ms){ if(!P||!P.uh||!P.uh.length) return; let e=null; ms=m
 function padGeo(){ const r=padEl.getBoundingClientRect(); return {cx:r.left+r.width/2,cy:r.top+r.height/2,r:r.width/2}; }
 function padAt(x,y){ const g=padGeo(); return Math.hypot(x-g.cx,y-g.cy)<=g.r; }
 function pressStart(now){
-  const hand=now-lastHand<1000;
+  const hand=inputSrc==="hand";
   let pos={x:cur.x,y:cur.y};
   if(hand){ for(let i=hist.length-1;i>=0;i--){ pos=hist[i]; if(now-hist[i].t>=150) break; } }   // posición previa al gesto de pellizcar
   const raw={x:target.x,y:target.y};
@@ -841,7 +1033,7 @@ function drawLayer(ctx,Tf,k,isLupa){
     ctx.beginPath(); ctx.moveTo(a.x,a.y); ctx.lineTo(b.x,b.y); ctx.stroke();
     if(live&&!isLupa){ const sp=clipLine(l,poly); if(sp){ const m=Tf({x:(sp[0].x+sp[1].x)/2,y:(sp[0].y+sp[1].y)/2}); pill(ctx,"corte "+cn.n,m.x,m.y-16,1,"#ff8a7a"); } }
   }
-  if(!isLupa&&stage==="trace"&&(phaseKey==="cut-pie"||phaseKey==="cut-head")){       // aviso para cambiar de extremo en los cortes
+  if(!isLupa&&!CPT()&&stage==="trace"&&(phaseKey==="cut-pie"||phaseKey==="cut-head")){       // aviso para cambiar de extremo en los cortes
     const pend=n=>!cutsDone.includes(n), pie=phaseKey==="cut-pie";
     if(pie&&(pend(3)||pend(4))){ const q=Tf({x:L*0.40,y:HH/2}); pill(ctx,"◀ CABEZA: apunta aquí",q.x,q.y,1.1,"#ffd60a"); }
     if(!pie&&(pend(1)||pend(2))){ const q=Tf({x:L*0.60,y:HH/2}); pill(ctx,"PIE: apunta aquí ▶",q.x,q.y,1.1,"#ffd60a"); }
@@ -939,9 +1131,11 @@ function drawLupa(){
   const reading = show&&tapeDraw&&tapeDraw.a!==null&&tapeDraw.t!==undefined;
   lread.style.display=reading?"block":"none";
   if(!show) return;
-  const lx=Math.min(W-214,Math.max(8,cur.x>W/2?cur.x-260:cur.x+60)), ly=Math.max(64,Math.min(Hh-440,cur.y-235));
+  const LS=CPT()?140:200;
+  let lx=Math.min(W-214,Math.max(8,cur.x>W/2?cur.x-260:cur.x+60)), ly=Math.max(64,Math.min(Hh-440,cur.y-235));
+  if(CPT()){ lx=Math.max(8,Math.min(W-LS-8,cur.x-LS/2)); ly=cur.y-LS-56; if(ly<8) ly=Math.min(Hh-LS-8,cur.y+56); }
   lupa.style.left=lx+"px"; lupa.style.top=ly+"px";
-  if(reading){ lread.style.left=(lx+70)+"px"; lread.style.top=(ly+206)+"px"; lread.textContent=f1(Math.abs(tapeDraw.t))+" cm"; }
+  if(reading){ lread.style.left=(lx+LS*0.35)+"px"; lread.style.top=(ly+LS+6)+"px"; lread.textContent=f1(Math.abs(tapeDraw.t))+" cm"; }
   const c=pb, K=80;
   lctx.save(); lctx.clearRect(0,0,200,200);
   drawLayer(lctx,p=>({x:100+(p.x-c.x)*K,y:100-(p.y-c.y)*K}),1.5,true);
@@ -1083,7 +1277,7 @@ function pickVoice(){
   voiceObj=vs.sort((a,b)=>score(b)-score(a))[0];
 }
 if(synth){ pickVoice(); synth.onvoiceschanged=pickVoice; }
-function speak(t){ if(!voiceOn||!synth||!t) return; try{ synth.cancel(); const u=new SpeechSynthesisUtterance(t); u.lang=voiceObj?voiceObj.lang:"es-ES"; if(voiceObj) u.voice=voiceObj; u.rate=0.95; u.pitch=1; u.volume=1; synth.speak(u); }catch(e){} }
+function speak(t){ if(!voiceOn||!synth||!t) return; t=tx(t); try{ synth.cancel(); const u=new SpeechSynthesisUtterance(t); u.lang=voiceObj?voiceObj.lang:"es-ES"; if(voiceObj) u.voice=voiceObj; u.rate=0.95; u.pitch=1; u.volume=1; synth.speak(u); }catch(e){} }
 function paintVoice(){ const b=document.getElementById("voiceBtn"); if(b) b.textContent=voiceOn?"🔊 Voz":"🔇 Sin voz"; }
 function reqTool(){ if(stage!=="trace") return null; const ns=nextStep(); if(ns<0) return null; return ns<12?STEP_TOOL[ns]:(cutsDone.length<4?"saw":null); }
 function narrate(now){
@@ -1148,7 +1342,7 @@ function renderSide(){
   document.querySelectorAll(".tbtn[data-key^='tool:']").forEach(b=>b.classList.toggle("sel",b.dataset.key==="tool:"+tool&&stage==="trace"));
   let h="";
   if(stage==="intro"){
-    h+=`<div class="rep" style="background:#0e1f3a;border-color:#35e0ff"><b>Tornapunta a ${TH}°: así quedará montado.</b> Gíralo con la pelota. Para pulsar, haz la pinza así:</div>${pinchDemo(104)}<div class="dw btn big" data-key="begin" style="height:76px;font-size:15px;line-height:1.2">COMENZAR A TRAZAR Y CORTAR EL TORNAPUNTA</div>`;
+    h+=`<div class="rep" style="background:#0e1f3a;border-color:#35e0ff"><b>Tornapunta a ${TH}°: así quedará montado.</b> Gíralo con la pelota${CPT()?" o arrastrando el fondo":""}.${CPT()&&!camOn()?"":" Para pulsar, haz la pinza así:"}</div>${CPT()&&!camOn()?"":pinchDemo(CPT()?72:104)}<div class="dw btn big" data-key="begin" style="height:76px;font-size:15px;line-height:1.2">COMENZAR A TRAZAR Y CORTAR EL TORNAPUNTA</div>`;
   } else if(stage==="mounted"){
     const s=suelaLen(), secs=Math.round((performance.now()-tStart)/1000);
     h+=`<div class="rep"><b>¡Tornapunta montado a ${TH}°!</b><br>Durmientes 5 × 15 cm · ejiones 20 × 3 cm<br>Suela P–Q = <b>${isNaN(s)?"—":f1(s)} cm</b> (objetivo ${f1(EXP.P.x-EXP.Q.x>0?Math.hypot(EXP.P.x-EXP.Q.x,EXP.P.y-EXP.Q.y):0)} cm)<br>Errores: ${errors} · Tiempo: ${Math.floor(secs/60)} min ${secs%60} s</div>`;
@@ -1159,10 +1353,13 @@ function renderSide(){
     for(const a of [90,60,45]) h+=`<div class="dw btn ${sawTilt===a?"sel":""}" data-key="tilt:${a}" style="min-width:0;flex:1;font-size:11.5px;height:84px;line-height:1.1;padding:2px 4px">${bevelSvg(a)}${a===90?"90° perpendicular a la cara tabla":a+"° bisel"}</div>`;
     h+=`</div>${cutErr?`<div class="rep" style="border-color:#ff5a5f;background:#2a0f16;color:#ffd0d3;font-size:11.5px;line-height:1.25;padding:5px 8px;max-height:84px;overflow:hidden">${cutErr}</div>`:""}<div class="row" style="flex-wrap:nowrap"><div class="dw btn big" style="flex:1;height:50px;font-size:16px;width:auto" data-key="cut">CORTAR</div><div class="dw btn small" data-key="sawcancel">Cancelar</div></div>`;
   } else {
-    h+=`<div style="opacity:.85;line-height:1.45"><b>Pellizca</b> (pulgar + índice) sobre un punto, línea o botón para pulsarlo.<br><b>Vista:</b> pelota o <b>fondo vacío</b>: pellizca y arrastra (↔ eje Z, ↕ eje X, borde de la pelota = eje Y). X e Y forman el suelo; Z es la vertical. Sobre la tabla el pellizco solo traza.<br>Tabla: ${L} × ${HH} cm · ejión h = ${H} cm · θ = ${TH}°</div>`;
+    if(CPT()&&phaseOf()==="cut"){ const he=cutEnd==="head";
+      h+=`<div class="row"><div class="dw btn ${he?"sel":""}" data-key="end:head" style="flex:1">◀ Cortes en la CABEZA</div><div class="dw btn ${he?"":"sel"}" data-key="end:pie" style="flex:1">Cortes en el PIE ▶</div></div>`; }
+    h+=`<div class="help" style="opacity:.85;line-height:1.45"><b>Pellizca</b> (pulgar + índice) sobre un punto, línea o botón para pulsarlo.<br><b>Vista:</b> pelota o <b>fondo vacío</b>: pellizca y arrastra (↔ eje Z, ↕ eje X, borde de la pelota = eje Y). X e Y forman el suelo; Z es la vertical. Sobre la tabla el pellizco solo traza.<br>Tabla: ${L} × ${HH} cm · ejión h = ${H} cm · θ = ${TH}°</div>`;
   }
   $("resetBtn").style.visibility=(stage==="mounting"||stage==="intro")?"hidden":"visible"; $("tools").style.opacity=stage==="trace"?1:.35;
   sideEl.innerHTML=h;
+  if(CPT()) reframe();          // en móvil, el hueco de la tabla depende del tamaño de este panel
 }
 function contextHint(){
   if(stage==="mounting") return "";
@@ -1183,8 +1380,8 @@ let landmarker=null,lastVT=-1; const VER="0.10.14";
 const MODEL="https://storage.googleapis.com/mediapipe-models/hand_landmarker/hand_landmarker/float16/1/hand_landmarker.task";
 async function startCamera(){
   $("start").style.display="none";
-  try{ const s=await navigator.mediaDevices.getUserMedia({video:{width:640,height:480,facingMode:"user"},audio:false}); video.srcObject=s; video.style.display="block"; await video.play(); }
-  catch(e){ setStatus("Cámara no disponible: usa el ratón","err"); return; }
+  try{ const s=await navigator.mediaDevices.getUserMedia({video:{width:640,height:480,facingMode:"user"},audio:false}); video.srcObject=s; video.style.display="block"; await video.play(); document.body.classList.add("cam"); resize(); sideDirty=true; }
+  catch(e){ setStatus(COARSE?"Cámara no disponible: usa el dedo":"Cámara no disponible: usa el ratón","err"); return; }
   setStatus("Cargando seguimiento de manos…");
   try{
     const {HandLandmarker,FilesetResolver}=await import(`https://cdn.jsdelivr.net/npm/@mediapipe/tasks-vision@${VER}/vision_bundle.mjs`);
@@ -1192,11 +1389,13 @@ async function startCamera(){
     const o=d=>({baseOptions:{modelAssetPath:MODEL,delegate:d},runningMode:"VIDEO",numHands:1});
     try{landmarker=await HandLandmarker.createFromOptions(fs,o("GPU"));}catch(e){landmarker=await HandLandmarker.createFromOptions(fs,o("CPU"));}
     setStatus("Muestra tu mano a la cámara","ok");
-  }catch(e){ console.error(e); setStatus("No se pudo cargar el seguimiento de manos (¿sin internet?). Usa el ratón","err"); }
+  }catch(e){ console.error(e); setStatus(`No se pudo cargar el seguimiento de manos (¿sin internet?). Usa ${COARSE?"el dedo":"el ratón"}`,"err"); }
 }
 $("startDemo").innerHTML=pinchDemo(150);
 $("go").addEventListener("click",startCamera);
-$("mouse").addEventListener("click",()=>{ $("start").style.display="none"; setStatus("Modo ratón (prueba)"); });
+const camOn=()=>video.style.display==="block";
+if(COARSE) $("mouse").textContent="Usar el dedo";
+$("mouse").addEventListener("click",()=>{ $("start").style.display="none"; setStatus(COARSE?"Modo dedo":"Modo ratón (prueba)"); });
 const clamp=v=>Math.max(0,Math.min(1,v));
 let clickMode="pinch";
 let CAL={d0:1.25,d1:0.60,a0:165,a1:125}, calOk=false; try{ const c=JSON.parse(localStorage.getItem("tp_cal")||"null"); if(c&&c.d0){ CAL=c; calOk=true; } }catch(e){}
@@ -1221,7 +1420,7 @@ function stepCal(now,m){
       cal=null; } }
 }
 /* ================= DIAGNÓSTICO: graba lo que detecta la cámara (solo números, sin imagen) ================= */
-const APP_VER="v19";
+const APP_VER="v20";
 /* Umbrales de pellizco adaptados a cada mano (se aprenden de los últimos 3 s).
    El diagnóstico mostró manos cuya postura "abierta" ronda 0,60-0,70: con un umbral fijo de 0,72 el pellizco no se soltaba nunca. */
 const PH=[]; let openRef=0.75, closedRef=0.22, pCloseT=0.38, pOpenT=0.51, pCondT=null;
@@ -1302,6 +1501,7 @@ function detectHand(now){
   if(REC){ const Lm=r.landmarks&&r.landmarks[0];
     recLm=Lm?Lm.flatMap(p=>[r4(p.x),r4(p.y),Math.round((p.z||0)*1e3)/1e3]):null;
     const hh=(r.handednesses||r.handedness||[])[0]; recHd=hh&&hh[0]?[hh[0].categoryName,Math.round(hh[0].score*100)/100]:undefined; }
+  if(!REPLAY&&(touches.size||now-lastTouch<700)) return;            // el dedo en la pantalla manda sobre la cámara
   if(r.landmarks&&r.landmarks.length){
     const Lm=r.landmarks[0], t4=Lm[4], t8=Lm[8];
     const palm=Math.hypot(Lm[5].x-Lm[17].x,Lm[5].y-Lm[17].y)||0.1;
@@ -1322,7 +1522,7 @@ function detectHand(now){
     const px=clickMode==="thumb"?t8.x:t4.x*0.25+t8.x*0.75, py=clickMode==="thumb"?t8.y:t4.y*0.25+t8.y*0.75;   // puntero cerca de la punta del índice: acercar el pulgar apenas lo mueve   // puntero = punta del índice (modo pulgar) o punto medio (pellizco)
     target.x=clamp(((1-px)-0.10)/0.80)*W; target.y=clamp((py-0.08)/0.78)*Hh;
     if(!ptrVisible){cur.x=target.x;cur.y=target.y;}
-    ptrVisible=true; lastHand=now; handSeen=true;
+    ptrVisible=true; lastHand=now; handSeen=true; touchMode=false; touchUI=false; inputSrc="hand";
     setStatus(clickMode==="thumb"?`${pinched?"CLIC":"Señalando"} · pulgar ${(thumbS*100)|0}%`:`${pinched?"Pellizco":"Mano detectada"} · ${ratio.toFixed(2)}`,"ok");
   } else if(now-lastHand>500) setStatus("Muestra tu mano a la cámara","ok");
 }
@@ -1342,8 +1542,9 @@ function frame(now){
   const dt=Math.max(0,Math.min(100,now-prev)); prev=now;
   detectHand(now);
   hist.push({t:now,x:target.x,y:target.y}); while(hist.length&&now-hist[0].t>500) hist.shift();
-  if(now-lastHand>(press?1000:500)&&now-lastMouse>1000&&handSeen){ ptrVisible=false; pinched=false; pinchG=false; thumbOn=false; ratioS=-1; }
-  if(press&&press.mode==="pending"){ cur.x=press.pos.x; cur.y=press.pos.y; }   // el clic no se desplaza al cerrar los dedos
+  if(now-lastHand>(press?1000:500)&&now-lastMouse>1000&&handSeen&&!touches.size&&!mouseDown){ ptrVisible=false; pinched=false; pinchG=false; thumbOn=false; ratioS=-1; }
+  if(press&&press.mode==="pending"&&inputSrc!=="touch"){ cur.x=press.pos.x; cur.y=press.pos.y; }   // el clic no se desplaza al cerrar los dedos
+  else if(touches.size){ cur.x=target.x; cur.y=target.y; }                 // el dedo: sin retardo (apuntar deslizando y soltar)
   else { const k=pinched?0.5:0.35; cur.x+=(target.x-cur.x)*k; cur.y+=(target.y-cur.y)*k; }
 
   const f2=1-Math.exp(-dt/220); zoomV+=(zoomPct-zoomV)*f2; const zoomK=zoomV/100;
@@ -1353,14 +1554,14 @@ function frame(now){
     holder.position.set(-L/2,-5,0); holder.rotation.set(0,0,0);
     stageG.updateMatrixWorld(true);
     const ph=phaseNow(now);
-    if(ph!==phaseKey){ phaseKey=ph;
-      if(ph==="pie"||ph==="head"){ fxT=ph==="pie"?L:0; foT=ph==="pie"?0.11:-0.4; fwT=1; setSlider(SLIDERS[0],130); say(ph==="pie"?"Zoom al extremo del PIE (punto E)":"Zoom al extremo de la CABEZA (punto E′)","",2600); }
-      else if(ph==="cut-pie"||ph==="cut-head"){ const pie=ph==="cut-pie"; fxT=pie?L:0; foT=pie?0.22:-0.35; fwT=1; setSlider(SLIDERS[0],115);
-        say(pie?"Cortes en el PIE (para ir a la cabeza, apunta a la izquierda de la tabla)":"Cortes en la CABEZA (para ir al pie, apunta a la derecha de la tabla)","",3200); }
+    if(ph!==phaseKey){ phaseKey=ph; sideDirty=true;
+      if(ph==="pie"||ph==="head"){ fxT=ph==="pie"?L:0; foT=ph==="pie"?(CPT()?0.5:0.11):(CPT()?-0.5:-0.4); fwT=1; setSlider(SLIDERS[0],ZTR()); say(ph==="pie"?"Zoom al extremo del PIE (punto E)":"Zoom al extremo de la CABEZA (punto E′)","",2600); }
+      else if(ph==="cut-pie"||ph==="cut-head"){ const pie=ph==="cut-pie"; fxT=pie?L:0; foT=pie?(CPT()?0.5:0.22):(CPT()?-0.5:-0.35); fwT=1; setSlider(SLIDERS[0],ZCUT());
+        say(CPT()?(pie?"Cortes en el PIE (botón ◀ para ir a la cabeza)":"Cortes en la CABEZA (botón ▶ para ir al pie)"):(pie?"Cortes en el PIE (para ir a la cabeza, apunta a la izquierda de la tabla)":"Cortes en la CABEZA (para ir al pie, apunta a la derecha de la tabla)"),"",3200); }
       else { fwT=0; setSlider(SLIDERS[0],100); } }
     fw+=(fwT-fw)*f2; fx+=(fxT-fx)*f2; fo+=(foT-fo)*f2;
     const dz=camZ0/zoomK; _fv.set(fx,fy,T/2); holder.localToWorld(_fv);
-    camera.position.set(fw*(_fv.x-fo*dz*Math.tan(rad(15))*camera.aspect), fw*(_fv.y-0.29*dz*Math.tan(rad(15))), dz);
+    camera.position.set(fw*(_fv.x-fo*dz*Math.tan(rad(15))*camera.aspect), fw*(_fv.y-(CPT()?0:0.29)*dz*Math.tan(rad(15))), dz);
   } else {
     const fin=stage!=="mounting", p=fin?1:Math.min(1,(now-mountT0)/2600), e=ease(p);
     piv.rotation.set(rad(view0.x)*(1-e),rad(view0.y)*(1-e),rad(view0.z)*(1-e));
@@ -1368,7 +1569,7 @@ function frame(now){
     piv.position.set(0,5.7*(1-e),0);
     holder.position.set(hx,hy-piv.position.y,0); holder.rotation.set(0,0,rad(-TH)*e);
     stageG.position.y=14*e; if(fin) stageG.rotation.set(rad(view.x),rad(view.y),rad(view.z)); else stageG.rotation.set(rad(VIEW0.x)*e,rad(VIEW0.y)*e,rad(VIEW0.z)*e);
-    { const dzM=camZ0/zoomK*(1+2.3*e)*(1+(ASM_K-1)*e), wpp=2*dzM*Math.tan(rad(15))/Hh, cx=Math.min(W/2,(miniEl.getBoundingClientRect().right+8+W-190)/2-90), cy=215; camera.position.set(-(cx-W/2)*wpp*e,(14-(Hh/2-cy)*wpp)*e,dzM); }   // centro del montaje (origen de stageG) en (cx,cy)
+    { const dzM=camZ0/zoomK*(1+2.3*e)*(1+(ASM_K-1)*e)*(CPT()?(PORT()?0.6:0.85):1), wpp=2*dzM*Math.tan(rad(15))/Hh, cx=CPT()?W/2:Math.min(W/2,(miniEl.getBoundingClientRect().right+8+W-190)/2-90), cy=CPT()?Hh/2:215; camera.position.set(-(cx-W/2)*wpp*e,(14-(Hh/2-cy)*wpp)*e,dzM); }   // centro del montaje (origen de stageG) en (cx,cy)
     const f=Math.max(0,Math.min(1,(p-0.35)/0.5)); setAsmOpacity(f);
     if(stage==="mounting"&&p>=1){ stage="mounted"; setView0(); sideDirty=true; say("Tornapunta montado: la suela queda horizontal y el corte 1 vertical","ok",9000); }
   }
@@ -1388,15 +1589,15 @@ function frame(now){
 
   narrate(now);
   { const rq=reqTool(); document.querySelectorAll(".tbtn[data-key^='tool:']").forEach(b=>b.classList.toggle("need",!!rq&&b.dataset.key==="tool:"+rq&&tool!==rq)); }
-  ptrEl.style.display=ptrVisible?"block":"none";
-  ptrEl.style.transform=`translate(${cur.x}px,${cur.y}px)`;
+  ptrEl.style.display=(ptrVisible&&(!touchMode||ringP>0))?"block":"none";          // con el dedo solo se ve el anillo de «mantener pulsado»
+  ptrEl.style.transform=`translate(${cur.x}px,${cur.y-(touchMode&&ringP>0?70:0)}px)`;
   pring.style.strokeDashoffset=String(119.4*(1-ringP));
 
   if(sideDirty) renderSide();
   renderCheck();
   const msgEl=$("msg");
   if(now<msgUntil){ msgEl.textContent=msgText; msgEl.className=msgKind; }
-  else { msgEl.textContent=contextHint(); msgEl.className=""; }
+  else { msgEl.textContent=tx(contextHint()); msgEl.className=""; }
   msgEl.style.display=msgEl.textContent?"block":"none";
 
   const dpr=Math.min(devicePixelRatio,2);
@@ -1406,7 +1607,7 @@ function frame(now){
   drawLupa();
 
   renderer.render(scene,camera);
-  const showMini=true; miniEl.style.display="block";
+  miniEl.style.display="block"; const showMini=miniEl.getBoundingClientRect().width>0;
   if(showMini){
     const r=miniEl.getBoundingClientRect(); miniRoot.rotation.copy(stage==="trace"?piv.rotation:stageG.rotation);
     camera2.aspect=r.width/r.height; camera2.updateProjectionMatrix();
@@ -1461,7 +1662,8 @@ window.__t={
   phase:()=>phaseKey,
   replayInfo:()=>REPLAY&&{i:REPLAY.i,n:REPLAY.f.length,done:REPLAY.done,t:REPLAY.f[REPLAY.i]&&REPLAY.f[REPLAY.i].t,stage},
   rec:()=>REC&&REC.frames.length, recStart:()=>recStart(), recStop:()=>recStop(), lastDiag:()=>window.__lastDiag,
-  sim:(x,y,p)=>{lastHand=performance.now();handSeen=true;target.x=x;target.y=y;ptrVisible=true;pinched=p;}
+  sim:(x,y,p)=>{lastHand=performance.now();handSeen=true;target.x=x;target.y=y;ptrVisible=true;pinched=p;},
+  get frame(){return FRAME;}, get zoom(){return zoomPct;}, get layout(){return document.body.className;}
 };
 </script>
 </body>
